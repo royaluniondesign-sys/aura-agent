@@ -524,6 +524,8 @@ class GeminiLiveAgent:
                         and self._turn_done_event.is_set()
                         and self._audio_in_queue.empty()
                     ):
+                        # 800ms echo cooldown — prevents mic picking up speaker residue
+                        await asyncio.sleep(0.8)
                         self.set_speaking(False)
                         self._turn_done_event.clear()
                         logger.debug("aura_playback_done")
