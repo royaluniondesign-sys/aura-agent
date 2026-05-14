@@ -394,6 +394,8 @@ setInterval(poll, 800);
 
         # Watchdog: restart agent if it dies (every 15s check)
         asyncio.create_task(self._watchdog())
+        # Media watch: auto-sleep/wake based on frontmost app
+        asyncio.create_task(self._media_watch())
 
         try:
             while True:
@@ -401,6 +403,45 @@ setInterval(poll, 800);
         finally:
             _STATE_FILE.unlink(missing_ok=True)
             await runner.cleanup()
+
+    async def _media_watch(self) -> None:
+        """Auto-sleep when Ricardo watches videos, wake when he stops.
+        Uses macOS frontmost app — no extra installs needed.
+        """
+        import subprocess
+        MEDIA_APPS = {
+            "Brave Browser", "Google Chrome", "Safari", "Firefox", "Arc",
+            "VLC", "IINA", "QuickTime Player", "Infuse", "Plex",
+            "Spotify", "Apple TV", "YouTube", "Miro",
+        }
+        _slept_by_media = False
+        await asyncio.sleep(30)  # grace period on startup
+        while True:
+            await asyncio.sleep(15)
+            if not self._agent:
+                continue
+            try:
+                r = subprocess.run(
+                    ["osascript", "-e",
+                     "tell application \"System Events\" to return "
+                     "name of first process whose frontmost is true"],
+                    capture_output=True, text=True, timeout=3,
+                )
+                front_app = r.stdout.strip()
+                is_media = front_app in MEDIA_APPS
+
+                if is_media and not _slept_by_media and not self._agent.is_sleeping():
+                    logger.info("media_watch_sleep", app=front_app)
+                    self._agent.sleep(announce=True)
+                    _slept_by_media = True
+                elif not is_media and _slept_by_media and self._agent.is_sleeping():
+                    logger.info("media_watch_wake", app=front_app)
+                    self._agent.wake(announce=True)
+                    _slept_by_media = False
+                elif not is_media:
+                    _slept_by_media = False  # reset if user manually woke
+            except Exception:
+                pass
 
     async def _watchdog(self) -> None:
         """Restart voice agent automatically if it dies."""
