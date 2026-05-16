@@ -394,8 +394,9 @@ setInterval(poll, 800);
 
         # Watchdog: restart agent if it dies (every 15s check)
         asyncio.create_task(self._watchdog())
-        # Media watch: auto-sleep/wake based on frontmost app
-        asyncio.create_task(self._media_watch())
+        # Media watch disabled — caused AURA to wake when switching windows mid-video.
+        # Manual sleep/wake via Telegram /voice sleep|wake is cleaner.
+        # asyncio.create_task(self._media_watch())
 
         try:
             while True:
