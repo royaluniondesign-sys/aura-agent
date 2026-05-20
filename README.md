@@ -1,238 +1,291 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/AURA-v0.11.0-d97757?style=for-the-badge&labelColor=0e0d0c&color=d97757" alt="AURA v0.11.0">
-  <img src="https://img.shields.io/badge/Python-3.11+-3776ab?style=for-the-badge&labelColor=0e0d0c" alt="Python 3.11+">
-  <img src="https://img.shields.io/badge/Tests-498_passing-22c55e?style=for-the-badge&labelColor=0e0d0c" alt="Tests: 498 passing">
-  <img src="https://img.shields.io/badge/Brain-Haiku_Primary-7c5cff?style=for-the-badge&labelColor=0e0d0c" alt="Haiku Primary">
-  <img src="https://img.shields.io/badge/RAG-11k%2B_chunks-f59e0b?style=for-the-badge&labelColor=0e0d0c" alt="RAG: 11k+ chunks">
-  <img src="https://img.shields.io/badge/License-MIT-64748b?style=for-the-badge&labelColor=0e0d0c" alt="MIT">
+  <img src="https://img.shields.io/badge/AURA-v0.11.0-d97757?style=for-the-badge&labelColor=0e0d0c&logoColor=d97757" alt="AURA v0.11.0">
+  <img src="https://img.shields.io/badge/Python-3.11%2B-3776ab?style=for-the-badge&labelColor=0e0d0c" alt="Python 3.11+">
+  <img src="https://img.shields.io/badge/Tests-498_passing-22c55e?style=for-the-badge&labelColor=0e0d0c" alt="498 passing">
+  <img src="https://img.shields.io/badge/Brain-Haiku_%2F_Gemini-7c5cff?style=for-the-badge&labelColor=0e0d0c" alt="Haiku / Gemini">
+  <img src="https://img.shields.io/badge/RAG-11k%2B_chunks-f59e0b?style=for-the-badge&labelColor=0e0d0c" alt="11k+ chunks">
+  <img src="https://img.shields.io/badge/License-MIT-475569?style=for-the-badge&labelColor=0e0d0c" alt="MIT">
 </p>
 
+<br>
+
 ```
- █████╗ ██╗   ██╗██████╗  █████╗
-██╔══██╗██║   ██║██╔══██╗██╔══██╗
-███████║██║   ██║██████╔╝███████║
-██╔══██║██║   ██║██╔══██╗██╔══██║
-██║  ██║╚██████╔╝██║  ██║██║  ██║
-╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
-Autonomous Unified Reasoning Agent
+   ██████╗ ██╗   ██╗██████╗  █████╗
+  ██╔══██╗██║   ██║██╔══██╗██╔══██╗
+  ███████║██║   ██║██████╔╝███████║
+  ██╔══██║██║   ██║██╔══██╗██╔══██║
+  ██║  ██║╚██████╔╝██║  ██║██║  ██║
+  ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+
+  Autonomous  ·  Unified  ·  Reasoning  ·  Agent
 ```
 
-**A personal AI agent that lives on your Mac, runs 24/7, and does things Claude can't do alone.**
+<p align="center">
+  <strong>A personal AI agent that lives on your Mac, runs 24/7, and thinks for itself.</strong><br>
+  Talk to it from your phone. It executes, remembers, and improves — without you watching.
+</p>
 
-AURA runs as a macOS LaunchAgent, accessible from anywhere via Telegram. It routes every request to the cheapest capable brain, executes tasks autonomously, maintains persistent semantic memory over your Obsidian vault, generates images, publishes to Instagram, and continuously improves its own codebase — all without touching an API key or paying per message.
-
-No SDK. No per-message billing. Your hardware, your credentials, your data.
+<br>
 
 ---
 
 ## What is AURA
 
-AURA is a self-directing AI agent accessible from your phone via Telegram. You send a message — in any language — and AURA decides how to handle it: run a bash command directly, pull semantic context from your Obsidian vault, delegate to a free local model, escalate to Claude Haiku for complex tasks, or dispatch a background job and notify you when done.
+AURA is a self-directing AI agent running as a macOS LaunchAgent, reachable from anywhere via Telegram. You send a message — in any language — and AURA decides how to handle it: run a bash command instantly, pull semantic context from your Obsidian vault, speak back to you in real-time, generate an image, publish to Instagram, or send a branded email quote to a client.
 
-The key distinctions from every other AI assistant setup:
+**Two channels. One brain.**
 
-- **No Anthropic SDK** — AURA drives the `claude` CLI via subprocess. Zero per-message API billing. Your Claude subscription covers everything.
-- **Haiku-first brain cascade** — 11 brains in cost order. Most chat, translation, and general tasks go to Claude Haiku (subscription, no extra cost, fast). Claude Sonnet only when complexity demands it.
-- **Obsidian-aware memory** — your entire Obsidian vault is indexed (11k+ chunks) with semantic search. Every response is enriched with relevant context from your own notes.
-- **Tool-aware routing** — AURA checks what services are running on your Mac right now (open-design, ComfyUI, Instagram pipeline) and uses them without you spelling it out.
-- **Proactive conductor** — every 15 minutes, AURA analyzes its own state, generates improvement tasks, and executes them. No prompting required.
-- **Knowledge pipeline** — DuckDB analytics over all indexed content. Queryable Parquet tables at `~/.aura/knowledge_lake/`.
+| Channel | Transport | Model |
+|---|---|---|
+| 💬 **Telegram** (`@rudagency_bot`) | python-telegram-bot | Claude Haiku → Sonnet |
+| 🎙 **Voice** (always-on daemon) | Gemini 2.5 Flash Native Audio | Gemini Live bidirectional |
+
+Both channels share the same tool registry, same memory, same identity. A tool registered once works across Telegram commands and live voice sessions without any extra wiring.
+
+**No Anthropic SDK. No per-message billing.**  
+AURA drives the `claude` CLI via subprocess. Your Claude subscription covers everything.
 
 ---
 
-## Why AURA — What Claude alone can't do
+## What AURA Can Do That Claude Alone Can't
 
 | Capability | Claude chat | AURA |
 |---|---|---|
-| 24/7 operation | No | Yes — LaunchAgent, always running |
-| Obsidian vault memory | No | Yes — 11k+ chunks, semantic search |
-| Scheduled tasks | No | Yes — APScheduler cron jobs |
-| Local filesystem access | No | Yes — read/write any file on your Mac |
-| Image generation (FLUX.1) | No | Yes — ComfyUI local or Pollinations.ai |
-| Instagram publishing | No | Yes — Meta Graph API, one natural command |
-| Design generation | No | Yes — open-design carousels and posts |
-| Proactive self-improvement | No | Yes — conductor loop, every 15 min |
-| Cost routing (free first) | No | Yes — 11 brains, $0 for most tasks |
-| Voice messages (TTS) | No | Yes — edge-tts |
-| Self-healing on failure | No | Yes — watchdog + auto-restart |
-| Knowledge analytics | No | Yes — DuckDB pipeline over all memory |
+| 24/7 autonomous operation | ✗ | ✅ LaunchAgent, KeepAlive, auto-restart |
+| Obsidian vault memory | ✗ | ✅ 11k+ chunks, semantic search |
+| Voice — real-time bidirectional | ✗ | ✅ Gemini 2.5 Flash Native Audio |
+| Scheduled & proactive tasks | ✗ | ✅ APScheduler + 15-min conductor loop |
+| Local filesystem access | ✗ | ✅ read/write any file on your Mac |
+| Image generation (FLUX.1-dev) | ✗ | ✅ ComfyUI local or Pollinations.ai |
+| Instagram publishing | ✗ | ✅ Meta Graph API, one natural command |
+| Email (Ionos SMTP) | ✗ | ✅ Branded quotes, templates, direct send |
+| Design generation | ✗ | ✅ open-design carousels and posts |
+| Hermes agent mesh | ✗ | ✅ two-agent coordination, shared memory |
+| Self-improvement loop | ✗ | ✅ conductor scans + auto-commits fixes |
+| Cost routing (free first) | ✗ | ✅ 11 brains, $0 for most tasks |
+| Knowledge analytics | ✗ | ✅ DuckDB pipeline over all memory |
 
 ---
 
-## Architecture — The Intelligence Stack
+## Architecture
 
 ```
-Layer 0: LaunchAgent (macOS, KeepAlive=true, 10s ThrottleInterval)
-         ↓
-Layer 1: Python bot process (src/main.py)
-         ↓
-Layer 1.5: Watchdog ping loop (2-min interval, 3-strike SIGTERM → restart)
-         ↓
-Layer 2: Conductor / Proactive Loop — 15-min autonomous task cycle
-         ↓
-Layer 3: Brain Router → AuraCortex (EMA scoring) → cheapest capable brain
-         ┌──────────────┬──────────────────┬───────────────────┐
-         │  zero-token  │  free-tier brains│  subscription     │
-         │ bash/git/ops │ qwen/gemini/ollama│ haiku → sonnet    │
-         └──────────────┴──────────────────┴───────────────────┘
-         ↓
-Layer 4: RAG Context Injection (build_system_prompt_async)
-         ├── Obsidian vault ~/Obsidian/**/*.md (~11k chunks)
-         ├── ~/.aura/memory/ markdown files
-         ├── MISSION.md + CLAUDE.md (identity + mission)
-         ├── src/**/*.py (own source code)
-         └── Telegram conversation history
-         ↓
-Layer 4.5: Tool Manifest (live TCP port checks at call time)
-         ├── open-design :59826 → carousel/post generation
-         ├── ComfyUI :8188 → FLUX.1-dev local images
-         └── Termora :4030 → interactive mobile terminal
-         ↓
-Layer 5: Knowledge Pipeline (~/.aura/knowledge_lake/)
-         └── DuckDB: keywords | source_summary | recent_memory | conversations
-         ↓
-Layer 6: FastAPI :8080 + Dashboard (SSE real-time panels)
+┌─────────────────────────────────────────────────────────────┐
+│  Layer 0 — macOS LaunchAgent (KeepAlive, ThrottleInterval)  │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 1 — Python process  ·  src/main.py                   │
+│            + Watchdog ping (2-min, 3-strike SIGTERM)        │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 2 — Conductor / Proactive Loop  ·  15-min cycle      │
+│            analyze → implement → verify → commit            │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 3 — Brain Router  ·  AuraCortex (EMA scoring)        │
+│  ┌──────────────┬───────────────────┬──────────────────┐   │
+│  │  zero-token  │  free-tier brains │  subscription    │   │
+│  │ bash/git/ops │ qwen/gemini/ollama│ haiku → sonnet   │   │
+│  └──────────────┴───────────────────┴──────────────────┘   │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 4 — RAG Context Injection  ·  build_system_prompt_async()  │
+│  ├── ~/Obsidian/**/*.md  (11k+ chunks)                      │
+│  ├── ~/.aura/memory/*.md  (persistent state)                │
+│  ├── MISSION.md + CLAUDE.md  (identity)                     │
+│  └── Telegram conversation history                          │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 4.5 — Tool Manifest  ·  live TCP port checks         │
+│  ├── open-design :59826  →  carousel/post generation        │
+│  ├── ComfyUI :8188        →  FLUX.1-dev images (~90s)       │
+│  └── Termora :4030        →  mobile terminal URL            │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 5 — Knowledge Pipeline  ·  ~/.aura/knowledge_lake/   │
+│  └── DuckDB: keywords · source_summary · conversations      │
+├─────────────────────────────────────────────────────────────┤
+│  Layer 6 — FastAPI :3002 + Dashboard (SSE real-time)        │
+└─────────────────────────────────────────────────────────────┘
+
+Voice daemon runs in parallel on port 8085 — Gemini 2.5 Flash
+Native Audio, sleeping by default, same tool registry.
 ```
 
-**Supporting systems running in parallel:**
-- `AutoExecutor` — picks up pending tasks every 5 minutes
-- `SelfEvaluator` — scans codebase every 30 minutes, auto-creates fix tasks
-- `EventBus` — async pub/sub: webhooks → agent → notifications
-- `RAGIndexer` — background re-index every 5 minutes (content-hash, only re-embeds changes)
+**Supporting systems (always-on):**
+
+| System | Interval | What it does |
+|---|---|---|
+| `AutoExecutor` | 5 min | Picks up pending generated tasks |
+| `SelfEvaluator` | 30 min | Scans codebase, auto-creates fix tasks |
+| `RAGIndexer` | 5 min | Re-indexes changed content (content-hash) |
+| `EventBus` | async | Webhooks → agent → Telegram notifications |
 
 ---
 
-## Brain Cascade — Cost-Optimized Routing
+## Brain Cascade — Cost-First Routing
 
 | Brain | Cost | Primary use |
 |---|---|---|
 | `zero-token` | $0 | Bash, git, file ops — no LLM, instant |
-| `api-zero` | $0 | Weather, crypto, QR codes via free public APIs |
-| `ollama-rud` | $0 | Remote LAN Ollama server, code-focused |
-| `qwen-code` | $0 | Alibaba Qwen Code CLI, 1000 req/day |
+| `api-zero` | $0 | Weather, crypto, QR codes via public APIs |
+| `ollama-rud` | $0 | Remote LAN Ollama (code-focused) |
+| `qwen-code` | $0 | Alibaba Qwen Code CLI, 1k req/day |
 | `opencode` | $0 | OpenCode CLI + OpenRouter backend |
-| `gemini` | $0 | Google Gemini CLI, free tier, web-aware |
-| `openrouter` | $0 | OpenRouter free model (pressure fallback only) |
+| `gemini` | $0 | Google Gemini CLI, free tier, web-grounded |
+| `openrouter` | $0 | Free model (pressure fallback only) |
 | `cline` | $0 | Local Ollama via Cline |
-| **`haiku`** | subscription | **Primary brain** — chat, translate, general tasks |
-| `sonnet` | subscription | Complex reasoning, architecture, long tasks |
-| `opus` | subscription | Deepest reasoning, maximum quality |
+| **`haiku`** | subscription | **Primary** — chat, translate, general |
+| `sonnet` | subscription | Complex reasoning, long tasks |
+| `opus` | subscription | Maximum reasoning quality |
 
-**Intent routing (v0.11.0):**
+**Intent → Brain map:**
 
 | Intent | Brain |
 |---|---|
-| `CHAT`, `TRANSLATE` | **Haiku** (was OpenRouter — fixed in v0.11.0) |
+| `CHAT`, `TRANSLATE` | Haiku |
 | `CODE` | ollama-rud → qwen → haiku cascade |
 | `SEARCH` | Gemini |
 | `SHELL` | zero-token (no LLM) |
 | `IMAGE` | image-brain (ComfyUI / Pollinations) |
 | `DESIGN` | open-design tool |
-| `SOCIAL` | instagram_publish / social pipeline |
+| `SOCIAL` | instagram_publish pipeline |
 
-**Pressure-aware fallback:** Haiku usage ≥ 70% of rate limit → auto-fallback to OpenRouter free tier.
+**AuraCortex**: self-learning EMA layer. Tracks success rate and latency per brain per intent. Creates bypass rules after 2+ failures. Persists to `~/.aura/cortex.json`.
 
-**AuraCortex:** self-learning EMA layer above the router. Tracks success rate and latency per brain per intent. Creates bypass rules after 2+ failures. All state persists to `~/.aura/cortex.json`.
+---
+
+## Voice Agent — Gemini 2.5 Flash Native Audio
+
+AURA Voice runs as a separate daemon on port 8085. It uses Google's Gemini 2.5 Flash Native Audio for real-time bidirectional audio — no STT/TTS pipeline, no latency from transcription.
+
+```
+Microphone → Gemini Live session → AURA tool registry → Speaker
+```
+
+- **Model**: `gemini-2.5-flash-native-audio-preview`
+- **Language**: Spanish primary, auto-detects English
+- **Tools**: same registry as Telegram — rud_email_send, instagram_publish, bash_run, memory_search, etc.
+- **Sleep/wake**: manual via Telegram or voice command (disabled media_watch auto-wake — was triggering on window switches)
+- **Session continuity**: Gemini sessions auto-reconnect on drop; sleep state preserved across restarts
+
+```bash
+# Via Telegram
+/voice wake    # wake from sleep
+/voice sleep   # go back to sleep
+/voice status  # check state
+
+# Via curl
+curl -X POST http://localhost:8085/wake
+curl -X POST http://localhost:8085/sleep
+curl http://localhost:8085/status
+```
+
+---
+
+## Hermes Mesh — Two-Agent Coordination
+
+AURA has a sibling agent: **Hermes** (`@rudserverbot`, OpenClaw/Node.js, port 18789). Same owner, different stack, complementary capabilities.
+
+```
+AURA ←──────────────────────────────→ Hermes
+@rudagency_bot                         @rudserverbot
+Claude Haiku/Sonnet                    Groq llama-3.3-70b
+Port 3002                              Port 18789
+
+AURA → Hermes:  curl http://localhost:18789/
+Hermes → AURA:  MCP aura__* tools (bash_run, git_*, instagram_publish…)
+```
+
+**Shared memory** (`~/.aura/memory/shared/`):
+- `tasks.md` — pending tasks for both agents
+- `projects.md` — active projects
+- Symlinked into Hermes workspace — both read the same files
+
+| AURA has | Hermes has |
+|---|---|
+| ComfyUI image generation | Browser control (port 18791) |
+| Ionos email direct | Web search (DuckDuckGo native) |
+| Instagram publish | Cron jobs native |
+| Git commit native | 131k context window |
+| Obsidian RAG | Lossless compaction |
+
+---
+
+## Email — RUD Studio
+
+AURA can send email from `hello@royaluniondesign.com` directly, with full HTML branding.
+
+Three auto-registered tools (work in Telegram and Voice):
+
+```python
+# General email
+rud_email_send(to, subject, body, html=None, reply_to=None)
+
+# Branded HTML quote — black/gold RUD design
+rud_email_presupuesto(to, cliente_nombre, proyecto, items, total, validez_dias)
+# items = [{"descripcion": "...", "precio": 500}, ...]
+
+# Check SMTP config
+rud_email_status()
+```
+
+**SMTP**: smtp.ionos.es:587 with STARTTLS. Client at `src/integrations/ionos_client.py`.
 
 ---
 
 ## RAG Memory — Obsidian + Semantic Search
 
-Every brain call is enriched with the most relevant 1,500 chars of context from your entire knowledge base — automatically, without any prompting.
+Every brain call is enriched with the most relevant 1,500 chars from your entire knowledge base — automatically.
 
 - **Embeddings**: `nomic-embed-text` via Ollama, 768-dim, fully local
-- **Storage**: SQLite at `~/.aura/rag.db` — 11,000+ chunks
-- **Sources indexed**:
-  - `~/Obsidian/**/*.md` — entire Obsidian vault
-  - `~/.aura/memory/*.md` — AURA persistent memory
-  - `MISSION.md`, `CLAUDE.md` — identity and mission
-  - `src/**/*.py` — AURA source code
-  - Bot logs (last 500 lines, rolling)
-  - Telegram conversation history (indexed after each exchange)
-- **Auto re-index**: every 5 minutes, content-hash based (skips unchanged chunks)
-- **Context injection**: `build_system_prompt_async(user_message)` runs semantic search before every LLM call
+- **Store**: SQLite at `~/.aura/rag.db` — 11,000+ chunks
+- **Sources**: Obsidian vault · AURA memory · MISSION.md · source code · Telegram history
+- **Auto re-index**: every 5 minutes, content-hash based (skips unchanged)
+- **Injection**: `build_system_prompt_async(user_message)` runs before every LLM call
 
 ---
 
 ## Knowledge Pipeline — DuckDB Analytics
 
 ```bash
-# Count chunks by type (no writes)
+# Dry run — count chunks by type
 uv run python -m src.spark.pipeline --dry-run
 
 # Build all Parquet tables (~3 seconds for 11k chunks)
 uv run python -m src.spark.pipeline
 
-# Query top keywords from memory
-uv run python -m src.spark.pipeline --query keywords --top 20 --type memory
+# Query top keywords
+uv run python -m src.spark.pipeline --query keywords --top 20
 
-# Query most active sources
+# Most active sources
 uv run python -m src.spark.pipeline --query source_summary --top 10
 ```
 
-**Tables at `~/.aura/knowledge_lake/`:**
+Tables at `~/.aura/knowledge_lake/`: `keywords.parquet` · `source_summary.parquet` · `recent_memory.parquet` · `conversations.parquet`
 
-| Table | Content |
-|---|---|
-| `keywords.parquet` | Word frequency by source_type |
-| `source_summary.parquet` | Chunk count + chars + last updated per source |
-| `recent_memory.parquet` | Latest 200 Obsidian + memory chunks |
-| `conversations.parquet` | All indexed Telegram exchanges |
-
-Engine: DuckDB (no Java/JVM, ~3s). Architecture is PySpark-compatible for cluster scale.
+Engine: DuckDB (no JVM, ~3s for 11k chunks). Architecture is PySpark-compatible for cluster scale.
 
 ---
 
-## Tool Manifest — Live Service Detection
+## Security
 
-Every brain call includes a dynamically generated section describing what's actually running right now. Detected via TCP port check at call time — no stale config.
+**Five layers:**
 
-| Service | Port | AURA action |
-|---|---|---|
-| open-design | 59826 | Generates carousels, posts with RUD branding |
-| ComfyUI (FLUX.1-dev) | 8188 | Photorealistic images in ~90s |
-| Termora terminal | 4030 | One-click mobile terminal URL |
-
-When you say "haz un carousel para Instagram sobre X" — AURA checks open-design, calls it, returns the result. No explicit instructions needed.
-
----
-
-## Security Model
-
-**Five-layer defense:**
-
-1. **Authentication** — Telegram user ID whitelist. Only configured users can interact.
-2. **Directory isolation** — all file ops sandboxed to `APPROVED_DIRECTORY`. Path traversal blocked.
-3. **Input validation** — blocks `;`, `&&`, `$()`, backticks, shell injection. Secrets files blocked.
+1. **Authentication** — Telegram user ID whitelist. No unknown users.
+2. **Directory isolation** — all file ops sandboxed to `APPROVED_DIRECTORY`.
+3. **Input validation** — blocks `;`, `&&`, `$()`, backticks, path traversal.
 4. **Rate limiting** — per-user token bucket.
-5. **Audit logging** — every action recorded in SQLite.
+5. **Audit logging** — every action in SQLite.
 
-**Autonomous loop protection:**
-
-The conductor can modify any source file, but nine core engine files are in a `frozenset` denylist — never auto-staged, never auto-committed:
+**Conductor denylist** — nine core engine files never auto-staged or auto-committed:
 
 ```python
 _PROTECTED_CORE_FILES = frozenset({
-    "src/infra/proactive_loop.py",
-    "src/infra/watchdog.py",
-    "src/main.py",
-    "src/config/settings.py",
-    "src/config/features.py",
-    "src/brains/conductor.py",
-    "src/brains/router.py",
-    "src/mcp/cli_registrar.py",
-    "src/bot/orchestrator.py",
+    "src/infra/proactive_loop.py", "src/infra/watchdog.py",
+    "src/main.py", "src/config/settings.py", "src/config/features.py",
+    "src/brains/conductor.py", "src/brains/router.py",
+    "src/mcp/cli_registrar.py", "src/bot/orchestrator.py",
 })
 ```
 
-**Additional safeguards:**
-- Conductor never runs `git add -A` — stages only explicit files
-- After every conductor commit: pytest runs, auto-revert on failure
-- Secret file filter: `.env`, `credential`, `token`, `password`, `private_key` always skipped
-- Brain subprocesses isolated — one brain failing doesn't cascade
-- Webhook HMAC-SHA256 (GitHub) + Bearer token (generic) + replay deduplication
+After every conductor commit: pytest runs automatically. Auto-revert on failure.
 
-See [SECURITY.md](SECURITY.md) for full threat model, configuration, and production checklist.
+See [SECURITY.md](SECURITY.md) for full threat model and production checklist.
 
 ---
 
@@ -246,38 +299,40 @@ cd claude-code-telegram
 uv install
 
 cp .env.example .env
-# Minimum required:
+# Required:
 # TELEGRAM_BOT_TOKEN=...
 # APPROVED_DIRECTORY=/Users/yourname
 # ALLOWED_USERS=your-telegram-id
 
-# Embeddings (RAG)
+# Embeddings
 brew install ollama
 ollama pull nomic-embed-text
 
-# Install as LaunchAgent
+# Install as LaunchAgent (macOS)
 cp src/infra/com.aura.bot.plist ~/Library/LaunchAgents/
 launchctl load ~/Library/LaunchAgents/com.aura.bot.plist
 ```
 
-**Recommended `.env` additions:**
+**Key optional env vars:**
+
 ```bash
-AGENTIC_MODE=true
-ENABLE_API_SERVER=true
-API_SERVER_PORT=8080
-NOTIFICATION_CHAT_IDS=your-telegram-id
-GEMINI_ENABLED=true
-OPENROUTER_API_KEY=sk-or-...
+API_SERVER_PORT=3002         # Dashboard + webhook API
+AGENTIC_MODE=true            # Natural language mode (default)
+GEMINI_ENABLED=true          # Enable Gemini brain
+OPENROUTER_API_KEY=sk-or-... # Fallback free models
+NOTIFICATION_CHAT_IDS=...    # Telegram IDs for proactive alerts
+IONOS_EMAIL_USER=...         # hello@yourdomain.com
+IONOS_EMAIL_PASS=...         # SMTP password
 ```
 
 **Dev commands:**
+
 ```bash
-uv run make dev          # install all deps (including dev)
-uv run make run          # run the bot
-uv run make run-debug    # debug logging
-uv run make test         # 498 tests with coverage
-uv run make lint         # black + isort + flake8 + mypy
-uv run make format       # auto-format
+uv run make dev        # install all deps
+uv run make run        # run the bot
+uv run make test       # 498 tests + coverage
+uv run make lint       # black + isort + flake8 + mypy
+uv run make format     # auto-format
 ```
 
 ---
@@ -288,87 +343,87 @@ uv run make format       # auto-format
 src/
 ├── brains/           Brain implementations + Cortex + router
 │   ├── cortex.py     EMA self-learning routing layer
-│   ├── router.py     Intent → brain map (Haiku primary, v0.11.0)
-│   ├── conductor.py  3-layer autonomous loop (analysis → impl → verify)
-│   └── claude_brain.py  Claude CLI subprocess + async RAG context injection
-├── context/          System prompt construction
-│   ├── aura_context.py      build_system_prompt_async() — RAG + manifest + memory
-│   └── mempalace_memory.py  RAG-backed conversation memory (stub → RAG)
-├── rag/              Local vector search
-│   ├── embedder.py   Async Ollama embedder + LRU cache
-│   ├── indexer.py    Incremental indexer (Obsidian-aware, content-hash)
-│   ├── retriever.py  Cosine similarity + context formatter
-│   └── store.py      SQLite vector store (~/.aura/rag.db)
-├── spark/            Knowledge analytics
-│   └── pipeline.py   DuckDB pipeline → ~/.aura/knowledge_lake/ Parquet
-├── economy/          Intent classification (regex + semantic)
-├── infra/            Runtime: proactive loop, watchdog, auto executor, LaunchAgent
-├── scheduler/        APScheduler cron + routines store
+│   ├── router.py     Intent → brain map
+│   └── conductor.py  3-layer autonomous loop
+├── context/          System prompt construction + RAG injection
+├── rag/              Local vector search (Ollama embeddings)
+├── spark/            Knowledge analytics (DuckDB → Parquet)
+├── economy/          Intent classification
+├── infra/            Proactive loop, watchdog, auto executor
+├── scheduler/        APScheduler cron + routines
 ├── bot/              Telegram handlers, middleware, orchestrator
-├── claude/           Claude CLI facade, session management
-├── api/              FastAPI server, webhooks, dashboard routes
-├── storage/          SQLite repositories (sessions, audit, costs)
-├── security/         Auth, input validation, rate limiting, audit
+├── claude/           Claude CLI facade + session management
+├── api/              FastAPI server + dashboard routes (:3002)
+├── storage/          SQLite repositories
+├── security/         Auth, input validation, rate limiting
 ├── events/           Async pub/sub EventBus
 ├── notifications/    Rate-limited Telegram delivery
-└── voice/            TTS, voice daemon, screen/computer control tools
-dashboard/            Single-file dashboard UI (SSE real-time, 10 panels)
-scripts/              rud_server_setup.sh, export_chat_history.py
+├── integrations/     ionos_client.py + external service clients
+├── actions/tools/    @aura_tool auto-discovered tools
+│   ├── rud_email.py  Email via Ionos SMTP
+│   └── ...
+└── voice/            Gemini Live daemon + TTS + screen tools
+dashboard/            Real-time dashboard (SSE, 10 panels)
 ```
 
-**Key data paths:**
+**Key paths:**
+
 ```
-~/.aura/rag.db                SQLite vector store (11k+ chunks)
-~/.aura/knowledge_lake/       DuckDB Parquet analytics tables
-~/.aura/brain/memory.md       Persistent AURA memory (facts, projects, rules)
-~/.aura/brain/identity.md     AURA identity and persona
-~/.aura/cortex.json           Self-learned brain routing scores + bypass rules
-~/Obsidian/                   Obsidian vault (fully indexed, primary memory source)
+~/.aura/rag.db              Vector store (11k+ chunks)
+~/.aura/knowledge_lake/     DuckDB Parquet tables
+~/.aura/memory/             Persistent AURA memory (markdown)
+~/.aura/cortex.json         Self-learned brain scores
+~/.aura/social_drafts/      Images queued for publishing
+~/Obsidian/                 Obsidian vault (primary memory)
 ```
 
 ---
 
-## Roadmap — What's Next
+## Roadmap
 
-| Feature | Status | Notes |
-|---|---|---|
-| **Hermes RAG bridge** | Planned | Hermes gets same Obsidian context via mesh |
-| **Knowledge lake scheduler** | Planned | Run pipeline automatically every 6h |
-| **Dashboard knowledge panel** | Planned | Surface knowledge_lake queries in UI |
-| **Wan2.1 video pipeline** | Planned | Short-form video for Reels/TikTok |
-| **mem0 vector store** | Planned | Replace SQLite cosine search with mem0 |
-| **Spark cluster mode** | Future | PySpark when knowledge_lake > 1M chunks |
-| **Credential rotation** | Ongoing | Rotate all tokens and API keys regularly |
-| **Hermes tool reduction** | Planned | Reduce active tools for better latency |
+| Feature | Status |
+|---|---|
+| Cross-context bridge (Telegram ↔ Voice) | 🔶 Planned |
+| Voice → Telegram auto-notify after tool calls | 🔶 Planned |
+| Knowledge lake scheduler (auto every 6h) | 🔶 Planned |
+| Wan2.1 video pipeline → Reels/TikTok | 🔶 Planned |
+| mem0 vector store (replace SQLite cosine) | 🔶 Planned |
+| Test coverage 23% → 80% | 🔄 In progress |
+| Credential rotation (Alibaba, Telegram, Meta) | 🔴 Critical |
+| New computer migration | 🔄 In progress |
 
 ---
 
 ## Tech Stack
 
-| Component | Library / Version |
+| Component | Library |
 |---|---|
 | Language | Python 3.11–3.13 |
 | Telegram | python-telegram-bot 22.x |
+| Voice | Gemini 2.5 Flash Native Audio (google-genai) |
 | API server | FastAPI + uvicorn |
 | Scheduler | APScheduler |
 | Database | SQLite + aiosqlite |
-| Embeddings | Ollama nomic-embed-text (768-dim) |
-| Vector math | numpy cosine similarity |
-| Analytics | DuckDB 1.5.x (knowledge pipeline) |
-| Logging | structlog (JSON prod / console dev) |
+| Embeddings | Ollama nomic-embed-text (768-dim, local) |
+| Analytics | DuckDB 1.5.x |
+| Email | smtplib STARTTLS (Ionos SMTP) |
+| Logging | structlog |
 | Deps | uv |
-| Claude interface | `claude` CLI subprocess (subscription auth, no SDK) |
+| Claude interface | `claude` CLI subprocess (subscription auth) |
 
 ---
 
-## Project Status
+## Status
 
-- **Version**: 0.11.0
-- **Tests**: 498 passing, 23% coverage
-- **Primary brain**: Claude Haiku (subscription, no extra cost)
-- **RAG**: Active — 11,008 chunks (Obsidian + memory + code + logs)
-- **Knowledge lake**: Active — 4 Parquet tables, ~3s build time
-- **Stability**: Beta — core routing, autonomous loop, RAG are production-stable
+| Metric | Value |
+|---|---|
+| Version | 0.11.0 |
+| Tests | 498 passing · 23% coverage |
+| Primary brain | Claude Haiku (subscription) |
+| Voice brain | Gemini 2.5 Flash Native Audio |
+| RAG | 11,008 chunks · 5-min re-index |
+| Knowledge lake | 4 Parquet tables · ~3s build |
+| Stability | Beta — core routing, RAG, voice production-stable |
 
 ---
 
@@ -380,5 +435,5 @@ MIT — see [LICENSE](LICENSE).
 
 <p align="center">
   <strong>AURA — your hardware, your models, your rules.</strong><br>
-  <em>Built autonomously, improved continuously.</em>
+  <em>Built autonomously. Improved continuously.</em>
 </p>
