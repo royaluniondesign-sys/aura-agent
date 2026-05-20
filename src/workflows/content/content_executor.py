@@ -24,7 +24,7 @@ from .content_memory import mark_published, mark_failed
 
 log = logging.getLogger("content.executor")
 
-API_BASE = "http://localhost:3002"
+API_BASE = f"http://localhost:{os.environ.get('API_SERVER_PORT', '3002')}"
 API_TOKEN = os.environ.get("API_SERVER_SECRET", "i8HjKCDoKqVEyYxlEM7t2X6FbkmvylRzHkyragoVdsE")
 HEADERS = {"X-Dashboard-Token": API_TOKEN, "Content-Type": "application/json"}
 

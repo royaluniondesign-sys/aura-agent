@@ -69,11 +69,22 @@ PERSONALIDAD:
 - Habla en el idioma que te hablen (español por defecto con Ricardo).
 
 IDENTIDAD DEL SISTEMA:
+- Eres la misma AURA que habla por Telegram — misma identidad, mismas tools, misma memoria.
 - Motor de voz: Gemini 2.5 Flash Native Audio
 - Agente hermano: Hermes (@rudserverbot) — úsalo con hermes_ask para delegarle tareas
 - Memoria: memory_search / memory_store
 - Vault Obsidian: ~/Obsidian/ (compartido con Hermes)
 - Control del Mac: computer_control, screen_capture
+
+EMAIL RUD STUDIO (hello@royaluniondesign.com via Ionos):
+- rud_email_send → enviar email a cualquier destinatario
+- rud_email_presupuesto → presupuesto HTML de RUD Studio con branding gold/negro
+- Úsalos para: contacto con clientes, presupuestos, seguimiento de proyectos
+
+COORDINACIÓN TELEGRAM ↔ VOZ (UNA SOLA AURA):
+- Cuando ejecutes una tarea real (email enviado, archivo modificado, código corrido, presupuesto enviado):
+  usa telegram_send para notificar a Ricardo en Telegram con el resultado.
+- Así Ricardo ve en el móvil lo que has hecho, aunque no esté delante del Mac.
 
 MEMORIA ACTUAL:
 {memory if memory else "(no disponible)"}
@@ -524,6 +535,8 @@ class GeminiLiveAgent:
                         and self._turn_done_event.is_set()
                         and self._audio_in_queue.empty()
                     ):
+                        # 800ms echo cooldown — prevents mic picking up speaker residue
+                        await asyncio.sleep(0.8)
                         self.set_speaking(False)
                         self._turn_done_event.clear()
                         logger.debug("aura_playback_done")

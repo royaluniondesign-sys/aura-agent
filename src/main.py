@@ -540,42 +540,44 @@ async def run_application(app: Dict[str, Any]) -> None:
         # Proactive conductor loop — autonomous AURA self-improvement every 15 min
         _notify_timestamps: list = []  # rolling window for rate limiting
         _NOTIFY_MAX_PER_HOUR = 1       # max 1 proactive notification per hour (3/day max in practice)
+        _notify_lock = asyncio.Lock()  # prevents race between proactive_loop + routine_runner
 
         async def _notify_proactive(msg: str) -> None:
             nonlocal _notify_timestamps
             import time as _time
-            now = _time.time()
-            # Respect global Telegram flood ban (shared with orchestrator)
-            try:
-                from src.bot.flood_guard import remaining_flood_wait, set_flood_wait, extract_retry_after
-                flood_remaining = remaining_flood_wait()
-                if flood_remaining > 0:
-                    logger.info("proactive_notify_skipped_flood", remaining_s=flood_remaining)
-                    return
-            except Exception:
-                pass
-            # Per-hour rate limit: drop oldest outside 1h window
-            _notify_timestamps = [t for t in _notify_timestamps if now - t < 3600]
-            if len(_notify_timestamps) >= _NOTIFY_MAX_PER_HOUR:
-                logger.info("proactive_notify_skipped_hourly_cap",
-                            sent=len(_notify_timestamps), cap=_NOTIFY_MAX_PER_HOUR)
-                return
-            for cid in (config.notification_chat_ids or []):
+            async with _notify_lock:  # atomic check+send — no duplicate sends
+                now = _time.time()
+                # Respect global Telegram flood ban (shared with orchestrator)
                 try:
-                    await telegram_bot.send_message(cid, msg, parse_mode="HTML")
-                    _notify_timestamps.append(now)
-                except Exception as e:
-                    err = str(e)
-                    if "429" in err or "Too Many Requests" in err:
-                        try:
-                            from src.bot.flood_guard import set_flood_wait, extract_retry_after
-                            wait = extract_retry_after(err) or 3600
-                            set_flood_wait(wait)
-                        except Exception:
-                            pass
-                        logger.warning("proactive_notify_flood_wait", error=err[:80])
-                    else:
-                        logger.warning("proactive_notify_fail", error=err[:100])
+                    from src.bot.flood_guard import remaining_flood_wait, set_flood_wait, extract_retry_after
+                    flood_remaining = remaining_flood_wait()
+                    if flood_remaining > 0:
+                        logger.info("proactive_notify_skipped_flood", remaining_s=flood_remaining)
+                        return
+                except Exception:
+                    pass
+                # Per-hour rate limit: drop oldest outside 1h window
+                _notify_timestamps = [t for t in _notify_timestamps if now - t < 3600]
+                if len(_notify_timestamps) >= _NOTIFY_MAX_PER_HOUR:
+                    logger.info("proactive_notify_skipped_hourly_cap",
+                                sent=len(_notify_timestamps), cap=_NOTIFY_MAX_PER_HOUR)
+                    return
+                for cid in (config.notification_chat_ids or []):
+                    try:
+                        await telegram_bot.send_message(cid, msg, parse_mode="HTML")
+                        _notify_timestamps.append(now)
+                    except Exception as e:
+                        err = str(e)
+                        if "429" in err or "Too Many Requests" in err:
+                            try:
+                                from src.bot.flood_guard import set_flood_wait, extract_retry_after
+                                wait = extract_retry_after(err) or 3600
+                                set_flood_wait(wait)
+                            except Exception:
+                                pass
+                            logger.warning("proactive_notify_flood_wait", error=err[:80])
+                        else:
+                            logger.warning("proactive_notify_fail", error=err[:100])
 
         from src.infra.proactive_loop import start_proactive_loop
         proactive_task = asyncio.create_task(

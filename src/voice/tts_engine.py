@@ -4,7 +4,7 @@ Motor principal: Coqui XTTS v2 via subprocess con Python 3.11.
 Voz fija: Claribel Dervla — la mejor voz femenina en español del modelo.
 Fallback: edge-tts si XTTS no está disponible.
 
-XTTS corre en /tmp/tts_env (Python 3.11) porque el bot usa Python 3.13
+XTTS corre en ~/.aura/tts_env (Python 3.11) porque el bot usa Python 3.13
 y Coqui TTS solo soporta hasta 3.11.
 """
 
@@ -26,7 +26,7 @@ XTTS_LANG    = "es"
 
 # Paths
 _WORKER     = Path(__file__).parent / "xtts_worker.py"
-_PYTHON311  = Path("/tmp/tts_env/bin/python3.11")
+_PYTHON311  = Path.home() / ".aura/tts_env/bin/python3.11"
 _FFMPEG     = "ffmpeg"
 
 # Límite de texto (~4000 chars — XTTS maneja bien hasta aquí)
