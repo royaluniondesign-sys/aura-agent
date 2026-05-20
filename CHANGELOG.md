@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.11.1] - 2026-05-20
+
+### Added
+- **Ionos SMTP email client** (`src/integrations/ionos_client.py`): async SMTP via smtp.ionos.es:587 + STARTTLS. Sends from `hello@royaluniondesign.com`. Correct host is `smtp.ionos.es` (not `.com` — auth fails). (PR #32)
+- **RUD Email tools** (`src/actions/tools/rud_email.py`): three `@aura_tool` auto-registered tools — `rud_email_send`, `rud_email_presupuesto` (branded HTML quote, black/gold RUD design), `rud_email_status`. Available from both Telegram and voice without extra wiring. (PR #32)
+- **Voice system prompt unified**: `_build_system_prompt()` in `gemini_live_agent.py` now includes email tool docs and cross-channel identity section — "misma AURA que habla por Telegram". (PR #32)
+- **mempalace_memory stub** (`src/context/mempalace_memory.py`): 40-line RAG-backed stub replacing the previous 200-line ChromaDB module that silently failed. (PR #32)
+
+### Fixed
+- **`_media_watch` disabled** in `voice_daemon.py`: was waking AURA every 15s when Ricardo switched windows while watching video. Commented out; manual sleep/wake via `/voice sleep|wake` is the correct flow. (PR #32)
+- **Voice sleep state preserved across restarts**: `_start_agent()` checks `was_sleeping` before creating a new agent and re-applies sleep without announcing, preventing unexpected wakeups on watchdog restart. (PR #32)
+- **`API_SERVER_PORT` from env** in `content_executor.py`: was hardcoded to 3002. Now reads `os.environ.get('API_SERVER_PORT', '3002')`. (PR #32)
+- **Exposed API key removed**: `AURA-apiKey-192795.csv` (Alibaba Cloud MaaS key) deleted from repo and added to `.gitignore`. (PR #32)
+
+### Changed
+- **Dashboard port corrected**: port 3002 (was incorrectly documented as 8080 in multiple places — that was a previous version)
+- **Voice daemon**: `RunAtLoad=true` in LaunchAgent plist — voice now starts automatically on boot
+
 ## [0.11.0] - 2026-05-13
 
 ### Added
