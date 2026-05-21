@@ -1,23 +1,24 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/AURA-v0.11.0-d97757?style=for-the-badge&labelColor=0e0d0c&logoColor=d97757" alt="AURA v0.11.0">
+  <img src="https://img.shields.io/badge/AURA-v0.11.1-d97757?style=for-the-badge&labelColor=0e0d0c" alt="AURA v0.11.1">
   <img src="https://img.shields.io/badge/Python-3.11%2B-3776ab?style=for-the-badge&labelColor=0e0d0c" alt="Python 3.11+">
   <img src="https://img.shields.io/badge/Tests-498_passing-22c55e?style=for-the-badge&labelColor=0e0d0c" alt="498 passing">
   <img src="https://img.shields.io/badge/Brain-Haiku_%2F_Gemini-7c5cff?style=for-the-badge&labelColor=0e0d0c" alt="Haiku / Gemini">
   <img src="https://img.shields.io/badge/RAG-11k%2B_chunks-f59e0b?style=for-the-badge&labelColor=0e0d0c" alt="11k+ chunks">
   <img src="https://img.shields.io/badge/License-MIT-475569?style=for-the-badge&labelColor=0e0d0c" alt="MIT">
+  <img src="https://github.com/royaluniondesign-sys/claude-code-telegram/actions/workflows/ci.yml/badge.svg" alt="CI">
 </p>
 
 <br>
 
 ```
-   ██████╗ ██╗   ██╗██████╗  █████╗
-  ██╔══██╗██║   ██║██╔══██╗██╔══██╗
-  ███████║██║   ██║██████╔╝███████║
-  ██╔══██║██║   ██║██╔══██╗██╔══██║
-  ██║  ██║╚██████╔╝██║  ██║██║  ██║
-  ╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
+█████╗ ██╗   ██╗██████╗  █████╗
+██╔══██╗██║   ██║██╔══██╗██╔══██╗
+███████║██║   ██║██████╔╝███████║
+██╔══██║██║   ██║██╔══██╗██╔══██║
+██║  ██║╚██████╔╝██║  ██║██║  ██║
+╚═╝  ╚═╝ ╚═════╝ ╚═╝  ╚═╝╚═╝  ╚═╝
 
-  Autonomous  ·  Unified  ·  Reasoning  ·  Agent
+Autonomous  ·  Unified  ·  Reasoning  ·  Agent
 ```
 
 <p align="center">
@@ -430,6 +431,8 @@ dashboard/            Real-time dashboard (SSE, 10 panels)
 ## License
 
 MIT — see [LICENSE](LICENSE).
+
+© 2026 [Royal Union Design](https://rud-web.vercel.app)
 
 ---
 
