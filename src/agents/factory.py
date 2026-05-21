@@ -151,7 +151,7 @@ def _synthesize_system_prompt(role_name: str, skills: list[str], task_hint: str 
     name_clean = role_name.replace("_", " ").title()
     task_note = f" Your current focus: {task_hint[:120]}." if task_hint else ""
     return (
-        f"You are {name_clean} at AURA, Ricardo's AI agency. "
+        f"You are {name_clean} at AURA, an AI agency. "
         f"Your expertise: {skills_str}. "
         f"You are precise, professional, and deliver exactly what's asked.{task_note} "
         f"If you need information from another specialist, clearly state what you need "

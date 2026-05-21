@@ -406,7 +406,7 @@ setInterval(poll, 800);
             await runner.cleanup()
 
     async def _media_watch(self) -> None:
-        """Auto-sleep when Ricardo watches videos, wake when he stops.
+        """Auto-sleep when the owner watches videos, wake when they stop.
         Uses macOS frontmost app — no extra installs needed.
         """
         import subprocess

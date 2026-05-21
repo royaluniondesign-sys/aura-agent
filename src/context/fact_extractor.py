@@ -2,7 +2,7 @@
 
 After each brain response, runs a tiny OpenRouter call (fast free model)
 to extract facts worth remembering. Runs in the background so it never
-delays the response to Ricardo.
+delays the response to the owner.
 
 Extracted facts are saved to ~/.aura/brain/memory.md automatically.
 """
@@ -32,7 +32,7 @@ Given a conversation (user message + assistant response), extract 0-3 facts wort
 Facts worth remembering:
 - Client info: emails, names, companies, relationships
 - Task outcomes: what was done, what worked, what failed
-- Preferences: how Ricardo likes things done
+- Preferences: how the owner likes things done
 - Project state: new projects, status changes
 - Configuration: keys, paths, services discovered
 

@@ -1,4 +1,4 @@
-"""RUD Studio email tools — envía desde hello@royaluniondesign.com via Ionos SMTP.
+"""RUD Studio email tools — envía desde IONOS_EMAIL_USER via Ionos SMTP.
 
 Auto-descubierto por MCP y voz. Disponible en Telegram + Voice AURA.
 """
@@ -11,7 +11,7 @@ from src.actions.registry import aura_tool
 @aura_tool(
     name="rud_email_send",
     description=(
-        "Envía un email profesional desde hello@royaluniondesign.com (Ionos SMTP). "
+        "Envía un email profesional desde la cuenta Ionos configurada (IONOS_EMAIL_USER). "
         "Usa para comunicaciones con clientes, presupuestos, seguimiento. "
         "Siempre envía desde la cuenta profesional de RUD Studio."
     ),
@@ -128,7 +128,7 @@ async def rud_email_presupuesto(
         <tr><td style="padding:32px 40px">
           <p style="margin:0;font-size:13px;color:#666">Validez del presupuesto: <strong style="color:#e5e5e5">{validez_dias} días</strong></p>
           <p style="margin:8px 0 0;font-size:13px;color:#666">Para aceptar o preguntar, responde a este correo.</p>
-          <p style="margin:24px 0 0;font-size:12px;color:#444">RUD Studio · hello@royaluniondesign.com</p>
+          <p style="margin:24px 0 0;font-size:12px;color:#444">RUD Studio · {os.environ.get("IONOS_EMAIL_USER", "")}</p>
         </td></tr>
       </table>
     </td></tr>
@@ -146,7 +146,7 @@ async def rud_email_presupuesto(
         )
         + f"\n\nTOTAL: {total:,.0f} €"
         + (f"\n\nNotas: {notas}" if notas else "")
-        + f"\n\nValidez: {validez_dias} días\n\nRUD Studio · hello@royaluniondesign.com"
+        + f"\n\nValidez: {validez_dias} días\n\nRUD Studio · {os.environ.get('IONOS_EMAIL_USER', '')}"
     )
 
     try:
@@ -155,7 +155,7 @@ async def rud_email_presupuesto(
             subject=f"Presupuesto — {proyecto} | RUD Studio",
             body=body_plain,
             html=html,
-            reply_to="hello@royaluniondesign.com",
+            reply_to=os.environ.get("IONOS_EMAIL_USER", ""),
         )
         return f"✅ Presupuesto enviado a {cliente_nombre} <{to}> — {proyecto} — {total:,.0f} €"
     except Exception as e:

@@ -57,7 +57,7 @@ ROLES: dict[str, AgentRole] = {
         reports_to=None,
         skills=("strategy", "planning", "delegation", "synthesis", "decisions"),
         system_prompt=(
-            "You are the CEO of AURA, Ricardo's AI company. You orchestrate a team of specialized agents. "
+            "You are the CEO of AURA, an AI agency. You orchestrate a team of specialized agents. "
             "Analyze complex tasks, decompose them into subtasks, delegate to appropriate team members, "
             "and synthesize their results into a final coherent response. Be strategic and decisive."
         ),

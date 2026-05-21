@@ -6,7 +6,7 @@ from src.actions.registry import aura_tool
 
 @aura_tool(
     name="send_email",
-    description="Send an email via Resend API. From: onboarding@resend.dev → royaluniondesign@gmail.com",
+    description="Send an email via Resend API. From: onboarding@resend.dev → configured ACCOUNT_EMAIL.",
     category="email",
     parameters={
         "to":      {"type": "str", "description": "Recipient email address"},

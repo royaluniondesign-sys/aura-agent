@@ -1,4 +1,4 @@
-"""Bash execution tool — runs commands on Ricardo's Mac."""
+"""Bash execution tool — runs commands on the local Mac."""
 from __future__ import annotations
 import asyncio
 import os
@@ -10,7 +10,7 @@ _TIMEOUT = 30
 
 @aura_tool(
     name="bash_run",
-    description="Execute a bash command on Ricardo's Mac and return stdout/stderr.",
+    description="Execute a bash command on the local Mac and return stdout/stderr.",
     category="system",
     parameters={
         "command": {"type": "str", "description": "Bash command to execute"},

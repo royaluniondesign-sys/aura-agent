@@ -9,7 +9,7 @@ from src.actions.registry import aura_tool
 @aura_tool(
     name="computer_control",
     description=(
-        "Full keyboard/mouse control of Ricardo's Mac. "
+        "Full keyboard/mouse control of the local Mac. "
         "Actions: type, smart_type, click, double_click, right_click, move, drag, "
         "hotkey (e.g. 'command+c'), press (single key), scroll, copy, paste, "
         "screenshot, wait, clear_field, focus_window, open_app, "

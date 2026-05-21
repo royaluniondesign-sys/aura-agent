@@ -5,7 +5,7 @@ from src.actions.registry import aura_tool
 
 @aura_tool(
     name="get_terminal_url",
-    description="Get a one-click terminal URL for Ricardo's Mac via Termora.",
+    description="Get a one-click terminal URL for the local Mac via Termora.",
     category="system",
     parameters={},
 )

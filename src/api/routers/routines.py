@@ -1,5 +1,6 @@
 """Routines router: /api/routines/* and /api/routines/jobs/*."""
 
+from pathlib import Path
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Request
@@ -41,7 +42,7 @@ async def create_routine_endpoint(request: Request) -> Dict[str, Any]:
             brain=body.get("brain") or "codex",
             frequency=body.get("frequency") or "daily",
             schedule_time=body.get("schedule_time") or "09:00",
-            working_dir=body.get("working_dir") or "/Users/oxyzen/claude-code-telegram",
+            working_dir=body.get("working_dir") or str(Path(__file__).parent.parent.parent.parent),
             is_local=bool(body.get("is_local", True)),
             auto_created=bool(body.get("auto_created", False)),
         )

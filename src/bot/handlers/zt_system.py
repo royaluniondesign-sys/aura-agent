@@ -86,7 +86,7 @@ class ZeroTokenSystemMixin:
             await update.message.reply_text("🔄 Termora está caída, reiniciando…", parse_mode="HTML")
             proc = await _asyncio.create_subprocess_shell(
                 "launchctl kickstart -k gui/$(id -u)/com.termora.agent 2>/dev/null || "
-                "(cd /Users/oxyzen/Projects/termora && /opt/homebrew/bin/npm run dev &)",
+                f"(cd {__import__('pathlib').Path.home()}/Projects/termora && /opt/homebrew/bin/npm run dev &)",
             )
             await _asyncio.sleep(5)
             info = await _fetch_info()

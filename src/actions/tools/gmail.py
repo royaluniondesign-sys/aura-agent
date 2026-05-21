@@ -1,7 +1,7 @@
 """Gmail MCP tools — auto-discovered by AURA MCP server.
 
 Provides: gmail_list_unread, gmail_read, gmail_search, gmail_send, gmail_reply
-All send FROM royaluniondesign@gmail.com once OAuth is configured.
+All send FROM the configured RUD_EMAIL account once OAuth is configured.
 Setup: send /gmail-auth in Telegram.
 """
 
@@ -13,7 +13,7 @@ from src.integrations import gmail_client
 
 @aura_tool(
     name="gmail_list_unread",
-    description="Lista los emails no leídos en royaluniondesign@gmail.com. Devuelve remitente, asunto, snippet y ID.",
+    description="Lista los emails no leídos en la cuenta Gmail configurada. Devuelve remitente, asunto, snippet y ID.",
     category="email",
     parameters={
         "max_results": {"type": "int", "description": "Máximo de emails a devolver (default 10)"},
@@ -97,7 +97,7 @@ async def gmail_search(query: str, max_results: int = 10) -> str:
 @aura_tool(
     name="gmail_send",
     description=(
-        "Envía un email DESDE royaluniondesign@gmail.com a cualquier destinatario. "
+        "Envía un email DESDE la cuenta Gmail configurada a cualquier destinatario. "
         "Usar para respuestas a clientes, presupuestos, propuestas comerciales de RUD Studio."
     ),
     category="email",
@@ -114,7 +114,7 @@ async def gmail_send(to: str, subject: str, body: str, html: str = "") -> str:
     try:
         result = await gmail_client.send(to=to, subject=subject, body=body, html=html or None)
         if result.get("ok"):
-            return f"✅ Email enviado a {to} desde royaluniondesign@gmail.com"
+            return f"✅ Email enviado a {to} desde {gmail_client.RUD_EMAIL}"
         return f"❌ Error: {result.get('error')}"
     except Exception as e:
         return f"❌ Error: {e}"
@@ -171,5 +171,5 @@ async def gmail_status() -> str:
         "1. Envía /gmail-auth\n"
         "2. Sigue las instrucciones para crear credenciales OAuth\n"
         "3. Pega el JSON de las credenciales\n\n"
-        "Mientras tanto, el envío funciona solo hacia royaluniondesign@gmail.com (vía Resend)."
+        "Mientras tanto, el envío funciona solo hacia la cuenta configurada (vía Resend)."
     )

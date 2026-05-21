@@ -3,7 +3,7 @@
 This is the ADENTRO layer: AURA's self-awareness that transcends any specific task.
 Whether the task is "fix Telegram crash" or "write SEO for Madrid client", the same
 meta-context feeds into every conductor run — internal (self-improvement) and
-external (Ricardo's requests).
+external (owner's requests).
 
 What it provides:
   - Conductor history: what was tried, what worked, what failed and why

@@ -6,7 +6,7 @@ Exposes everything to the Gemini Live voice agent:
   • Full computer control (mouse, keyboard, window focus)
   • Hermes bridge (ask Hermes, delegate tasks)
   • Claude escalation (for complex code/analysis — min usage)
-  • Telegram send (notify Ricardo on phone)
+  • Telegram send (notify owner on phone)
 """
 from __future__ import annotations
 
@@ -81,7 +81,7 @@ _EXTRA_TOOLS = [
     # Screen capture
     {
         "name": "screen_capture",
-        "description": "Capture Ricardo's Mac screen and analyze it visually. Returns description of what's on screen. Use when asked 'what's on my screen', 'what do you see', etc.",
+        "description": "Capture the Mac screen and analyze it visually. Returns description of what's on screen. Use when asked 'what's on my screen', 'what do you see', etc.",
         "parameters": {
             "question": {"type": "str", "description": "What to analyze or look for on screen"},
             "monitor": {"type": "int", "description": "Monitor index (1=primary, optional)", "optional": True},
@@ -117,7 +117,7 @@ _EXTRA_TOOLS = [
     # Hermes bridge
     {
         "name": "hermes_ask",
-        "description": "Ask Hermes (AURA's sibling AI agent, @rudserverbot) a question or delegate a task. Hermes has GPT-oss-120b and its own tool set. Use for tasks better suited for Hermes or to coordinate between agents.",
+        "description": "Ask Hermes (AURA's sibling AI agent) a question or delegate a task. Hermes has its own tool set. Use for tasks better suited for Hermes or to coordinate between agents.",
         "parameters": {
             "message": {"type": "str", "description": "Message or task for Hermes"},
         },
@@ -134,7 +134,7 @@ _EXTRA_TOOLS = [
     # Telegram notification
     {
         "name": "telegram_send",
-        "description": "Send a message to Ricardo's Telegram. Use to notify him of completed tasks, send results, or share files when he's away from his Mac.",
+        "description": "Send a message to the owner's Telegram. Use to notify of completed tasks, send results, or share files when away from the Mac.",
         "parameters": {
             "message": {"type": "str", "description": "Message text to send"},
             "parse_mode": {"type": "str", "description": "Markdown or HTML (optional)", "optional": True},
@@ -353,7 +353,7 @@ class ToolExecutor:
             return f"Claude escalation error: {e}"
 
     async def _telegram_send(self, args: Dict) -> str:
-        """Send message to Ricardo's Telegram via bot API."""
+        """Send message to the owner's Telegram via bot API."""
         message = args.get("message", "")
         if not message or not self._bot_token or not self._chat_id:
             return "Telegram not configured or empty message"
