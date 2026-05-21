@@ -17,7 +17,7 @@ def _safe_path(path_str: str) -> Path:
 
 @aura_tool(
     name="file_read",
-    description="Read the contents of a file on Ricardo's Mac.",
+    description="Read the contents of a file on the local Mac.",
     category="files",
     parameters={"path": {"type": "str", "description": "Absolute or ~/relative file path"}},
 )
@@ -31,7 +31,7 @@ async def file_read(path: str) -> str:
 
 @aura_tool(
     name="file_write",
-    description="Write content to a file on Ricardo's Mac.",
+    description="Write content to a file on the local Mac.",
     category="files",
     parameters={
         "path":    {"type": "str", "description": "File path"},

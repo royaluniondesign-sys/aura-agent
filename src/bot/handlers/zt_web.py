@@ -25,7 +25,7 @@ class ZeroTokenWebMixin:
         if len(parts) < 2:
             await update.message.reply_text(
                 "Uso: <code>/web &lt;url&gt; [instrucción opcional]</code>\n"
-                "Ejemplo: <code>/web https://oxyzen.es analiza el SEO</code>",
+                "Ejemplo: <code>/web https://example.com analiza el SEO</code>",
                 parse_mode="HTML",
             )
             return

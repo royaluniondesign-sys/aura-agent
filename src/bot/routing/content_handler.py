@@ -6,6 +6,7 @@ Contains:
 """
 
 import asyncio
+import os
 from typing import TYPE_CHECKING, Any
 
 import structlog
@@ -50,8 +51,8 @@ class ContentHandlerMixin:
             compose_prompt = (
                 f"Extrae y compone el email solicitado. Responde SOLO con JSON válido, sin markdown:\n"
                 f'{{"to": "email@destinatario.com", "subject": "Asunto", "body": "Cuerpo del email"}}\n\n'
-                f"Contexto del dueño: royaluniondesign@gmail.com es el email de Ricardo (yo mismo).\n"
-                f"Si dice 'envíate', 'mándame', 'a mí', etc → to: royaluniondesign@gmail.com\n\n"
+                f"Contexto del dueño: el email del dueño es {os.environ.get('ACCOUNT_EMAIL', 'owner@example.com')} (yo mismo).\n"
+                f"Si dice 'envíate', 'mándame', 'a mí', etc → to: {os.environ.get('ACCOUNT_EMAIL', 'owner@example.com')}\n\n"
                 f"Petición: {message_text}\n\n"
                 f"Responde SOLO el JSON."
             )

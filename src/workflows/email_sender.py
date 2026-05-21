@@ -19,7 +19,7 @@ _FROM = os.environ.get("RESEND_FROM", "AURA <onboarding@resend.dev>")
 # Without a verified domain, Resend only allows sending to the account owner.
 # Set RESEND_VERIFIED_DOMAIN=true once a domain is verified.
 _DOMAIN_VERIFIED = os.environ.get("RESEND_VERIFIED_DOMAIN", "").lower() == "true"
-_ACCOUNT_EMAIL = "royaluniondesign@gmail.com"
+_ACCOUNT_EMAIL = os.environ.get("ACCOUNT_EMAIL", "")
 
 
 def _reload_key() -> str:
@@ -38,7 +38,7 @@ async def send_email(
     Returns {"ok": True, "id": "..."} or {"ok": False, "error": "..."}.
 
     Note: Without a verified domain, `to` must be the Resend account email
-    (royaluniondesign@gmail.com). Verify a domain at resend.com/domains to
+    (set via ACCOUNT_EMAIL env var). Verify a domain at resend.com/domains to
     send to any address.
     """
     import asyncio

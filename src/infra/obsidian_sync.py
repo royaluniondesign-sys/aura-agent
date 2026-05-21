@@ -116,7 +116,7 @@ def _write_dashboard() -> None:
 |--------|--------|
 | ✨ AURA | 🟢 Online |
 | ⚡ Hermes | 🟢 Online |
-| 📱 Instagram | ✅ @royaluniondesign |
+| 📱 Instagram | ✅ Configured |
 | 🖼 FLUX.1 | ✅ Pollinations.ai (FREE) |
 
 ## Tareas Pendientes

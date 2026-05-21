@@ -1,7 +1,7 @@
 """Routines — persistent store for user-defined & auto-created scheduled tasks.
 
 Routines are named prompts that run on a schedule (daily, hourly, cron).
-They can be created by Ricardo or auto-created by the conductor when it
+They can be created by the owner or auto-created by the conductor when it
 detects a recurring improvement opportunity.
 
 Different from `scheduled_jobs` (APScheduler internal) — routines are
@@ -13,6 +13,7 @@ import json
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 import aiosqlite
@@ -20,7 +21,8 @@ import structlog
 
 logger = structlog.get_logger()
 
-_DB_PATH = "/Users/oxyzen/claude-code-telegram/data/bot.db"
+import os as _os
+_DB_PATH = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "data", "bot.db")
 
 
 @dataclass
@@ -31,7 +33,7 @@ class Routine:
     brain: str = "codex"                  # which brain executes it
     frequency: str = "daily"              # hourly | daily | weekly | cron:<expr>
     schedule_time: str = "09:00"          # HH:MM (for daily/weekly)
-    working_dir: str = "/Users/oxyzen/claude-code-telegram"
+    working_dir: str = str(Path(__file__).parent.parent.parent)
     is_local: bool = True                 # local = only runs while Mac is on
     enabled: bool = True
     auto_created: bool = False            # True if conductor created it
@@ -70,7 +72,7 @@ CREATE TABLE IF NOT EXISTS routines (
     brain TEXT DEFAULT 'codex',
     frequency TEXT DEFAULT 'daily',
     schedule_time TEXT DEFAULT '09:00',
-    working_dir TEXT DEFAULT '/Users/oxyzen/claude-code-telegram',
+    working_dir TEXT DEFAULT '',
     is_local INTEGER DEFAULT 1,
     enabled INTEGER DEFAULT 1,
     auto_created INTEGER DEFAULT 0,
@@ -224,7 +226,7 @@ def _row_to_routine(row: aiosqlite.Row) -> Routine:
         brain=d.get("brain") or "codex",
         frequency=d.get("frequency") or "daily",
         schedule_time=d.get("schedule_time") or "09:00",
-        working_dir=d.get("working_dir") or "/Users/oxyzen/claude-code-telegram",
+        working_dir=d.get("working_dir") or str(Path(__file__).parent.parent.parent),
         is_local=bool(d.get("is_local", 1)),
         enabled=bool(d.get("enabled", 1)),
         auto_created=bool(d.get("auto_created", 0)),

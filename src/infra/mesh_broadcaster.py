@@ -1,7 +1,7 @@
-"""Mesh Broadcaster — formats and delivers AURA↔Hermes exchanges to Ricardo's Telegram.
+"""Mesh Broadcaster — formats and delivers AURA↔Hermes exchanges to the owner's Telegram.
 
 Single responsibility: take an exchange (who said what, reply, timing) and send it
-to Ricardo in a readable format. All mesh-visible communication goes through here.
+to the owner in a readable format. All mesh-visible communication goes through here.
 """
 from __future__ import annotations
 
@@ -36,7 +36,7 @@ async def broadcast_exchange(
     elapsed_s: float,
     important: bool = False,
 ) -> None:
-    """Send a formatted AURA↔Hermes exchange to Ricardo's Telegram."""
+    """Send a formatted AURA↔Hermes exchange to the owner's Telegram."""
     from src.api.mesh_state import get_mesh_bot, get_owner_chat_id
 
     bot = get_mesh_bot()
@@ -73,7 +73,7 @@ async def broadcast_alert(
     message: str,
     hint: str = "",
 ) -> None:
-    """Send an important alert from any agent to Ricardo."""
+    """Send an important alert from any agent to the owner."""
     from src.api.mesh_state import get_mesh_bot, get_owner_chat_id
 
     bot = get_mesh_bot()

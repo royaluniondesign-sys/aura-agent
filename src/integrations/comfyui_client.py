@@ -25,7 +25,7 @@ OUTPUT_DIR = Path(os.getenv("COMFYUI_OUTPUT_DIR", Path.home() / ".aura/comfyui/o
 
 # ComfyUI's own output dir
 COMFYUI_OUTPUT_DIR = Path(os.getenv("COMFYUI_INSTALL_DIR",
-    "/Users/oxyzen/Projects/ComfyUI")) / "output"
+    str(Path.home() / "Projects" / "ComfyUI"))) / "output"
 
 
 def is_running() -> bool:

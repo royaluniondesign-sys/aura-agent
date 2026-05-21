@@ -41,13 +41,13 @@ _PROFILE_TEMPLATE = """(version 1)
 (allow file-read* (subpath "/private/var/db/timezone"))
 
 ; Read Python environments
-(allow file-read* (subpath "/Users/oxyzen/.local/share/uv"))
-(allow file-read* (subpath "/Users/oxyzen/.codex"))
-(allow file-write* (subpath "/Users/oxyzen/.codex"))
-(allow file-read* (subpath "/Users/oxyzen/.config"))
-(allow file-write* (subpath "/Users/oxyzen/.config"))
-(allow file-read* (subpath "/Users/oxyzen/.npm"))
-(allow file-read* (subpath "/Users/oxyzen/.node_repl_history"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.local/share/uv"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.codex"))
+(allow file-write* (subpath "HOME_PLACEHOLDER/.codex"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.config"))
+(allow file-write* (subpath "HOME_PLACEHOLDER/.config"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.npm"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.node_repl_history"))
 
 ; Write access to tmp only
 (allow file-write* (subpath "/tmp"))
@@ -87,13 +87,13 @@ _PROFILE_TEMPLATE_NETWORK = """(version 1)
 (allow file-read* (subpath "/private/var/db/timezone"))
 
 ; Read Python environments
-(allow file-read* (subpath "/Users/oxyzen/.local/share/uv"))
-(allow file-read* (subpath "/Users/oxyzen/.codex"))
-(allow file-write* (subpath "/Users/oxyzen/.codex"))
-(allow file-read* (subpath "/Users/oxyzen/.config"))
-(allow file-write* (subpath "/Users/oxyzen/.config"))
-(allow file-read* (subpath "/Users/oxyzen/.npm"))
-(allow file-read* (subpath "/Users/oxyzen/.node_repl_history"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.local/share/uv"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.codex"))
+(allow file-write* (subpath "HOME_PLACEHOLDER/.codex"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.config"))
+(allow file-write* (subpath "HOME_PLACEHOLDER/.config"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.npm"))
+(allow file-read* (subpath "HOME_PLACEHOLDER/.node_repl_history"))
 
 ; Write access to tmp only
 (allow file-write* (subpath "/tmp"))
@@ -148,9 +148,11 @@ def is_sandbox_available() -> bool:
 
 
 def _build_profile(cwd: str, allow_network: bool) -> str:
-    """Return a sandbox profile with WORKDIR_PLACEHOLDER replaced by cwd."""
+    """Return a sandbox profile with placeholders replaced by runtime paths."""
+    import os
+    home = os.path.expanduser("~")
     template = _PROFILE_TEMPLATE_NETWORK if allow_network else _PROFILE_TEMPLATE
-    return template.replace("WORKDIR_PLACEHOLDER", cwd)
+    return template.replace("HOME_PLACEHOLDER", home).replace("WORKDIR_PLACEHOLDER", cwd)
 
 
 def _make_ulimit_preexec(max_cpu_seconds: int, max_memory_mb: int):

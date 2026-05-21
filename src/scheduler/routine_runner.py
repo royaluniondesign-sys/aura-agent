@@ -13,6 +13,7 @@ import asyncio
 import time
 import uuid
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any, Callable, Dict, Optional
 
 import structlog
@@ -247,7 +248,7 @@ async def propose_routine(
     brain: str = "codex",
     frequency: str = "daily",
     schedule_time: str = "09:00",
-    working_dir: str = "/Users/oxyzen/claude-code-telegram",
+    working_dir: str = str(Path(__file__).parent.parent.parent),
 ) -> Optional[Routine]:
     """Auto-create a routine if one with this name doesn't exist.
 

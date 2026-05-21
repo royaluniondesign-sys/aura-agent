@@ -29,7 +29,7 @@ GMAIL_SCOPES = [
     "https://www.googleapis.com/auth/gmail.modify",
 ]
 
-RUD_EMAIL = os.environ.get("RUD_EMAIL", "royaluniondesign@gmail.com")
+RUD_EMAIL = os.environ.get("RUD_EMAIL", os.environ.get("ACCOUNT_EMAIL", ""))
 RUD_NAME = os.environ.get("RUD_NAME", "RUD Studio")
 
 
@@ -174,7 +174,7 @@ async def send(
     reply_to_message_id: Optional[str] = None,
     reply_to_thread_id: Optional[str] = None,
 ) -> dict:
-    """Send email FROM royaluniondesign@gmail.com.
+    """Send email FROM the configured RUD_EMAIL account.
 
     Returns {"ok": True, "id": "..."} or {"ok": False, "error": "..."}.
     """

@@ -556,7 +556,7 @@ class ZeroTokenSocialMixin:
     async def _zt_design(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
-        """⚡ Genera un post HTML de diseño editorial @royaluniondesign → PNG → borradores.
+        """⚡ Genera un post HTML de diseño editorial @YOUR_INSTAGRAM_HANDLE → PNG → borradores.
 
         Usage:
           /design post editorial sobre tipografía
@@ -568,7 +568,7 @@ class ZeroTokenSocialMixin:
         args_text = (update.message.text or "").split(maxsplit=1)
         if len(args_text) < 2:
             await update.message.reply_text(
-                "🎨 <b>/design — Diseño Editorial @royaluniondesign</b>\n\n"
+                "🎨 <b>/design — Diseño Editorial @YOUR_INSTAGRAM_HANDLE</b>\n\n"
                 "Genera un post HTML con la marca y lo convierte a PNG.\n\n"
                 "<b>Ejemplos:</b>\n"
                 "  <code>/design post sobre tipografía moderna</code>\n"
@@ -611,7 +611,7 @@ class ZeroTokenSocialMixin:
             f"🎨 <b>Generando diseño…</b>\n\n"
             f"📐 Formato: <code>{fmt}</code> · {slides} slide(s)\n"
             f"📝 Brief: <i>{brief[:120]}</i>\n\n"
-            "Usando Gemini Flash + DESIGN.md @royaluniondesign…",
+            "Usando Gemini Flash + DESIGN.md @YOUR_INSTAGRAM_HANDLE…",
             parse_mode="HTML",
         )
 

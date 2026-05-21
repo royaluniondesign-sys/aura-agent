@@ -1169,8 +1169,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             else "Create a single full-canvas composition."
         )
 
+        instagram_handle = os.environ.get("INSTAGRAM_HANDLE", "@your_handle")
         design_prompt = (
-            f"You are generating a branded Instagram post HTML for @royaluniondesign.\n\n"
+            f"You are generating a branded Instagram post HTML for {instagram_handle}.\n\n"
             f"BRAND GUIDE (abridged):\n{design_md[:3500]}\n\n"
             f"RULES:\n"
             f"- Output ONLY a complete self-contained HTML file (no markdown, no code fences, no explanation)\n"
@@ -1182,7 +1183,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             f"- Subtext: Playfair Display 700 italic\n"
             f"- Import fonts from Google Fonts CDN\n"
             f"- {slides_instruction}\n"
-            f"- Bottom-right: '@royaluniondesign' Inter 600 small, cream, subtle\n"
+            f"- Bottom-right: '{instagram_handle}' Inter 600 small, cream, subtle\n"
             f"- No drop shadows on text, no rounded corners >8px, no neon colors\n"
             f"- All CSS inline in <style> block\n\n"
             f"POST BRIEF: {brief}\n\n"

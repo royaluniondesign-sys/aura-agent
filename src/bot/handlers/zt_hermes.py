@@ -192,7 +192,7 @@ class ZeroTokenHermesMixin:
         update: "Update",
         context: "ContextTypes.DEFAULT_TYPE",
     ) -> None:
-        """/mesh chat <msg> — Ricardo sends to the group: AURA forwards to Hermes and shows reply."""
+        """/mesh chat <msg> — the owner sends to the group: AURA forwards to Hermes and shows reply."""
         args = (update.message.text or "").split(maxsplit=2)
         msg_text = args[2].strip() if len(args) > 2 else ""
         if not msg_text:
@@ -203,13 +203,13 @@ class ZeroTokenHermesMixin:
             return
 
         progress = await update.message.reply_text(
-            f"🕸 <b>Grupo AURA + Hermes</b>\n<i>Ricardo dice:</i> {msg_text[:120]}",
+            f"🕸 <b>Grupo AURA + Hermes</b>\n<i>the owner dice:</i> {msg_text[:120]}",
             parse_mode="HTML",
         )
 
         # Forward to Hermes with context
         full_msg = (
-            f"Mensaje de Ricardo para los dos:\n\n\"{msg_text}\"\n\n"
+            f"Mensaje de the owner para los dos:\n\n\"{msg_text}\"\n\n"
             f"Respóndele directamente."
         )
         start = time.time()
@@ -219,7 +219,7 @@ class ZeroTokenHermesMixin:
         if result.get("ok"):
             content = result.get("result") or "(sin respuesta)"
             reply_text = (
-                f"🕸 <b>Grupo — Ricardo dice:</b>\n<i>{msg_text[:200]}</i>\n\n"
+                f"🕸 <b>Grupo — the owner dice:</b>\n<i>{msg_text[:200]}</i>\n\n"
                 f"⚡ <b>Hermes ({int(elapsed)}s):</b>\n{content[:1000]}"
             )
             try:

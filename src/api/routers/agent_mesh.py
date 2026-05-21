@@ -101,7 +101,7 @@ async def agent_query(request: Request) -> Dict[str, Any]:
             # Fallback: use claude CLI directly
             import asyncio
             proc = await asyncio.create_subprocess_exec(
-                "/Users/oxyzen/.local/bin/claude", "-p",
+                "claude", "-p",
                 f"[Tarea delegada por Hermes]\n\n{task}",
                 "--model", "claude-haiku-4-5-20251001",
                 "--output-format", "text",
@@ -297,7 +297,7 @@ async def project_update(request: Request) -> Dict[str, Any]:
 
 @router.post("/api/mesh/notify")
 async def mesh_notify(request: Request) -> Dict[str, Any]:
-    """Hermes or any agent pushes a message directly to Ricardo's Telegram chat.
+    """Hermes or any agent pushes a message directly to the owner's Telegram chat.
 
     Body:
       from    — sender name, e.g. "hermes" (default "hermes")
@@ -321,7 +321,7 @@ async def mesh_notify(request: Request) -> Dict[str, Any]:
         await broadcast_alert(
             from_agent=from_agent,
             message=message,
-            hint="Puedes responder aquí o en @rudserverbot" if from_agent.lower() == "hermes" else "",
+            hint="Puedes responder aquí o en el bot de Hermes" if from_agent.lower() == "hermes" else "",
         )
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
         _append_mesh_log(f"[{ts}] {from_agent.upper()}→TELEGRAM{'⚠️' if important else ''}: {message[:80]}")

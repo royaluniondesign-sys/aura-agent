@@ -1,7 +1,7 @@
 """Mesh Loop — AURA↔Hermes autonomous conversation loop.
 
 Runs every 30 minutes. Checks shared tasks for Hermes work, delegates,
-and broadcasts the exchange to Ricardo so he can see what they're doing.
+and broadcasts the exchange to the owner so they can see what they're doing.
 """
 from __future__ import annotations
 

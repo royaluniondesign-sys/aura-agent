@@ -23,8 +23,9 @@ class LaunchAgent:
     async def start(self) -> None:
         """Start the bot process."""
         try:
+            _project_root = Path(__file__).parent.parent.parent
             self.process = await asyncio.create_subprocess_exec(
-                "/Users/oxyzen/claude-code-telegram/bin/aura",
+                str(_project_root / "bin" / "aura"),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -59,7 +60,7 @@ def ensure_launch_agent_is_running() -> bool:
     Returns:
         True if LaunchAgent is running, False otherwise.
     """
-    plist_src = Path("/Users/oxyzen/claude-code-telegram/src/infra/com.aura.bot.plist")
+    plist_src = Path(__file__).parent / "com.aura.bot.plist"
     plist_dest = Path.home() / "Library" / "LaunchAgents" / "com.aura.bot.plist"
 
     if not plist_src.exists():

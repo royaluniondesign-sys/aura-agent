@@ -7,9 +7,9 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
     {
       "mcpServers": {
         "aura": {
-          "command": "/Users/oxyzen/.local/share/uv/tools/claude-code-telegram/bin/python",
+          "command": "<path-to-venv>/bin/python",
           "args": ["-m", "src.mcp.aura_server"],
-          "cwd": "/Users/oxyzen/claude-code-telegram"
+          "cwd": "<path-to-project>"
         }
       }
     }
@@ -46,7 +46,7 @@ from src.actions.registry import registry
 mcp = FastMCP(
     name="AURA",
     instructions=(
-        "AURA es la IA personal de Ricardo Pinto corriendo en su Mac. "
+        "AURA es la IA personal del dueño, corriendo en su Mac. "
         "Usa estas tools para ejecutar acciones reales: enviar emails, correr comandos, "
         "leer archivos, buscar memoria, provisionar terminal. "
         "Ejecuta directamente sin pedir confirmación para acciones no destructivas."

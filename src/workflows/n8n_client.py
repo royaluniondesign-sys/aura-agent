@@ -15,7 +15,7 @@ import structlog
 logger = structlog.get_logger()
 
 _LOCAL_N8N = "http://localhost:5678"
-_N8N_EMAIL = "royaluniondesign@gmail.com"
+_N8N_EMAIL = os.environ.get("N8N_EMAIL", "")
 _N8N_PASSWORD = "N8N_PASSWORD_REDACTED"
 _SOCIAL_FLOW_ID = "gQvwEydQ4Bcj5pru"
 

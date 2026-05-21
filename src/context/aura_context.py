@@ -1,7 +1,7 @@
 """AURA Context Engine — builds rich unified system context for all brain calls.
 
 Reads identity + dynamic memory from ~/.aura/brain/ and composes a system
-prompt that makes every brain aware of who AURA is, who Ricardo is, and what
+prompt that makes every brain aware of who AURA is, who the owner is, and what
 AURA has learned so far.
 
 Memory is updated via update_memory() after each learning extraction.
@@ -9,6 +9,7 @@ Memory is updated via update_memory() after each learning extraction.
 
 from __future__ import annotations
 
+import os
 import re
 import socket
 import time
@@ -47,7 +48,7 @@ def build_tool_manifest() -> str:
     """Return a markdown section describing available tools and when to use them.
 
     Service availability is checked at call time so the manifest reflects
-    what's actually running on Ricardo's Mac right now.
+    what's actually running on the owner's Mac right now.
     """
     sections: list[str] = ["## Herramientas disponibles en este Mac\n"]
 
@@ -61,13 +62,13 @@ def build_tool_manifest() -> str:
             "- DESIGN.md: ~/Projects/design-systems/royaluniondesign/DESIGN.md\n"
             "  → Paleta: #0d0d0d negro + #c9a84c gold + #f5f0e8 cream\n"
             "  → Tipografía: Montserrat Black + Playfair Display + Inter\n"
-            "**Usar cuando:** Ricardo pida carousel, post, diseño, contenido visual para Instagram/LinkedIn."
+            "**Usar cuando:** the owner pida carousel, post, diseño, contenido visual para Instagram/LinkedIn."
         )
     else:
         sections.append(
             "### open-design (OFFLINE)\n"
             "Para activar: `cd ~/Projects/open-design && corepack pnpm tools-dev run web`\n"
-            "**Si Ricardo pide diseño:** avísale que open-design está offline y ofrece activarlo."
+            "**Si the owner pide diseño:** avísale que open-design está offline y ofrece activarlo."
         )
 
     # ── Image AI ─────────────────────────────────────────────────────────────
@@ -78,22 +79,22 @@ def build_tool_manifest() -> str:
             "- Tool MCP: `comfyui_generate(prompt_en_ingles, preset='square')`\n"
             "- Presets: square (1080×1080), portrait (1080×1350), story (1080×1920)\n"
             "- Output: ~/Projects/ComfyUI/output/ComfyUI_*.png\n"
-            "**Usar cuando:** Ricardo pida imagen, foto, ilustración, o para acompañar un post."
+            "**Usar cuando:** the owner pida imagen, foto, ilustración, o para acompañar un post."
         )
     else:
         sections.append(
             "### Imagen IA (ComfyUI offline → Pollinations.ai fallback)\n"
             "Pollinations.ai FLUX.1 gratis: `curl 'https://image.pollinations.ai/prompt/ENGLISH_PROMPT?width=1080&height=1080'`\n"
-            "**Usar cuando:** Ricardo pida imagen. ComfyUI da más calidad si está activo."
+            "**Usar cuando:** the owner pida imagen. ComfyUI da más calidad si está activo."
         )
 
     # ── Social Media ─────────────────────────────────────────────────────────
     sections.append(
         "### Social Media (Instagram + Facebook)\n"
-        "- Instagram @royaluniondesign: Meta Graph API, tokens en .env (META_ACCESS_TOKEN)\n"
+        f"- Instagram {os.environ.get('INSTAGRAM_HANDLE', '@your_handle')}: Meta Graph API, tokens en .env (META_ACCESS_TOKEN)\n"
         "- Tool MCP: `instagram_publish(caption='texto + hashtags', image_path='ruta.png')`\n"
         "- O directo: `instagram_publish(caption='...', prompt='english flux prompt')` (genera imagen sola)\n"
-        "**Usar cuando:** Ricardo diga 'publica', 'sube a Instagram', 'programa post'."
+        "**Usar cuando:** the owner diga 'publica', 'sube a Instagram', 'programa post'."
     )
 
     # ── Terminal interactivo ──────────────────────────────────────────────────
@@ -102,7 +103,7 @@ def build_tool_manifest() -> str:
             "### Termora — Terminal web (ACTIVO en puerto 4030)\n"
             "Provee terminal interactivo accesible desde el móvil.\n"
             "- Info + URL: `curl -s http://localhost:4030/api/info` → devuelve authUrl con token\n"
-            "**Usar cuando:** Ricardo necesite shell interactivo, vim, tmux, htop, o SSH desde el móvil."
+            "**Usar cuando:** the owner necesite shell interactivo, vim, tmux, htop, o SSH desde el móvil."
         )
 
     # ── Blog ─────────────────────────────────────────────────────────────────
@@ -110,7 +111,7 @@ def build_tool_manifest() -> str:
         "### Blog RUD (rud-web.vercel.app)\n"
         "Publica via GitHub API → commit MDX → Vercel auto-deploys.\n"
         "- Repo: royaluniondesign-sys/rud-web-dev, ruta: src/content/blog/\n"
-        "**Usar cuando:** Ricardo diga 'publica en el blog', 'escribe un artículo'."
+        "**Usar cuando:** the owner diga 'publica en el blog', 'escribe un artículo'."
     )
 
     # ── Routing hints ─────────────────────────────────────────────────────────
@@ -169,7 +170,7 @@ def build_system_prompt(
         if memory:
             parts.append(f"---\n{memory}")
 
-    # Tool manifest — what's available RIGHT NOW on Ricardo's Mac
+    # Tool manifest — what's available RIGHT NOW on the owner's Mac
     manifest = build_tool_manifest()
     if manifest:
         parts.append(f"---\n{manifest}")
@@ -177,7 +178,7 @@ def build_system_prompt(
     # Always include current date/time so the brain knows when "now" is
     now = datetime.now()
     parts.append(
-        f"---\nFecha actual: {now.strftime('%Y-%m-%d %H:%M')} (hora local de Ricardo)"
+        f"---\nFecha actual: {now.strftime('%Y-%m-%d %H:%M')} (hora local de the owner)"
     )
 
     if extra_section:

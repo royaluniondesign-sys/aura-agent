@@ -18,9 +18,10 @@ import structlog
 
 logger = structlog.get_logger()
 
-_AURA_MCP_COMMAND = "/Users/oxyzen/.local/share/uv/tools/claude-code-telegram/bin/python"
+import sys as _sys
+_AURA_MCP_COMMAND = _sys.executable
 _AURA_MCP_ARGS = ["-m", "src.mcp.aura_server"]
-_AURA_MCP_CWD = "/Users/oxyzen/claude-code-telegram"
+_AURA_MCP_CWD = str(Path(__file__).parent.parent.parent)
 _AURA_MCP_ENV = {"PYTHONPATH": _AURA_MCP_CWD}
 _AURA_DESCRIPTION = "AURA personal tools: email, bash, files, git, memory, terminal"
 

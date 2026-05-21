@@ -8,7 +8,7 @@ from src.actions.registry import aura_tool
 
 @aura_tool(
     name="screen_capture",
-    description="Capture Ricardo's Mac screen and return base64 image. Use to see what's on screen, debug UI, verify visual results.",
+    description="Capture the local Mac screen and return base64 image. Use to see what's on screen, debug UI, verify visual results.",
     category="system",
     parameters={
         "monitor": {"type": "int", "description": "Monitor index: 1=primary (default), 0=all monitors"},

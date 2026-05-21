@@ -73,7 +73,7 @@ def _build_planner_prompt(
     meta_context is the ADENTRO layer — AURA's self-knowledge about what
     was tried, what failed, which brains are healthy. Injected into every
     planner call whether the task is internal (self-improvement) or external
-    (Ricardo's request from Telegram).
+    (owner's request from Telegram).
     """
     available_str = ", ".join(available_brains)
     prompt_parts = [

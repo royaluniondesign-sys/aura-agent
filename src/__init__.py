@@ -22,7 +22,7 @@ except Exception:
     except PackageNotFoundError:
         __version__ = "0.0.0-dev"
 
-__author__ = "Richard Atkinson"
-__email__ = "richardatk01@gmail.com"
+__author__ = "Royal Union Design"
+__email__ = "hello@example.com"
 __license__ = "MIT"
 __homepage__ = "https://github.com/richardatkinson/claude-code-telegram"

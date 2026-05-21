@@ -1,4 +1,4 @@
-"""Ionos SMTP client — envía correos desde hello@royaluniondesign.com.
+"""Ionos SMTP client — envía correos desde la cuenta configurada en IONOS_EMAIL_USER.
 
 Credentials from env: IONOS_EMAIL_USER, IONOS_EMAIL_PASS
 SMTP: smtp.ionos.com:587 (STARTTLS)

@@ -274,7 +274,7 @@ async def run_ping_loop(token: str) -> None:
     """Active liveness check: ping Telegram every 2 min, auto-restart after 3 failures.
 
     The LaunchAgent catches crashes but not frozen bots. This handles the frozen case.
-    After _PING_MAX_FAILURES consecutive failures: notify Ricardo → SIGTERM self.
+    After _PING_MAX_FAILURES consecutive failures: notify owner → SIGTERM self.
     LaunchAgent KeepAlive:true will restart the process cleanly.
     """
     import signal

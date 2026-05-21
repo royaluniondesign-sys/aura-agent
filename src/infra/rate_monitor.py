@@ -429,7 +429,7 @@ class RateMonitor:
 
 
 async def alert_autonomous_brain(message: str) -> None:
-    """Alert Ricardo via Telegram when a background job rate violation occurs.
+    """Alert the owner via Telegram when a background job rate violation occurs.
 
     Sends directly to NOTIFICATION_CHAT_IDS using the Bot API so no circular
     import with the bot layer is needed.
