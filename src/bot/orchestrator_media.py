@@ -275,7 +275,7 @@ class AgenticMediaMixin:
             # Primary: Gemini multimodal transcription
             try:
                 gemini_api_key = os.environ.get(
-                    "GEMINI_API_KEY", "GEMINI_KEY_REDACTED"
+                    "GEMINI_API_KEY", ""
                 )
                 audio_b64 = base64.b64encode(voice_bytes).decode("ascii")
                 payload = {

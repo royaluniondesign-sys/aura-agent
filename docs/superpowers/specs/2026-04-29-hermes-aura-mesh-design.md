@@ -142,7 +142,7 @@ Write discoveries to ~/.aura/memory/hermes.md.
       },
       nvidia: {
         baseUrl: "https://integrate.api.nvidia.com/v1",
-        apiKey: "NVIDIA_KEY_REDACTED"
+        apiKey: "nvapi-YOUR_NVIDIA_API_KEY"
       }
     }
   },

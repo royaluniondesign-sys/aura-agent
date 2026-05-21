@@ -24,10 +24,7 @@ from .base import Brain, BrainResponse, BrainStatus
 logger = structlog.get_logger()
 
 # ── NVIDIA Build ──────────────────────────────────────────────────────────────
-_NV_API_KEY = os.environ.get(
-    "NVIDIA_API_KEY",
-    "NVIDIA_KEY_REDACTED",
-)
+_NV_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
 _NV_DEV_URL    = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev"
 _NV_SCHNELL_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"
 
