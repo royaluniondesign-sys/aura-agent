@@ -18,8 +18,8 @@ from pathlib import Path
 from typing import Iterable
 
 
-DEFAULT_DB_PATH = Path("/Users/oxyzen/claude-code-telegram/data/bot.db")
-DEFAULT_OUTPUT_DIR = Path("/Users/oxyzen/claude-code-telegram/exports")
+DEFAULT_DB_PATH = Path(os.environ.get("AURA_DB_PATH", "data/bot.db"))
+DEFAULT_OUTPUT_DIR = Path(os.environ.get("AURA_EXPORT_DIR", "exports"))
 CHROME_CANDIDATES = [
     Path("/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"),
     Path("/Applications/Chromium.app/Contents/MacOS/Chromium"),

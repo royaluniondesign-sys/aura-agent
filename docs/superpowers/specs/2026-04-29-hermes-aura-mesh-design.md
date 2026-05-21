@@ -3,16 +3,16 @@ _2026-04-29_
 
 ## Vision
 
-Two autonomous agents running on Ricardo's Mac as always-on daemons, each with full domain ownership, communicating bidirectionally in real-time. Ricardo talks to either one; each can delegate to the other, work in parallel on the same project, and report results back.
+Two autonomous agents running on Owner's Mac as always-on daemons, each with full domain ownership, communicating bidirectionally in real-time. Owner talks to either one; each can delegate to the other, work in parallel on the same project, and report results back.
 
 Each agent has **complete visibility** into the other's state — skills, crons, memory, tasks, model, soul. No black boxes between them.
 
-**Parallel project execution:** Ricardo assigns a project to either agent → the coordinator splits work → both execute independently → results merge into a shared project folder → Ricardo gets one consolidated update.
+**Parallel project execution:** Owner assigns a project to either agent → the coordinator splits work → both execute independently → results merge into a shared project folder → Owner gets one consolidated update.
 
 ```
-Ricardo
+Owner
   ├── Telegram @aurajbot     → AURA  (Python/FastAPI :8080, Claude sub)
-  └── Telegram @rudserverbot → Hermes (OpenClaw :18789, Ollama free)
+  └── Telegram @YOUR_HERMES_BOT → Hermes (OpenClaw :18789, Ollama free)
                                   ↕ HTTP agent mesh
                            ~/.aura/ (shared memory + drafts)
 ```
@@ -31,7 +31,7 @@ Ricardo
 - **Runtime:** OpenClaw daemon (Node.js, port 18789)
 - **Brain:** Ollama qwen2.5:14b (primary, local $0) → deepseek-r1:14b (reasoning) → NVIDIA Llama 3.3 70B (heavy, free nvapi key) → Gemini CLI (web search) → AURA proxy (Claude fallback, no extra charge)
 - **Owns:** ClaHub skills ecosystem (5,211+ skills), multi-channel (WhatsApp/Discord/Signal), heartbeat scheduler, SOUL.md identity, OpenClaw Control UI (:18789)
-- **Telegram:** @rudserverbot
+- **Telegram:** @YOUR_HERMES_BOT
 
 ---
 
@@ -51,7 +51,7 @@ POST /api/agent-query
 → { "ok": true, "result": "string", "brain_used": "claude-sonnet" }
 ```
 
-AURA executes the task using its brain router, returns result. Hermes relays to Ricardo if needed.
+AURA executes the task using its brain router, returns result. Hermes relays to Owner if needed.
 
 ### AURA → Hermes
 AURA calls OpenClaw's native conversation injection API:
@@ -65,7 +65,7 @@ POST http://localhost:18789/api/conversations
 → OpenClaw streams result back to AURA
 ```
 
-AURA waits for response (async with timeout 60s), then delivers to Ricardo.
+AURA waits for response (async with timeout 60s), then delivers to Owner.
 
 ### Shared Memory (filesystem)
 Both agents read and write to `~/.aura/memory/`:
@@ -89,7 +89,7 @@ name: Hermes
 version: 1.0
 ---
 
-You are Hermes, Ricardo's second autonomous agent. You work alongside AURA.
+You are Hermes, Owner's second autonomous agent. You work alongside AURA.
 
 ## Your role
 - Handle research, coding tasks, git, browser automation, multi-channel comms
@@ -102,13 +102,13 @@ AURA runs at http://localhost:8080. To delegate:
   POST /api/agent-query {"task": "...", "prefer_brain": "claude"}
 
 ## Memory
-Read ~/.aura/memory/MEMORY.md for full context about Ricardo and active projects.
+Read ~/.aura/memory/MEMORY.md for full context about Owner and active projects.
 Write discoveries to ~/.aura/memory/hermes.md.
 
 ## Rules
-- Same language as Ricardo (Spanish/English)
+- Same language as Owner (Spanish/English)
 - Concise — Telegram context
-- When you delegate to AURA, tell Ricardo you're doing it and report the result
+- When you delegate to AURA, tell Owner you're doing it and report the result
 ```
 
 ### openclaw.json (core config)
@@ -122,7 +122,7 @@ Write discoveries to ~/.aura/memory/hermes.md.
     telegram: {
       botToken: "$TELEGRAM_BOT_TOKEN",
       dmPolicy: "allowlist",
-      allowlist: ["OWNER_ID_REDACTED"]   // Ricardo's Telegram ID
+      allowlist: ["OWNER_ID_REDACTED"]   // Owner's Telegram ID
     }
   },
   agents: {
@@ -204,12 +204,12 @@ Hermes skill `aura-context` calls this on demand or on heartbeat.
   ├── plan.md            — coordinator writes task split (who does what)
   ├── aura-progress.md   — AURA writes updates here
   ├── hermes-progress.md — Hermes writes updates here
-  └── result.md          — last-to-finish agent consolidates + notifies Ricardo
+  └── result.md          — last-to-finish agent consolidates + notifies Owner
 ```
 
 ### Project protocol
 ```
-Ricardo → either agent: "lanza proyecto X con Hermes/AURA"
+Owner → either agent: "lanza proyecto X con Hermes/AURA"
 
 Coordinator (whoever received the message):
   1. Creates ~/.aura/projects/<slug>/plan.md with task split
@@ -217,10 +217,10 @@ Coordinator (whoever received the message):
   3. POST to other agent: {"task": "...", "project_id": "<slug>", "write_to": "hermes-progress.md"}
   4. Both run in parallel, each writing progress to their file
   5. Coordinator polls for other agent's completion (checks hermes-progress.md / aura-progress.md)
-  6. When both done: writes result.md, sends consolidated message to Ricardo
+  6. When both done: writes result.md, sends consolidated message to Owner
 ```
 
-Both agents can be coordinator. The one who received Ricardo's request coordinates.
+Both agents can be coordinator. The one who received Owner's request coordinates.
 
 ---
 
@@ -240,7 +240,7 @@ File: `src/api/routers/agent_mesh.py` (new router)
 AURA's `/brain` or natural language: "dile a Hermes que..."
 - AURA parses intent → delegates to Hermes via POST :18789
 - Async response with 60s timeout
-- Reports Hermes result to Ricardo
+- Reports Hermes result to Owner
 
 ### 3. Dashboard panel: Hermes status
 File: `dashboard/index.html`
@@ -276,12 +276,12 @@ Both run as macOS LaunchAgents:
 - Configure openclaw.json (Ollama + NVIDIA + Telegram)
 - Write SOUL.md
 - Install 5 core ClaHub skills
-- Hermes responds on @rudserverbot
+- Hermes responds on @YOUR_HERMES_BOT
 
 ### Phase 2 — AURA bridge skill (1h)
 - Write aura-bridge SKILL.md
 - Add POST /api/agent-query to AURA's FastAPI
-- Test: Ricardo asks Hermes → Hermes calls AURA → result back
+- Test: Owner asks Hermes → Hermes calls AURA → result back
 
 ### Phase 3 — AURA → Hermes delegation (1h)
 - Add Hermes delegation to AURA brain router
@@ -302,15 +302,15 @@ Both run as macOS LaunchAgents:
 - `~/.aura/projects/` structure
 - AURA `/api/project/update` endpoint
 - Coordinator protocol in both agents
-- Ricardo can say "lanza proyecto X" to either agent
+- Owner can say "lanza proyecto X" to either agent
 
 ---
 
 ## Success Criteria
 
-- Ricardo messages Hermes → Hermes delegates to AURA → result in <30s
-- Ricardo messages AURA → AURA delegates to Hermes → result in <30s
-- "Lanza proyecto X" → both agents work in parallel → consolidated result to Ricardo
+- Owner messages Hermes → Hermes delegates to AURA → result in <30s
+- Owner messages AURA → AURA delegates to Hermes → result in <30s
+- "Lanza proyecto X" → both agents work in parallel → consolidated result to Owner
 - AURA dashboard Hermes panel shows live: model, skills, crons, heartbeat
 - Hermes `aura-context` skill returns AURA's full state on demand
 - Hermes runs 24/7, heartbeat advances tasks from session-plan.md autonomously

@@ -183,7 +183,7 @@ def _repair_missing_dependency(brain_name: str) -> bool:
     try:
         result = subprocess.run(
             ["pip", "install", "-q", "-e", "."],
-            cwd="/Users/oxyzen/claude-code-telegram",
+            cwd=os.environ.get("AURA_HOME", "."),
             capture_output=True,
             text=True,
             timeout=30,
@@ -242,7 +242,7 @@ def run_tests() -> dict:
     try:
         result = subprocess.run(
             ["python3", "-m", "pytest", "tests/", "-v", "--tb=short"],
-            cwd="/Users/oxyzen/claude-code-telegram",
+            cwd=os.environ.get("AURA_HOME", "."),
             capture_output=True,
             text=True,
             timeout=120,

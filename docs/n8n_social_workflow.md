@@ -8,10 +8,10 @@ N8N handles the actual platform API calls.
 Set `RUD_N8N_URL` in your `.env` file:
 
 ```env
-RUD_N8N_URL=http://192.168.1.219:5678
+RUD_N8N_URL=http://YOUR_SERVER_IP:5678
 ```
 
-If not set, AURA defaults to `http://192.168.1.219:5678`.
+If not set, AURA defaults to `http://localhost:5678`.
 When N8N is unreachable, AURA saves a draft to `~/.aura/social_drafts/`.
 
 ---

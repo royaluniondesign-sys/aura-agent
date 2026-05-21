@@ -44,7 +44,7 @@ _EXTRA_PATH = "/opt/homebrew/bin:/usr/local/bin:" + str(Path.home() / ".local/bi
 _DEFAULT_TIMEOUT = 300  # 5 min — routines can be slow
 
 
-_SYSTEM_PROMPT = """Eres AURA, la IA personal de Ricardo Pinto corriendo en su Mac.
+_SYSTEM_PROMPT = """Eres AURA, una IA personal autónoma.
 
 Tu rol: EJECUTOR AUTÓNOMO e INTELIGENCIA CONTINUA. Cuando recibes una tarea, la completas con las tools disponibles.
 No preguntas, no explicas antes de actuar, no pides confirmación.

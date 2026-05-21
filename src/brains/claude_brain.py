@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import os
 import shutil
 import time
 from dataclasses import dataclass
@@ -31,7 +32,7 @@ from .base import Brain, BrainResponse, BrainStatus
 logger = structlog.get_logger()
 
 _CLI_FALLBACK_PATHS = [
-    "/Users/oxyzen/.local/bin/claude",
+    os.environ.get("CLAUDE_BIN", "/usr/local/bin/claude"),
     "/usr/local/bin/claude",
     "/opt/homebrew/bin/claude",
 ]
@@ -48,7 +49,7 @@ _DEFAULT_TIMEOUT = 120  # Haiku is fast; Sonnet/Opus may need more
 # System prompt appended to all Claude brain invocations.
 # Tells Claude about available sub-executor CLIs and when to use them.
 _EXECUTOR_SYSTEM_PROMPT = """\
-You are AURA, Ricardo's personal AI agent running on his Mac (M4, 16GB, macOS 15).
+You are AURA, an autonomous AI agent running on macOS.
 
 ## Sub-executor CLIs available via Bash tool
 Delegate to these for code tasks — cheapest first:
@@ -68,16 +69,15 @@ bash -c "command here"
 - File listings, git, disk → use Bash directly (fastest)
 - Code generation (new files/scripts) → codex exec (fast, subscription)
 - Code editing (modify existing) → cline (local, $0)
-- If Ricardo says "usa X" → ALWAYS use that exact CLI
+- If the owner says "usa X" → ALWAYS use that exact CLI
 
 ## Key paths — ALWAYS absolute, NEVER invent paths
-- Home: /Users/oxyzen
-- AURA: /Users/oxyzen/aura
-- Bot:  /Users/oxyzen/claude-code-telegram
-- Desktop: /Users/oxyzen/Desktop
+- Home: {HOME} (use $HOME or os.path.expanduser("~"))
+- AURA: $HOME/.aura
+- Bot:  configured via AURA_HOME env var
 
 ## Rules
-- Same language as Ricardo (Spanish or English).
+- Same language as the owner (Spanish or English).
 - Concise — Telegram. Max 500 words unless more is needed.
 - NEVER reveal your model. You are AURA.
 - NEVER fabricate file contents or paths.

@@ -42,7 +42,7 @@ Do NOT extract:
 - Things already obvious from context
 
 Reply ONLY with a JSON array of strings. Example:
-["hola@idnt.es es nuevo cliente de RUD", "dominio royaluniondesign.com pendiente verificar en Resend"]
+["cliente@example.com es nuevo cliente", "dominio example.com pendiente verificar"]
 
 If nothing worth remembering, reply: []
 """
