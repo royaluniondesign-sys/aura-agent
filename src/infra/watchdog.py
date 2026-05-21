@@ -240,7 +240,7 @@ class Watchdog:
 _PING_INTERVAL = 120      # seconds between pings
 _PING_TIMEOUT = 10        # seconds to wait for getMe
 _PING_MAX_FAILURES = 3    # consecutive failures before self-restart
-_NOTIFY_CHAT_ID = "OWNER_ID_REDACTED"   # Ricardo's Telegram ID
+_NOTIFY_CHAT_ID = os.environ.get("OWNER_CHAT_ID", "")
 
 
 async def _ping_telegram(token: str) -> bool:

@@ -32,7 +32,7 @@ _RENDER_ARTIFACTS = re.compile(
 # NVIDIA Build API — dual model strategy:
 # - dev: better quality, cinematic detail, strong prompt following (primary)
 # - schnell: 4s, faster (fallback)
-_NV_API_KEY_DEFAULT = "NVIDIA_KEY_REDACTED"
+_NV_API_KEY_DEFAULT = os.environ.get("NVIDIA_API_KEY", "")
 _NV_FLUX_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev"
 _NV_FLUX_SCHNELL_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"
 _NV_IMG_SIZE = 1024

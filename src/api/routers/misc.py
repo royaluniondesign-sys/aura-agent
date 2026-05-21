@@ -303,14 +303,14 @@ async def rud_server_status() -> Dict[str, Any]:
     import httpx as _httpx
 
     ollama_url = (
-        __import__("os").environ.get("RUD_OLLAMA_URL", "http://192.168.1.219:11434").rstrip("/")
+        __import__("os").environ.get("RUD_OLLAMA_URL", "").rstrip("/")
     )
-    n8n_url = __import__("os").environ.get("RUD_N8N_URL", "http://192.168.1.219:5678").rstrip("/")
+    n8n_url = __import__("os").environ.get("RUD_N8N_URL", "").rstrip("/")
     grafana_url = (
-        __import__("os").environ.get("RUD_GRAFANA_URL", "http://192.168.1.219:3200").rstrip("/")
+        __import__("os").environ.get("RUD_GRAFANA_URL", "").rstrip("/")
     )
     portainer_url = (
-        __import__("os").environ.get("RUD_PORTAINER_URL", "https://192.168.1.219:9443").rstrip("/")
+        __import__("os").environ.get("RUD_PORTAINER_URL", "").rstrip("/")
     )
 
     async def _check(url: str, path: str = "/") -> bool:
