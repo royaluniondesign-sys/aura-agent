@@ -147,6 +147,8 @@ class GeminiLiveAgent:
         self._sleep_lock = threading.Lock()
         self._last_user_activity = time.monotonic()
         self._auto_sleep_secs = 120.0  # 2 min idle → auto-sleep
+        # ASR buffering: Gemini sends progressive partials; keep only the latest
+        self._pending_user_text = ""
 
         # Tool executor
         from src.voice.tool_bridge import ToolExecutor
@@ -416,18 +418,22 @@ class GeminiLiveAgent:
                         if chunk:
                             transcript.append(chunk)
 
-                    # User speech transcript
+                    # User speech transcript — buffer partials, flush at turn_complete
                     if sc.input_transcription and sc.input_transcription.text:
                         user_text = sc.input_transcription.text.strip()
                         if user_text:
                             self._last_user_activity = time.monotonic()
-                            if self._on_transcript:
-                                self._on_transcript("user", user_text)
+                            self._pending_user_text = user_text  # overwrite with latest partial
 
                     # Turn complete — signal play_loop to stop speaking
                     if sc.turn_complete:
                         if self._turn_done_event:
                             self._turn_done_event.set()
+                        # Flush buffered user speech first (complete ASR result)
+                        if self._pending_user_text:
+                            if self._on_transcript:
+                                self._on_transcript("user", self._pending_user_text)
+                            self._pending_user_text = ""
                         if transcript:
                             full = re.sub(r"\s+", " ", " ".join(transcript)).strip()
                             if full and self._on_transcript:

@@ -85,7 +85,9 @@ _PATTERNS: list = [
     (Intent.CALENDAR, r"(?i)\b(?:calendar|calendario|reunión|meeting|agenda|evento|cita)\b", "gemini", 0.9, "calendar keyword"),
 
     # Search/translate → Gemini (needs internet)
-    (Intent.SEARCH, r"(?i)\b(?:busca|search|googl|find\s+info|investiga|qué\s+es|what\s+is|quién\s+es|who\s+is)\b", "gemini", 0.8, "search keyword"),
+    # NOTE: "qué es" / "what is" removed — those are educational questions → Haiku handles better
+    # Only keep explicit web-search verbs here
+    (Intent.SEARCH, r"(?i)\b(?:busca|search|googl|find\s+info|investiga)\b", "gemini", 0.8, "search keyword"),
     (Intent.TRANSLATE, r"(?i)(?:\btraduc\w*|\btranslat\w*|\ben\s+inglés\b|\ben\s+español\b|\bto\s+english\b|\bto\s+spanish\b)", "gemini", 0.85, "translate keyword"),
 
     # Simple explain/compare → CHAT (openrouter, not sonnet)
@@ -105,6 +107,9 @@ _PATTERNS: list = [
 
     # Git commands as plain text (not just /git prefix)
     (Intent.GIT, r"(?i)^git\s+(?:status|log|diff|add|commit|push|pull|branch|checkout|merge|rebase|stash|fetch|clone|init)\b", "zero-token", 0.9, "git plain text"),
+
+    # Plain bash commands typed without ! or / prefix
+    (Intent.BASH, r"^(?:ls|ll|pwd|cd\s|cat\s|grep\s|find\s|echo\s|mkdir\s|rm\s|cp\s|mv\s|chmod\s|chown\s|ps\s|ps\b|df\b|df\s|du\s|lsof\s|curl\s|wget\s|ssh\s|scp\s|tar\s|unzip\s|nano\s|vim\s|less\s|head\s|tail\s|sort\s|wc\s|awk\s|sed\s|env\b|export\s|source\s|which\s|type\s|man\s|ping\s|netstat|ifconfig|whoami\b|uname\b)", "zero-token", 0.88, "bare bash command"),
 
     # Code generation
     (Intent.CODE, r"(?i)\b(?:genera|generate|escribe?|write)\s+(?:un|una|el|la|a|an)\s+(?:script|funcion|función|function|clase|class|componente|component|modulo|module|codigo|código|programa|program)\b", "haiku", 0.85, "generate code"),
