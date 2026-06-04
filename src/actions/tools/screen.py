@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-import base64
 import asyncio
+import base64
+
 from src.actions.registry import aura_tool
 
 

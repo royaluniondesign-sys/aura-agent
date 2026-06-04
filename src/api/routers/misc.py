@@ -93,7 +93,9 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
     days=0 → all time; days=30/7 → last N days.
     """
     import re as _re
-    from datetime import date, timedelta, datetime as _dt
+    from datetime import date
+    from datetime import datetime as _dt
+    from datetime import timedelta
 
     try:
         # ── SQLite activity ──────────────────────────────────────
@@ -443,6 +445,7 @@ async def terminal_info() -> Dict[str, Any]:
 async def dashboard_url_info() -> Dict[str, Any]:
     """Return the public dashboard URL served via cloudflared tunnel."""
     import os as _os
+
     from ...infra.tunnel import get_dashboard_url
 
     url = get_dashboard_url()

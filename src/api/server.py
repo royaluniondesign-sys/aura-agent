@@ -33,18 +33,18 @@ from fastapi.staticfiles import StaticFiles
 from ..config.settings import Settings
 from ..events.bus import EventBus
 from ..storage.database import DatabaseManager
-from .routers import system as system_router_mod
-from .routers import brains as brains_router_mod
-from .routers import routines as routines_router_mod
-from .routers import conductor as conductor_router_mod
-from .routers import tasks as tasks_router_mod
-from .routers import memory as memory_router_mod
-from .routers import squad as squad_router_mod
-from .routers import misc as misc_router_mod
-from .routers.webhooks import make_webhooks_router
-from .routers import publish as publish_router_mod
 from .routers import agent_mesh as agent_mesh_router_mod
+from .routers import brains as brains_router_mod
+from .routers import conductor as conductor_router_mod
+from .routers import memory as memory_router_mod
+from .routers import misc as misc_router_mod
 from .routers import opendesign_proxy as opendesign_proxy_router_mod
+from .routers import publish as publish_router_mod
+from .routers import routines as routines_router_mod
+from .routers import squad as squad_router_mod
+from .routers import system as system_router_mod
+from .routers import tasks as tasks_router_mod
+from .routers.webhooks import make_webhooks_router
 
 logger = structlog.get_logger()
 
@@ -322,7 +322,8 @@ def create_api_app(
         """Merged panel: brains status + context window + bot stats."""
         import json as _json
         import time as _time
-        from datetime import UTC, datetime as _dt
+        from datetime import UTC
+        from datetime import datetime as _dt
         from pathlib import Path as _Path
 
         result: dict = {"ok": True, "ts": _time.time()}
@@ -415,7 +416,8 @@ def create_api_app(
                         break
             uptime_s = None
             if pid:
-                import subprocess as _sp, time as _t
+                import subprocess as _sp
+                import time as _t
 
                 r2 = _sp.run(
                     ["ps", "-o", "lstart=", "-p", str(pid)],
@@ -468,7 +470,7 @@ def create_api_app(
         if not brain_router:
             return {"ok": False, "error": "Brain router not available"}
 
-        from ..brains.conductor import get_conductor, Conductor, set_conductor
+        from ..brains.conductor import Conductor, get_conductor, set_conductor
 
         conductor = get_conductor(brain_router)
         if conductor is None:

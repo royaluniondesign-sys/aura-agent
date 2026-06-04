@@ -1,8 +1,10 @@
 """Browser tool — headless Chromium via Playwright for JS-heavy pages and screenshots."""
 
 from __future__ import annotations
+
 import asyncio
 import base64
+
 from src.actions.registry import aura_tool
 
 

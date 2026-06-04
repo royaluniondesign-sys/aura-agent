@@ -28,8 +28,8 @@ async def create_routine_endpoint(request: Request) -> Dict[str, Any]:
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
     try:
-        from src.scheduler.routines_store import Routine, create_routine, routine_exists
         from src.scheduler.routine_runner import schedule_routine
+        from src.scheduler.routines_store import Routine, create_routine, routine_exists
 
         name = (body.get("name") or "").strip()
         prompt = (body.get("prompt") or "").strip()
@@ -68,8 +68,8 @@ async def update_routine_endpoint(routine_id: str, request: Request) -> Dict[str
     except Exception:
         raise HTTPException(status_code=400, detail="Invalid JSON")
     try:
-        from src.scheduler.routines_store import update_routine
         from src.scheduler.routine_runner import schedule_routine, unschedule_routine
+        from src.scheduler.routines_store import update_routine
 
         updated = await update_routine(routine_id, **body)
         if not updated:
@@ -90,8 +90,8 @@ async def update_routine_endpoint(routine_id: str, request: Request) -> Dict[str
 async def delete_routine_endpoint(routine_id: str) -> Dict[str, Any]:
     """Delete a routine and remove from scheduler."""
     try:
-        from src.scheduler.routines_store import delete_routine
         from src.scheduler.routine_runner import unschedule_routine
+        from src.scheduler.routines_store import delete_routine
 
         unschedule_routine(routine_id)
         deleted = await delete_routine(routine_id)

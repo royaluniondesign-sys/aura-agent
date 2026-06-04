@@ -4,7 +4,7 @@ import json as _json
 from pathlib import Path
 
 import structlog
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 logger = structlog.get_logger()
@@ -18,6 +18,7 @@ class ZeroTokenStatusMixin:
     ) -> None:
         """Dashboard URL via ngrok — pre-embedded token, one tap and you're in."""
         import os as _os
+
         from ...infra.tunnel import get_dashboard_url
 
         _token = _os.environ.get("DASHBOARD_TOKEN", "")

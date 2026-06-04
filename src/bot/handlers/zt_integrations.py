@@ -152,9 +152,9 @@ class ZeroTokenIntegrationsMixin:
             info = get_credentials_info()
             if info["configured"]:
                 from src.integrations.publication_db import (
-                    get_recent_publications,
-                    _SHEET_ID_PATH,
                     _DRIVE_ROOT_ID_PATH,
+                    _SHEET_ID_PATH,
+                    get_recent_publications,
                 )
 
                 sheet_id = (

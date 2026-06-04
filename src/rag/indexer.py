@@ -10,7 +10,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from .chunker import chunk_markdown, chunk_text, chunk_logs, chunk_code
+from .chunker import chunk_code, chunk_logs, chunk_markdown, chunk_text
 from .embedder import embed_batch
 from .store import RAGStore
 

@@ -12,8 +12,8 @@ import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from .utils.html_format import escape_html
 from ..projects import PrivateTopicsUnavailableError
+from .utils.html_format import escape_html
 
 if TYPE_CHECKING:
     from .orchestrator import MessageOrchestrator
@@ -219,7 +219,7 @@ class AgenticCommandsMixin:
           /conductor research latest AI trends and write a summary
           /c analyze this Python file and suggest optimizations
         """
-        from ..brains.conductor import get_conductor, Conductor, set_conductor
+        from ..brains.conductor import Conductor, get_conductor, set_conductor
 
         router = context.bot_data.get("brain_router")
         if not router:

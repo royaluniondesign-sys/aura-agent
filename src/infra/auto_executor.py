@@ -25,10 +25,19 @@ import asyncio
 import subprocess
 import time
 from datetime import UTC, datetime
-from typing import Callable, Coroutine, Optional, Any
+from typing import Any, Callable, Coroutine, Optional
 
 import structlog
 
+from .task_journal import (
+    complete_task_journal,
+)
+from .task_journal import log_attempt as journal_attempt
+from .task_journal import log_learning as journal_learn
+from .task_journal import (
+    search_similar,
+)
+from .task_journal import start_task as journal_start
 from .task_store import (
     complete_task,
     create_task,
@@ -37,13 +46,6 @@ from .task_store import (
     pending_auto_fix_tasks,
     stats,
     update_task,
-)
-from .task_journal import (
-    start_task as journal_start,
-    log_attempt as journal_attempt,
-    log_learning as journal_learn,
-    complete_task_journal,
-    search_similar,
 )
 
 logger = structlog.get_logger()

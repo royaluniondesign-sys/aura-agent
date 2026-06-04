@@ -216,7 +216,8 @@ async def test_memory_layer_store_and_search_smoke(monkeypatch) -> None:
         return [{"content": f"Memoria relevante sobre: {query}", "score": 0.9}]
 
     # Patch at the RAG layer so no Ollama/SQLite needed in CI
-    from src.rag import indexer as _idx_mod, retriever as _ret_mod
+    from src.rag import indexer as _idx_mod
+    from src.rag import retriever as _ret_mod
 
     class _FakeIndexer:
         async def index_text(self, text: str, source: str, source_type: str) -> dict:

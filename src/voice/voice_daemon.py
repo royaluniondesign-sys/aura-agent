@@ -562,6 +562,7 @@ async def get_daemon_status(port: int = _PORT) -> Optional[dict]:
 
 def main() -> None:
     from pathlib import Path as P
+
     from dotenv import load_dotenv
 
     load_dotenv(P(__file__).parent.parent.parent / ".env")

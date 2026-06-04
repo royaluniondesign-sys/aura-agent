@@ -1,8 +1,10 @@
 """Git tools — status, log, commit, push."""
 
 from __future__ import annotations
+
 import asyncio
 from pathlib import Path
+
 from src.actions.registry import aura_tool
 
 _DEFAULT_REPO = str(Path.home())

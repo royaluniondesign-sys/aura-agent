@@ -16,6 +16,8 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
+from ..economy.intent import Intent, IntentResult, classify
+from ..economy.semantic_intent import classify_semantic
 from .api_brain import ApiBrain
 from .autonomous_brain import AutonomousBrain
 from .base import Brain, BrainResponse, BrainStatus
@@ -25,8 +27,6 @@ from .gemini_brain import GeminiBrain
 from .image_brain import ImageBrain
 from .ollama_brain import OllamaBrain
 from .openrouter_brain import OpenRouterBrain
-from ..economy.intent import Intent, IntentResult, classify
-from ..economy.semantic_intent import classify_semantic
 
 logger = structlog.get_logger()
 
@@ -38,8 +38,8 @@ def _has_openrouter_key() -> bool:
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if key:
         return True
-    from pathlib import Path
     import json
+    from pathlib import Path
 
     secrets = Path.home() / ".aura" / "secrets.json"
     if secrets.exists():

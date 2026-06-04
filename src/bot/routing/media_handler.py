@@ -32,8 +32,8 @@ class MediaHandlerMixin:
         user_id: int,
     ) -> None:
         """Generate image via pollinations.ai (FLUX.1, free, no key) and send as photo."""
-        import io
         import base64
+        import io
 
         chat = update.message.chat
         await chat.send_action("upload_photo")

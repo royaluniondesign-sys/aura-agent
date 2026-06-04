@@ -17,7 +17,7 @@ import asyncio
 import json
 import os
 import time
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -350,7 +350,7 @@ async def mesh_notify(request: Request) -> Dict[str, Any]:
         return {"ok": False, "error": "message is required"}
 
     try:
-        from src.infra.mesh_broadcaster import broadcast_alert, _queue_to_file
+        from src.infra.mesh_broadcaster import _queue_to_file, broadcast_alert
 
         await broadcast_alert(
             from_agent=from_agent,

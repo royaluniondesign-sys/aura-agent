@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 
 import structlog
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 logger = structlog.get_logger()
@@ -58,9 +58,10 @@ class ZeroTokenSystemMixin:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """⚡ Get Termora terminal — auto-restarts if down, one-tap link."""
-        import urllib.request
-        import json as _json
         import asyncio as _asyncio
+        import json as _json
+        import urllib.request
+
         from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 
         termora_port = 4030

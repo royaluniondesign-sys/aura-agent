@@ -1,6 +1,7 @@
 """Termora terminal provisioning tool."""
 
 from __future__ import annotations
+
 from src.actions.registry import aura_tool
 
 

@@ -6,8 +6,8 @@ Primary model: qwen2.5:7b (Alibaba, strong multilingual + code).
 
 import json
 import time
-import urllib.request
 import urllib.error
+import urllib.request
 from typing import Any, Dict
 
 import structlog

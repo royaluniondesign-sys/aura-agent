@@ -8,7 +8,9 @@ Voz fija: Claribel Dervla (XTTS v2 multilingual)
 Idioma:   es (español)
 """
 
-import os, sys, warnings
+import os
+import sys
+import warnings
 
 warnings.filterwarnings("ignore")
 os.environ["COQUI_TOS_AGREED"] = "1"

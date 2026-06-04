@@ -42,8 +42,8 @@ def is_configured() -> bool:
 
 def _get_service():
     """Build authenticated Gmail service. Raises if not configured."""
-    from google.oauth2.credentials import Credentials
     from google.auth.transport.requests import Request
+    from google.oauth2.credentials import Credentials
     from googleapiclient.discovery import build
 
     creds = None
@@ -254,8 +254,9 @@ async def mark_read(message_id: str) -> bool:
 
 async def start_oauth_flow() -> str:
     """Start Gmail OAuth flow. Returns URL for user to visit."""
-    from google_auth_oauthlib.flow import InstalledAppFlow
     import asyncio
+
+    from google_auth_oauthlib.flow import InstalledAppFlow
 
     # Check for existing OAuth app credentials
     app_creds_path = Path.home() / ".aura" / "gmail_app_credentials.json"

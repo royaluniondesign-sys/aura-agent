@@ -21,7 +21,7 @@ from typing import Optional
 
 import httpx
 
-from .content_memory import mark_published, mark_failed
+from .content_memory import mark_failed, mark_published
 
 log = logging.getLogger("content.executor")
 

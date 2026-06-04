@@ -372,10 +372,8 @@ class BrainHandlerMixin:
         _tool_log: list = []  # [(icon_str, line_str), ...]
         _last_progress_edit = [0.0]  # throttle edits
 
-        from ..orchestrator_utils import (
-            tool_icon as _tool_icon,
-            escape_html as _esc_html,
-        )
+        from ..orchestrator_utils import escape_html as _esc_html
+        from ..orchestrator_utils import tool_icon as _tool_icon
 
         def _tool_event(kind: str, name: str, detail: str) -> None:
             """Called from execute_streaming() for each tool/text event."""

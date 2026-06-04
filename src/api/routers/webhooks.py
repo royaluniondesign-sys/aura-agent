@@ -282,7 +282,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
             # Save token + credentials to .env and token file
             import json as _json
-            from datetime import datetime as _dt, timezone as _tz
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
 
             token_info = {
                 "access_token": long_token,
@@ -335,8 +336,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     @r.get("/auth/instagram/refresh")
     async def instagram_token_refresh() -> Dict[str, Any]:
         """Refresh the Instagram long-lived token (call before expiry)."""
-        import aiohttp as _aiohttp
         import json as _json
+
+        import aiohttp as _aiohttp
 
         token_path = Path.home() / ".aura" / "instagram_token.json"
         if not token_path.exists():
@@ -355,7 +357,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         if "access_token" in data:
             info["access_token"] = data["access_token"]
             info["expires_in"] = data.get("expires_in", 5183944)
-            from datetime import datetime as _dt, timezone as _tz
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
 
             info["refreshed_at"] = _dt.now(_tz.utc).isoformat()
             token_path.write_text(_json.dumps(info, indent=2))
@@ -519,7 +522,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         import json as _json
+
         import aiohttp as _aiohttp
+
         from src.workflows.social_publisher import _sanitize_flux_prompt
 
         image_base64 = (body.get("image_base64") or "").strip()
@@ -677,16 +682,18 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         import time
         import urllib.parse
-        import aiohttp
         from datetime import datetime, timezone
+
+        import aiohttp
+
         from src.workflows.social_publisher import (
-            generate_social_content,
-            generate_caption_concept,
-            refine_caption_with_claude,
             _STYLE_MOOD,
-            generate_image_nvidia,
-            generate_image_comfyui,
             _sanitize_flux_prompt,
+            generate_caption_concept,
+            generate_image_comfyui,
+            generate_image_nvidia,
+            generate_social_content,
+            refine_caption_with_claude,
         )
 
         topic = (body.get("topic") or "diseño y creatividad Barcelona").strip()
@@ -1034,9 +1041,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         Returns: {ok: bool, url: str, filename: str}
         """
-        from fastapi import UploadFile
         import mimetypes
         from datetime import datetime, timezone
+
+        from fastapi import UploadFile
 
         try:
             form = await request.form()
@@ -1253,9 +1261,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         The image_url must be publicly accessible (GitHub CDN or similar).
         """
         import aiohttp as _aiohttp
+
         from src.workflows.social_publisher import (
-            _ig_token,
             _ig_account_id,
+            _ig_token,
             _ig_wait_ready,
             generate_image_nvidia,
             upload_image_to_host,
@@ -1335,8 +1344,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         import uuid as _uuid
+        from datetime import datetime as _dt
+        from datetime import timezone as _tz
+
         import aiohttp as _aiohttp
-        from datetime import datetime as _dt, timezone as _tz
 
         brief = (body.get("brief") or "").strip()
         fmt = (body.get("format") or "1:1").strip()
@@ -1463,8 +1474,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         # Brain 3: Gemini CLI subprocess (Google OAuth, always available)
         if not html_content:
             import asyncio as _asyncio
-            import subprocess as _sp2
             import shutil as _shutil
+            import subprocess as _sp2
 
             gemini_bin = _shutil.which("gemini") or "/opt/homebrew/bin/gemini"
             if _shutil.which("gemini"):
@@ -1540,6 +1551,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def social_design_preview(task_id: str) -> Any:
         """Serve the generated design HTML file."""
         import re as _re
+
         from fastapi.responses import HTMLResponse as _HR
 
         if not _re.match(r"^[a-f0-9]{12}$", task_id):
@@ -1563,7 +1575,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         import re as _re
         import subprocess as _sp
-        from datetime import datetime as _dt, timezone as _tz
+        from datetime import datetime as _dt
+        from datetime import timezone as _tz
 
         task_id = (body.get("taskId") or "").strip()
         fmt = (body.get("format") or "1:1").strip()
@@ -1674,10 +1687,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="text or topic required")
         try:
             from src.workflows.social_post import (
-                generate_images_for_post,
-                generate_captions,
-                post_to_social,
                 build_n8n_payload,
+                generate_captions,
+                generate_images_for_post,
+                post_to_social,
             )
 
             platform = platforms[0] if platforms else "instagram"

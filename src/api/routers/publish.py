@@ -102,6 +102,7 @@ async def publish_social_post(req: SocialPublishRequest) -> dict:
 async def publish_status() -> dict:
     """Check publishing capabilities: token validity, account connections, etc."""
     import asyncio
+
     from ...workflows.social_publisher import get_social_status
 
     try:

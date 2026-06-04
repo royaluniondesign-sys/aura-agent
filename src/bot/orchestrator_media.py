@@ -197,8 +197,9 @@ class AgenticMediaMixin:
                 except Exception:
                     pass
 
-                from .orchestrator_utils import start_typing_heartbeat
                 import asyncio as _asyncio
+
+                from .orchestrator_utils import start_typing_heartbeat
 
                 typing_task = start_typing_heartbeat(chat, interval=3)
                 try:

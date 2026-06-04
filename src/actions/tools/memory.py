@@ -1,6 +1,7 @@
 """Memory tools — search and store facts in AURA's persistent vector memory."""
 
 from __future__ import annotations
+
 from src.actions.registry import aura_tool
 
 
@@ -11,7 +12,7 @@ from src.actions.registry import aura_tool
     parameters={"query": {"type": "str", "description": "What to search for"}},
 )
 async def memory_search(query: str) -> str:
-    from src.context.mempalace_memory import search_memories, format_memories_for_prompt
+    from src.context.mempalace_memory import format_memories_for_prompt, search_memories
 
     memories = await search_memories(query, n=6)
     if not memories:

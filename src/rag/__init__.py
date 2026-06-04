@@ -1,6 +1,6 @@
 """AURA RAG — local vector memory with Ollama embeddings + SQLite storage."""
 
-from .retriever import RAGRetriever
 from .indexer import RAGIndexer
+from .retriever import RAGRetriever
 
 __all__ = ["RAGRetriever", "RAGIndexer"]

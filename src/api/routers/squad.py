@@ -125,7 +125,7 @@ async def run_squad_task(request: Request) -> Dict[str, Any]:
     if not task:
         raise HTTPException(status_code=400, detail="task required")
     try:
-        from src.agents.squad import get_squad, AgentSquad
+        from src.agents.squad import AgentSquad, get_squad
         from src.brains.router import BrainRouter
 
         squad = get_squad()

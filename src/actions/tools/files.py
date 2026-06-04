@@ -1,7 +1,9 @@
 """File system tools — read, write, list files."""
 
 from __future__ import annotations
+
 from pathlib import Path
+
 from src.actions.registry import aura_tool
 
 _HOME = Path.home()

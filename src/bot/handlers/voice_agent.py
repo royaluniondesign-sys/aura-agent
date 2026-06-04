@@ -92,6 +92,7 @@ async def _voice_status(update: "Update") -> None:
 
 async def _voice_start(update: "Update") -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
 
     try:
@@ -123,6 +124,7 @@ async def _voice_start(update: "Update") -> None:
 
 async def _voice_stop(update: "Update") -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
 
     try:
@@ -153,6 +155,7 @@ async def _voice_send(update: "Update", text: str) -> None:
 
 async def _voice_sleep_wake(update: "Update", sleep: bool) -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
 
     endpoint = "/sleep" if sleep else "/wake"
@@ -172,6 +175,7 @@ async def _voice_sleep_wake(update: "Update", sleep: bool) -> None:
 
 async def _voice_transcript(update: "Update") -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
 
     try:

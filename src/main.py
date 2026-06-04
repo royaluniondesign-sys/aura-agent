@@ -6,6 +6,7 @@ import logging
 import os
 import signal
 import sys
+import time
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -38,9 +39,6 @@ from src.security.rate_limiter import RateLimiter
 from src.security.validators import SecurityValidator
 from src.storage.facade import Storage
 from src.storage.session_storage import SQLiteSessionStorage
-
-
-import time
 
 _LAST_MEMORY_WARN: float = 0.0
 
@@ -191,8 +189,8 @@ async def create_application(config: Settings) -> Dict[str, Any]:
 
     # Rate limit monitor (persists usage to ~/.aura/usage.json)
     # Use the global singleton so conductor track_request() calls and /limits share one instance
-    from src.infra.rate_monitor import get_global_monitor
     import src.infra.rate_monitor as _rm_module
+    from src.infra.rate_monitor import get_global_monitor
 
     rate_monitor = get_global_monitor()
     _rm_module._global_monitor = (
@@ -589,9 +587,9 @@ async def run_application(app: Dict[str, Any]) -> None:
                 # Respect global Telegram flood ban (shared with orchestrator)
                 try:
                     from src.bot.flood_guard import (
+                        extract_retry_after,
                         remaining_flood_wait,
                         set_flood_wait,
-                        extract_retry_after,
                     )
 
                     flood_remaining = remaining_flood_wait()
@@ -621,8 +619,8 @@ async def run_application(app: Dict[str, Any]) -> None:
                         if "429" in err or "Too Many Requests" in err:
                             try:
                                 from src.bot.flood_guard import (
-                                    set_flood_wait,
                                     extract_retry_after,
+                                    set_flood_wait,
                                 )
 
                                 wait = extract_retry_after(err) or 3600
@@ -706,7 +704,8 @@ async def run_application(app: Dict[str, Any]) -> None:
         # Scheduled social posts — check every 60s and publish when due
         async def _social_scheduler_loop() -> None:
             import json as _json
-            from datetime import datetime as _dt, timezone as _tz
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
             from pathlib import Path as _Path
 
             _sched_dir = _Path.home() / ".aura" / "social_scheduled"

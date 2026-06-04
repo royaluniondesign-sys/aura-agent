@@ -5,10 +5,10 @@ Usage from bot:
     result = await send_email(to="x@gmail.com", subject="...", body="...")
 """
 
-import os
-import urllib.request
-import urllib.error
 import json
+import os
+import urllib.error
+import urllib.request
 from typing import Optional
 
 RESEND_API_URL = "https://api.resend.com/emails"

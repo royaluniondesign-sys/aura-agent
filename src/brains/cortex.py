@@ -19,8 +19,8 @@ Session context:
   Used to enrich prompts automatically
 """
 
-import os
 import json
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -206,7 +206,7 @@ class AuraCortex:
             except Exception as exc2:
                 logger.error("cortex_route_fallback_error", error=str(exc2))
                 # Return safe sentinel — IntentResult-like object
-                from ..economy.intent import IntentResult, Intent
+                from ..economy.intent import Intent, IntentResult
 
                 safe = IntentResult(
                     intent=Intent.CHAT,

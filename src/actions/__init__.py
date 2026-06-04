@@ -7,6 +7,6 @@ and they appear automatically in:
   - Self-healer diagnostics
 """
 
-from .registry import registry, get_tool, list_tools, call_tool
+from .registry import call_tool, get_tool, list_tools, registry
 
 __all__ = ["registry", "get_tool", "list_tools", "call_tool"]

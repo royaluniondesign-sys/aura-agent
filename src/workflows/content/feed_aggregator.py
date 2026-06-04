@@ -9,10 +9,11 @@ from __future__ import annotations
 
 import asyncio
 import logging
-from dataclasses import dataclass, field
-from datetime import datetime, timezone, timedelta
-from typing import Optional
 import urllib.request
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
+from typing import Optional
+
 import feedparser  # type: ignore[import-untyped]
 
 log = logging.getLogger("content.feeds")

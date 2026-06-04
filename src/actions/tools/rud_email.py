@@ -6,6 +6,7 @@ Auto-descubierto por MCP y voz. Disponible en Telegram + Voice AURA.
 from __future__ import annotations
 
 import os
+
 from src.actions.registry import aura_tool
 
 

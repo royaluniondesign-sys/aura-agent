@@ -7,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from .embedder import embed, cosine_similarity, MODEL
+from .embedder import MODEL, cosine_similarity, embed
 from .store import RAGStore
 
 logger = structlog.get_logger()

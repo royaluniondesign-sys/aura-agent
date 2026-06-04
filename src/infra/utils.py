@@ -1,8 +1,9 @@
 """AURA infrastructure utilities."""
 
 from pathlib import Path
-import requests
+
 import backoff
+import requests
 from requests.exceptions import RequestException
 
 CONDUCTOR_LOG_PATH = Path.home() / ".aura" / "memory" / "conductor_log.md"

@@ -22,6 +22,7 @@ async def stream_orchestration() -> StreamingResponse:
     import asyncio as _aio
     import json as _j
     import time as _t
+
     from ...brains.conductor import orch_subscribe, orch_unsubscribe
 
     async def _gen():
@@ -85,7 +86,7 @@ async def stream_orchestration() -> StreamingResponse:
 @router.get("/api/conductor/status")
 async def conductor_status() -> Dict[str, Any]:
     """Return whether a conductor is initialized and available."""
-    from ...brains.conductor import get_conductor, _subscribers
+    from ...brains.conductor import _subscribers, get_conductor
 
     c = get_conductor()
     return {

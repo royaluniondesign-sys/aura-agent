@@ -331,6 +331,7 @@ class ToolExecutor:
         # Analyze with Gemini Flash (cheap vision model)
         try:
             import base64
+
             from google import genai  # type: ignore[import]
             from google.genai import types as gtypes  # type: ignore[import]
 

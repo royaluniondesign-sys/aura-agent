@@ -29,8 +29,8 @@ class ZeroTokenBrainMixin:
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
     ) -> None:
         """⚡ Show all brains / switch active brain. Usage: /brain [name]"""
-        import shutil
         import os
+        import shutil
 
         # --- /brain <name> → switch active brain for this user ---
         args = (update.message.text or "").split()[1:]

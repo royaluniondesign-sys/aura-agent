@@ -138,7 +138,7 @@ async def _call_hermes(task: str, timeout: int = 90) -> tuple[str, float]:
 async def _run_mesh_check(notify_fn: Optional[Callable] = None) -> None:
     """One autonomous mesh check: delegate pending Hermes tasks."""
     global _loop_status
-    from src.infra.mesh_broadcaster import broadcast_exchange, broadcast_alert
+    from src.infra.mesh_broadcaster import broadcast_alert, broadcast_exchange
 
     _loop_status["running"] = True
     _loop_status["last_run_at"] = datetime.now(UTC).isoformat()

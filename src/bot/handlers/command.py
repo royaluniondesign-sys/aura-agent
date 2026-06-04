@@ -25,14 +25,14 @@ from ._handler_utils import (
     _is_within_root,
 )
 
+# Re-export admin commands so external callers still resolve from this module
+from .cmd_admin import end_session, git_command, quick_actions, restart_command
+
 # Re-export navigation commands so external callers still resolve from this module
 from .cmd_navigation import change_directory, list_files, print_working_directory
 
 # Re-export project commands so external callers still resolve from this module
 from .cmd_project import export_session, session_status, show_projects
-
-# Re-export admin commands so external callers still resolve from this module
-from .cmd_admin import end_session, git_command, quick_actions, restart_command
 
 logger = structlog.get_logger()
 

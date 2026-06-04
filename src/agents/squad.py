@@ -95,7 +95,7 @@ class AgentSquad:
         """
         # Primary: meta_router complexity score (already wired in routing)
         try:
-            from src.claude.meta_router import route_request, ModelTier
+            from src.claude.meta_router import ModelTier, route_request
 
             decision = route_request(prompt)
             # Sonnet-level complexity (score ≥ 5) + multi-domain = squad territory

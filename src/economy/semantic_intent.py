@@ -15,7 +15,8 @@ from typing import Optional
 
 import structlog
 
-from .intent import Intent, IntentResult, classify as regex_classify
+from .intent import Intent, IntentResult
+from .intent import classify as regex_classify
 
 logger = structlog.get_logger()
 

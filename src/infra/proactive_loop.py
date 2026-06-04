@@ -572,10 +572,10 @@ async def run_self_improvement(
         if not _haiku_pressure_skip:
             try:
                 from .task_store import (
-                    list_tasks,
-                    update_task,
                     complete_task,
                     fail_task,
+                    list_tasks,
+                    update_task,
                 )
 
                 pending = [

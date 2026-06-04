@@ -23,13 +23,13 @@ class ZeroTokenMemoryMixin:
         /memory identity — show AURA's identity profile
         """
         from ...context.aura_context import (
-            format_for_display,
-            update_memory,
+            _BRAIN_DIR,
+            _MEMORY_FILE,
             add_client,
             add_task,
+            format_for_display,
             get_identity,
-            _MEMORY_FILE,
-            _BRAIN_DIR,
+            update_memory,
         )
 
         text = (update.message.text or "").strip()

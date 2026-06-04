@@ -1,9 +1,10 @@
 """Zero-token workspace commands — inbox, calendar, limits."""
 
+from pathlib import Path
+
 import structlog
 from telegram import Update
 from telegram.ext import ContextTypes
-from pathlib import Path
 
 logger = structlog.get_logger()
 

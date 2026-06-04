@@ -261,6 +261,7 @@ class AutonomousBrain(Brain):
             List of task dictionaries ready for execution
         """
         from pathlib import Path
+
         from src.utils.mission_parser import parse_mission_file
 
         mission_file = Path.home() / "claude-code-telegram" / "MISSION.md"

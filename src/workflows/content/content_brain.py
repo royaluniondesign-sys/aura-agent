@@ -22,8 +22,8 @@ from typing import Optional
 
 import anthropic  # type: ignore[import-untyped]
 
-from .feed_aggregator import FeedItem, fetch_all
 from .content_memory import is_fresh, log_planned, recent_topics
+from .feed_aggregator import FeedItem, fetch_all
 
 log = logging.getLogger("content.brain")
 

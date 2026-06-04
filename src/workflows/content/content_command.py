@@ -15,7 +15,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Callable, Awaitable
+from typing import Awaitable, Callable, Optional
 
 log = logging.getLogger("content.command")
 
@@ -186,7 +186,7 @@ async def cmd_feeds(send: Callable) -> None:
     """Show feed health."""
     await send("📡 Comprobando fuentes…")
     try:
-        from .feed_aggregator import fetch_all, FEEDS
+        from .feed_aggregator import FEEDS, fetch_all
 
         items = await fetch_all(max_age_hours=72)
 

@@ -1,10 +1,12 @@
 """AURA self-status tool — gathers real system + bot state."""
 
 from __future__ import annotations
+
 import asyncio
 import os
 import time
 from pathlib import Path
+
 from src.actions.registry import aura_tool
 
 

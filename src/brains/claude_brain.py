@@ -510,7 +510,8 @@ class ClaudeBrain(Brain):
         except (asyncio.TimeoutError, asyncio.CancelledError) as exc:
             if proc is not None:
                 try:
-                    import os as _os2, signal as _sig
+                    import os as _os2
+                    import signal as _sig
 
                     _os2.killpg(_os2.getpgid(proc.pid), _sig.SIGKILL)
                 except Exception:

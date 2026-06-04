@@ -32,6 +32,7 @@ class ConductorHandlerMixin:
     ) -> None:
         """Ruta B — Route complex external task through the 3-layer conductor."""
         import time as _time
+
         from src.infra.task_router import write_external_outcome
 
         progress_msg = await update.message.reply_text(
@@ -42,7 +43,7 @@ class ConductorHandlerMixin:
         t_start = _time.time()
 
         try:
-            from src.brains.conductor import get_conductor, Conductor
+            from src.brains.conductor import Conductor, get_conductor
 
             conductor = get_conductor(router)
             if conductor is None:

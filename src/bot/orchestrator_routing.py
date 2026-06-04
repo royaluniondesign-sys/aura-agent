@@ -28,8 +28,8 @@ from telegram.ext import ContextTypes
 
 from .routing.brain_handler import BrainHandlerMixin
 from .routing.conductor_handler import ConductorHandlerMixin
-from .routing.media_handler import MediaHandlerMixin
 from .routing.content_handler import ContentHandlerMixin
+from .routing.media_handler import MediaHandlerMixin
 
 if TYPE_CHECKING:
     from .orchestrator import MessageOrchestrator
@@ -292,7 +292,8 @@ class AgenticRoutingMixin(
         # Auto-capture group chat_id when AURA first receives a group message
         _chat = update.effective_chat
         if _chat and getattr(_chat, "type", "") in ("group", "supergroup"):
-            import os as _os, pathlib as _pl
+            import os as _os
+            import pathlib as _pl
 
             _group_file = _pl.Path.home() / ".aura" / "context" / "known_groups.txt"
             _group_file.parent.mkdir(parents=True, exist_ok=True)
@@ -534,9 +535,9 @@ class AgenticRoutingMixin(
             pass  # history is non-critical
 
         # --- Smart routing: classify intent and pick optimal brain ---
-        from src.observability import (
+        from src.observability import (  # noqa: F401 (imported for side effects)
             get_tracer,
-        )  # noqa: F401 (imported for side effects)
+        )
 
         router = context.bot_data.get("brain_router")
         intent_info = ""
@@ -576,8 +577,9 @@ class AgenticRoutingMixin(
             )
 
             # ── Native actions: intercept before routing to any LLM brain ──
-            from src.economy.intent import Intent as _Intent
             import re as _re2
+
+            from src.economy.intent import Intent as _Intent
 
             _is_send = bool(
                 _re2.search(

@@ -430,8 +430,8 @@ class FileHandler:
         if ext == ".docx":
             # docx is a zip of XML files — extract text without extra deps
             try:
-                import zipfile
                 import xml.etree.ElementTree as ET
+                import zipfile
 
                 with zipfile.ZipFile(file_path) as z:
                     with z.open("word/document.xml") as f:

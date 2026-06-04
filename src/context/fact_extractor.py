@@ -18,12 +18,12 @@ from typing import Any, Optional
 import structlog
 
 from .aura_context import (
-    update_memory,
+    _SECTION_CLIENTS,
+    _SECTION_NOTES,
+    _SECTION_TASKS,
     add_client,
     add_task,
-    _SECTION_CLIENTS,
-    _SECTION_TASKS,
-    _SECTION_NOTES,
+    update_memory,
 )
 
 logger = structlog.get_logger()

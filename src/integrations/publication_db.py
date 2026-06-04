@@ -369,6 +369,7 @@ def _upload_file_to_drive(
 ) -> tuple[str, str]:
     """Upload bytes to Drive. Returns (file_id, file_url)."""
     import io
+
     from googleapiclient.http import MediaIoBaseUpload
 
     media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type)

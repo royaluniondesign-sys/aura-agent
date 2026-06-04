@@ -325,7 +325,9 @@ class ZeroTokenSocialMixin:
                 return
 
             # Save to drafts
-            import time, re as _re, hashlib
+            import hashlib
+            import re as _re
+            import time
 
             slug = _re.sub(r"[^a-z0-9]+", "_", prompt.lower())[:30].strip("_")
             ts = time.strftime("%Y%m%d_%H%M%S")
@@ -524,7 +526,8 @@ class ZeroTokenSocialMixin:
           /social queue      — pending scheduled posts only
         """
         import json as _json
-        from datetime import datetime as _dt, timezone as _tz
+        from datetime import datetime as _dt
+        from datetime import timezone as _tz
         from pathlib import Path as _Path
 
         args = (update.message.text or "").split()
@@ -772,7 +775,9 @@ class ZeroTokenSocialMixin:
         Returns aware UTC datetime or None if unparseable.
         """
         import re as _re
-        from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+        from datetime import datetime as _dt
+        from datetime import timedelta as _td
+        from datetime import timezone as _tz
 
         text = time_str.strip().lower()
         now = _dt.now(_tz.utc)
@@ -851,7 +856,8 @@ class ZeroTokenSocialMixin:
         filename.write_text(_json.dumps(data, ensure_ascii=False, indent=2))
 
         # Human-readable "when"
-        from datetime import datetime as _dt, timezone as _tz
+        from datetime import datetime as _dt
+        from datetime import timezone as _tz
 
         now = _dt.now(_tz.utc)
         diff = due - now
@@ -889,6 +895,7 @@ class ZeroTokenSocialMixin:
           /content feeds  — RSS feed health
         """
         from telegram import Update as _Update
+
         from src.workflows.content.content_command import handle_content_command
 
         args_text = (update.message.text or "").partition(" ")[2]  # strip "/content"

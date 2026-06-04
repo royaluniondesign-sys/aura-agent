@@ -16,9 +16,9 @@ async def get_memory(q: str = "", limit: int = 10) -> Dict[str, Any]:
     """MemPalace stats and search."""
     try:
         from src.context.mempalace_memory import (
+            get_all_memories,
             palace_count,
             search_memories,
-            get_all_memories,
         )
 
         count = await palace_count()

@@ -219,7 +219,8 @@ async def social_generate_and_publish(
 ) -> str:
     """Autonomous social post: generate caption + image, then publish or schedule."""
     import time as _time
-    from datetime import datetime as _dt, timezone as _tz
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
 
     platforms = (
         ["instagram", "facebook"]
