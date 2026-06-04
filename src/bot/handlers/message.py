@@ -23,7 +23,7 @@ from .msg_formatters import (
 )
 
 # Re-export media handlers so external callers still resolve from this module
-from .msg_media import handle_voice  # noqa: F401
+from .msg_media import handle_document, handle_photo, handle_voice  # noqa: F401
 
 # Re-export utility functions so external callers still resolve from this module
 from .msg_utils import (
