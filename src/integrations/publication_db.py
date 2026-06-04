@@ -118,7 +118,8 @@ class Publication:
 def _init_db() -> sqlite3.Connection:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(_DB_PATH), detect_types=sqlite3.PARSE_DECLTYPES)
-    conn.execute("""
+    conn.execute(
+        """
         CREATE TABLE IF NOT EXISTS publications (
             id          TEXT PRIMARY KEY,
             created_at  TEXT NOT NULL,
@@ -145,7 +146,8 @@ def _init_db() -> sqlite3.Connection:
             notes       TEXT DEFAULT '',
             sheet_row   INTEGER DEFAULT 0
         )
-    """)
+    """
+    )
     conn.commit()
     return conn
 

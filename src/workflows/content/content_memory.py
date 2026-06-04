@@ -19,7 +19,8 @@ COOLDOWN_DAYS = 21  # Don't revisit same topic within 3 weeks
 def _conn() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     c = sqlite3.connect(str(DB_PATH))
-    c.execute("""
+    c.execute(
+        """
         CREATE TABLE IF NOT EXISTS content_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             topic_key TEXT NOT NULL,
@@ -30,7 +31,8 @@ def _conn() -> sqlite3.Connection:
             meta TEXT DEFAULT '{}',
             created_at TEXT DEFAULT (datetime('now'))
         )
-    """)
+    """
+    )
     c.execute("CREATE INDEX IF NOT EXISTS idx_topic ON content_log(topic_key)")
     c.commit()
     return c

@@ -316,7 +316,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             # Notify via Telegram if bot is available
             asyncio.create_task(_notify_ig_auth_success(ig_user_id, expires_in))
 
-            return HTMLResponse(f"""
+            return HTMLResponse(
+                f"""
             <html><body style="font-family:sans-serif;max-width:500px;margin:80px auto;text-align:center;">
             <h1>✅ Instagram conectado</h1>
             <p>Token guardado. AURA puede publicar en Instagram.</p>
@@ -324,7 +325,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             <p style="color:#888">Expira en: {expires_in // 86400} días</p>
             <p><b>Cierra esta ventana.</b></p>
             </body></html>
-            """)
+            """
+            )
 
         except Exception as exc:
             logger.error("instagram_oauth_error", error=str(exc))

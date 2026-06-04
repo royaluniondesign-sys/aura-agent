@@ -55,7 +55,9 @@ def _load_rag_to_duckdb(con) -> int:
             col3 AS content,
             col4 AS metadata,
             col5 AS updated_at
-        FROM (VALUES """ + ",".join(f"(?,?,?,?,?,?)" for _ in rows) + ")",
+        FROM (VALUES """
+        + ",".join(f"(?,?,?,?,?,?)" for _ in rows)
+        + ")",
         [val for row in rows for val in row],
     )
     return len(rows)
@@ -86,7 +88,8 @@ def run(dry_run: bool = False) -> dict[str, Any]:
 
     # ── Keyword frequency ─────────────────────────────────────────────────────
     kw_path = str(_LAKE_DIR / "keywords.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT source_type, word, count(*) AS freq
             FROM (
@@ -100,12 +103,14 @@ def run(dry_run: bool = False) -> dict[str, Any]:
             HAVING count(*) > 3
             ORDER BY freq DESC
         ) TO '{kw_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("keywords_written", path=kw_path)
 
     # ── Source summary ────────────────────────────────────────────────────────
     src_path = str(_LAKE_DIR / "source_summary.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT
                 source,
@@ -117,12 +122,14 @@ def run(dry_run: bool = False) -> dict[str, Any]:
             GROUP BY source, source_type
             ORDER BY chunk_count DESC
         ) TO '{src_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("source_summary_written", path=src_path)
 
     # ── Recent memory chunks ──────────────────────────────────────────────────
     mem_path = str(_LAKE_DIR / "recent_memory.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT source, content, updated_at
             FROM chunks
@@ -130,19 +137,22 @@ def run(dry_run: bool = False) -> dict[str, Any]:
             ORDER BY updated_at DESC
             LIMIT 200
         ) TO '{mem_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("recent_memory_written", path=mem_path)
 
     # ── Conversation extracts (telegram_chat only) ────────────────────────────
     conv_path = str(_LAKE_DIR / "conversations.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT id, content, updated_at
             FROM chunks
             WHERE source = 'telegram_chat'
             ORDER BY updated_at DESC
         ) TO '{conv_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("conversations_written", path=conv_path)
 
     manifest = {

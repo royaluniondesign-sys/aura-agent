@@ -31,7 +31,8 @@ class ResponseCache:
     def _init_db(self) -> None:
         """Create cache table if not exists."""
         with sqlite3.connect(str(self._db_path)) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS cache (
                     key TEXT PRIMARY KEY,
                     brain TEXT NOT NULL,
@@ -39,11 +40,14 @@ class ResponseCache:
                     created_at REAL NOT NULL,
                     hit_count INTEGER DEFAULT 0
                 )
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_cache_created
                 ON cache(created_at)
-            """)
+            """
+            )
 
     @staticmethod
     def _make_key(prompt: str, brain: str) -> str:
