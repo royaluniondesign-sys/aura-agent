@@ -1,4 +1,5 @@
 """Bash execution tool — runs commands on the local Mac."""
+
 from __future__ import annotations
 import asyncio
 import os

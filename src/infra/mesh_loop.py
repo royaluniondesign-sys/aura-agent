@@ -3,6 +3,7 @@
 Runs every 30 minutes. Checks shared tasks for Hermes work, delegates,
 and broadcasts the exchange to the owner so they can see what they're doing.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -16,14 +17,14 @@ import structlog
 
 logger = structlog.get_logger()
 
-_INTERVAL_S   = 1800          # 30 min between autonomous checks
-_TASKS_FILE   = Path.home() / ".aura" / "memory" / "shared" / "tasks.md"
-_DELEGATED    = Path.home() / ".aura" / "mesh" / "delegated.json"
+_INTERVAL_S = 1800  # 30 min between autonomous checks
+_TASKS_FILE = Path.home() / ".aura" / "memory" / "shared" / "tasks.md"
+_DELEGATED = Path.home() / ".aura" / "mesh" / "delegated.json"
 _OPENCLAW_BIN = "/opt/homebrew/bin/openclaw"
 
 # A task not confirmed by Hermes is retried after 24h, up to 3 times total.
-_DELEGATED_TTL_S   = 86400   # 24h before a stale delegation is retried
-_DELEGATED_MAX_ATT = 3       # give up after this many timeout/failure attempts
+_DELEGATED_TTL_S = 86400  # 24h before a stale delegation is retried
+_DELEGATED_MAX_ATT = 3  # give up after this many timeout/failure attempts
 
 _loop_status: dict = {
     "running": False,
@@ -89,10 +90,15 @@ async def _call_hermes(task: str, timeout: int = 90) -> tuple[str, float]:
 
     start = time.time()
     proc = await asyncio.create_subprocess_exec(
-        _OPENCLAW_BIN, "agent", "--agent", "main",
-        "--message", task,
+        _OPENCLAW_BIN,
+        "agent",
+        "--agent",
+        "main",
+        "--message",
+        task,
         "--json",
-        "--timeout", str(timeout),
+        "--timeout",
+        str(timeout),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -114,7 +120,11 @@ async def _call_hermes(task: str, timeout: int = 90) -> tuple[str, float]:
 
         if data:
             payloads = data.get("result", {}).get("payloads", [])
-            texts = [p.get("text", "") for p in payloads if isinstance(p, dict) and p.get("text")]
+            texts = [
+                p.get("text", "")
+                for p in payloads
+                if isinstance(p, dict) and p.get("text")
+            ]
             reply = "\n".join(texts).strip() if texts else raw[:500]
         else:
             reply = raw[:500] if raw else "(sin respuesta)"
@@ -167,7 +177,7 @@ async def _run_mesh_check(notify_fn: Optional[Callable] = None) -> None:
         reply, elapsed = await _call_hermes(message, timeout=90)
 
         is_timeout = reply.startswith("timeout (") or "timeout" in reply.lower()
-        is_error   = reply == "(sin respuesta)" or not reply.strip()
+        is_error = reply == "(sin respuesta)" or not reply.strip()
 
         # Log to mesh-log
         _ml = Path.home() / ".aura" / "memory" / "mesh-log.md"
@@ -197,7 +207,9 @@ async def _run_mesh_check(notify_fn: Optional[Callable] = None) -> None:
         if is_timeout or is_error:
             logger.warning(
                 "mesh_loop_hermes_no_response",
-                task=task[:60], attempt=attempt_num, reply=reply[:80],
+                task=task[:60],
+                attempt=attempt_num,
+                reply=reply[:80],
             )
             # Notify owner when Hermes fails to respond — they need to know
             if notify_fn and attempt_num >= _DELEGATED_MAX_ATT:
@@ -219,7 +231,9 @@ async def _run_mesh_check(notify_fn: Optional[Callable] = None) -> None:
                 except Exception:
                     pass
         else:
-            logger.info("mesh_loop_delegated_ok", task=task[:60], elapsed_s=round(elapsed, 1))
+            logger.info(
+                "mesh_loop_delegated_ok", task=task[:60], elapsed_s=round(elapsed, 1)
+            )
 
     except Exception as e:
         logger.warning("mesh_loop_error", error=str(e))

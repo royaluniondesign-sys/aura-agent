@@ -1,4 +1,5 @@
 """File system tools — read, write, list files."""
+
 from __future__ import annotations
 from pathlib import Path
 from src.actions.registry import aura_tool
@@ -19,7 +20,9 @@ def _safe_path(path_str: str) -> Path:
     name="file_read",
     description="Read the contents of a file on the local Mac.",
     category="files",
-    parameters={"path": {"type": "str", "description": "Absolute or ~/relative file path"}},
+    parameters={
+        "path": {"type": "str", "description": "Absolute or ~/relative file path"}
+    },
 )
 async def file_read(path: str) -> str:
     p = _safe_path(path)
@@ -34,7 +37,7 @@ async def file_read(path: str) -> str:
     description="Write content to a file on the local Mac.",
     category="files",
     parameters={
-        "path":    {"type": "str", "description": "File path"},
+        "path": {"type": "str", "description": "File path"},
         "content": {"type": "str", "description": "Content to write"},
     },
 )
@@ -50,7 +53,7 @@ async def file_write(path: str, content: str) -> str:
     description="List files in a directory.",
     category="files",
     parameters={
-        "path":    {"type": "str", "description": "Directory path"},
+        "path": {"type": "str", "description": "Directory path"},
         "pattern": {"type": "str", "description": "Glob pattern (e.g. *.py)"},
     },
 )

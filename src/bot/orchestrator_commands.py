@@ -74,8 +74,7 @@ class AgenticCommandsMixin:
         # Clear conversation history on /start
         context.user_data["ollama_history"] = []
         await update.message.reply_text(
-            f"Hola {safe_name} 👋 AURA lista."
-            f"{sync_line}",
+            f"Hola {safe_name} 👋 AURA lista." f"{sync_line}",
         )
 
     async def agentic_new(
@@ -290,7 +289,9 @@ class AgenticCommandsMixin:
                 # Telegram limit is 4096 chars
                 if len(full) > 4000:
                     await update.message.reply_text(
-                        header + self._escape_html(output[:3600]) + "\n\n<i>…truncado</i>",
+                        header
+                        + self._escape_html(output[:3600])
+                        + "\n\n<i>…truncado</i>",
                         parse_mode="HTML",
                     )
                 else:
@@ -318,6 +319,7 @@ class AgenticCommandsMixin:
     ) -> None:
         """/voice [start|stop|status|send|transcript] — control Gemini Live voice agent."""
         from .handlers.voice_agent import voice_command
+
         await voice_command(update, context)
 
     async def _voz_command(
@@ -327,6 +329,7 @@ class AgenticCommandsMixin:
     ) -> None:
         """/voz [on|off] — toggle voice responses for this user."""
         from .features.voice_tts import handle_voz_command
+
         await handle_voz_command(update, context)
 
     async def agentic_repo(

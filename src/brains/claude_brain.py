@@ -178,6 +178,7 @@ class ClaudeBrain(Brain):
         # Build dynamic system prompt: AURA identity + RAG memory + tool manifest
         try:
             from src.context.aura_context import build_system_prompt_async
+
             dynamic_system = await build_system_prompt_async(
                 user_message=prompt,
                 extra_section=_EXECUTOR_SYSTEM_PROMPT,
@@ -185,7 +186,10 @@ class ClaudeBrain(Brain):
         except Exception:
             try:
                 from src.context.aura_context import build_system_prompt
-                dynamic_system = build_system_prompt(extra_section=_EXECUTOR_SYSTEM_PROMPT)
+
+                dynamic_system = build_system_prompt(
+                    extra_section=_EXECUTOR_SYSTEM_PROMPT
+                )
             except Exception:
                 dynamic_system = _EXECUTOR_SYSTEM_PROMPT
 
@@ -345,11 +349,13 @@ class ClaudeBrain(Brain):
         start = time.time()
 
         import os as _os
+
         env = _os.environ.copy()
         env.pop("ANTHROPIC_API_KEY", None)
 
         try:
             from src.context.aura_context import build_system_prompt_async
+
             dynamic_system = await build_system_prompt_async(
                 user_message=prompt,
                 extra_section=_EXECUTOR_SYSTEM_PROMPT,
@@ -358,14 +364,20 @@ class ClaudeBrain(Brain):
             dynamic_system = _EXECUTOR_SYSTEM_PROMPT
 
         cmd = [
-            self._cli_path, "-p", prompt,
-            "--model", self._model,
-            "--output-format", "stream-json",
+            self._cli_path,
+            "-p",
+            prompt,
+            "--model",
+            self._model,
+            "--output-format",
+            "stream-json",
             "--verbose",  # required by claude CLI when using stream-json + --print
             "--no-session-persistence",
             "--dangerously-skip-permissions",
-            "--setting-sources", "",
-            "--append-system-prompt", dynamic_system,
+            "--setting-sources",
+            "",
+            "--append-system-prompt",
+            dynamic_system,
         ]
 
         proc: Optional[asyncio.subprocess.Process] = None
@@ -455,7 +467,9 @@ class ClaudeBrain(Brain):
                 # Fallback: maybe stderr has info
                 err = stderr.decode("utf-8", errors="replace").strip() if stderr else ""
                 if proc.returncode == 143:
-                    logger.warning("claude_brain_oom_kill", model=self._model_alias, returncode=143)
+                    logger.warning(
+                        "claude_brain_oom_kill", model=self._model_alias, returncode=143
+                    )
                     return BrainResponse(
                         content="⚠️ RAM al límite — claude fue terminado por el SO. Cierra Chrome/apps pesadas y vuelve a intentarlo.",
                         brain_name=self.name,
@@ -497,6 +511,7 @@ class ClaudeBrain(Brain):
             if proc is not None:
                 try:
                     import os as _os2, signal as _sig
+
                     _os2.killpg(_os2.getpgid(proc.pid), _sig.SIGKILL)
                 except Exception:
                     try:

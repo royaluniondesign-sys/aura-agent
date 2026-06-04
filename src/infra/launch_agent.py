@@ -46,8 +46,11 @@ class LaunchAgent:
             try:
                 await self.start()
                 await self.process.wait()
-                logger.warning("Bot process exited with code %s, restarting in %ds",
-                             self.process.returncode, self.throttle_interval)
+                logger.warning(
+                    "Bot process exited with code %s, restarting in %ds",
+                    self.process.returncode,
+                    self.throttle_interval,
+                )
                 await asyncio.sleep(self.throttle_interval)
             except Exception as e:
                 logger.exception("Exception in restart loop: %s", e)

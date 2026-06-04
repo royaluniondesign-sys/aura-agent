@@ -1,4 +1,5 @@
 """Step execution logic: prompt interpolation and execute_step."""
+
 from __future__ import annotations
 
 import asyncio
@@ -47,7 +48,7 @@ async def execute_step(
     start = time.time()
 
     # Log START of step for all brains
-    logger.info(f'START - Step {step.step}: {step.role} [{step.brain}]')
+    logger.info(f"START - Step {step.step}: {step.role} [{step.brain}]")
 
     # Inject previous step outputs into prompt placeholders
     prompt = interpolate_prompt(step.prompt, step_outputs)
@@ -61,15 +62,17 @@ async def execute_step(
             "If you find something that needs fixing, DESCRIBE the fix but do not implement it.\n\n"
         ) + prompt
 
-    await _broadcast({
-        "type": "step_started",
-        "run_id": run_id,
-        "step": step.step,
-        "layer": step.layer,
-        "brain": step.brain,
-        "role": step.role,
-        "ts": time.time(),
-    })
+    await _broadcast(
+        {
+            "type": "step_started",
+            "run_id": run_id,
+            "step": step.step,
+            "layer": step.layer,
+            "brain": step.brain,
+            "role": step.role,
+            "ts": time.time(),
+        }
+    )
 
     # Log autonomous brain activity (detailed session log)
     if step.brain == "autonomous":
@@ -85,15 +88,17 @@ async def execute_step(
     if not brain:
         step.status = "failed"
         step.error = f"brain '{step.brain}' not found in router"
-        await _broadcast({
-            "type": "step_failed",
-            "run_id": run_id,
-            "step": step.step,
-            "brain": step.brain,
-            "error": step.error,
-            "duration_ms": int((time.time() - start) * 1000),
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "step_failed",
+                "run_id": run_id,
+                "step": step.step,
+                "brain": step.brain,
+                "error": step.error,
+                "duration_ms": int((time.time() - start) * 1000),
+                "ts": time.time(),
+            }
+        )
         return ""
 
     # Layer 3 (executor) gets longer timeout — writes files + commits
@@ -121,6 +126,7 @@ async def execute_step(
                 )
                 try:
                     from ...infra.rate_monitor import track_error
+
                     track_error(step.brain)
                 except Exception:
                     pass
@@ -133,11 +139,14 @@ async def execute_step(
                     retries += 1
                     continue
                 else:
-                    logger.error(f"Step execution failed after {max_retries} retries: {last_error}")
+                    logger.error(
+                        f"Step execution failed after {max_retries} retries: {last_error}"
+                    )
                     break
             # Track successful request in global rate monitor
             try:
                 from ...infra.rate_monitor import track_request
+
                 track_request(step.brain)
             except Exception:
                 pass
@@ -154,6 +163,7 @@ async def execute_step(
             )
             try:
                 from ...infra.rate_monitor import track_error
+
                 track_error(step.brain)
             except Exception:
                 pass
@@ -165,7 +175,9 @@ async def execute_step(
                 await asyncio.sleep(1)
                 retries += 1
             else:
-                logger.error(f"Step execution failed after {max_retries} retries: {last_error}")
+                logger.error(
+                    f"Step execution failed after {max_retries} retries: {last_error}"
+                )
                 break
 
     duration_ms = int((time.time() - start) * 1000)
@@ -174,6 +186,7 @@ async def execute_step(
     # Cascade fallback: if primary brain failed, try next in _FREE_FALLBACK chain
     if not output:
         from ..router import _FREE_FALLBACK
+
         original_brain = step.brain
         fallback_brain_name = _FREE_FALLBACK.get(step.brain)
         while fallback_brain_name and not output:
@@ -195,7 +208,9 @@ async def execute_step(
                             step.brain = fallback_brain_name
                             logger.info(f"Cascade success via {fallback_brain_name}")
                 except Exception as exc:
-                    logger.warning(f"Cascade fallback {fallback_brain_name} also failed: {exc}")
+                    logger.warning(
+                        f"Cascade fallback {fallback_brain_name} also failed: {exc}"
+                    )
             fallback_brain_name = _FREE_FALLBACK.get(fallback_brain_name)
         if not output:
             step.brain = original_brain  # restore for error reporting
@@ -215,17 +230,19 @@ async def execute_step(
                 details={"role": step.role, "output_length": len(output)},
             )
 
-        await _broadcast({
-            "type": "step_completed",
-            "run_id": run_id,
-            "step": step.step,
-            "layer": step.layer,
-            "brain": step.brain,
-            "role": step.role,
-            "output_preview": output[:300],
-            "duration_ms": duration_ms,
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "step_completed",
+                "run_id": run_id,
+                "step": step.step,
+                "layer": step.layer,
+                "brain": step.brain,
+                "role": step.role,
+                "output_preview": output[:300],
+                "duration_ms": duration_ms,
+                "ts": time.time(),
+            }
+        )
     else:
         step.status = "failed"
         step.error = last_error or "no output after retries exhausted"
@@ -241,18 +258,20 @@ async def execute_step(
                 details={"role": step.role, "error": step.error},
             )
 
-        await _broadcast({
-            "type": "step_failed",
-            "run_id": run_id,
-            "step": step.step,
-            "brain": step.brain,
-            "error": step.error,
-            "duration_ms": duration_ms,
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "step_failed",
+                "run_id": run_id,
+                "step": step.step,
+                "brain": step.brain,
+                "error": step.error,
+                "duration_ms": duration_ms,
+                "ts": time.time(),
+            }
+        )
 
     # Log END of step for all brains
-    logger.info(f'END - Step {step.step}: {step.status} ({duration_ms}ms)')
+    logger.info(f"END - Step {step.step}: {step.status} ({duration_ms}ms)")
 
     logger.info(
         "conductor_step_done",

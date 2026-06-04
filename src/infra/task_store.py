@@ -22,6 +22,7 @@ Schema:
   "tags": ["env", "resend"]
 }
 """
+
 from __future__ import annotations
 
 import json
@@ -105,9 +106,11 @@ def create_task(
         # Deduplication: return existing active task if same title found
         title_lower = title.strip().lower()
         for existing in tasks:
-            if (
-                existing.get("title", "").strip().lower() == title_lower
-                and existing.get("status") in ("pending", "in_progress")
+            if existing.get(
+                "title", ""
+            ).strip().lower() == title_lower and existing.get("status") in (
+                "pending",
+                "in_progress",
             ):
                 return existing
 
@@ -204,14 +207,17 @@ def pending_auto_fix_tasks() -> List[Dict[str, Any]]:
     with _lock:
         tasks = _load()
     return [
-        t for t in tasks
+        t
+        for t in tasks
         if t.get("status") == "pending"
         and t.get("auto_fix") is True
         and t.get("attempts", 0) < 3  # max 3 attempts
     ]
 
 
-def update_task_status(task_id: str, status: str, result: str = "") -> Optional[Dict[str, Any]]:
+def update_task_status(
+    task_id: str, status: str, result: str = ""
+) -> Optional[Dict[str, Any]]:
     """Alias for update_task scoped to status + result fields."""
     kwargs: Dict[str, Any] = {"status": status}
     if result:

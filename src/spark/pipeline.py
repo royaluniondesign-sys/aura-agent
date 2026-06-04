@@ -11,6 +11,7 @@ Run:
     uv run python -m src.spark.pipeline --dry-run
     uv run python -m src.spark.pipeline --query keywords --top 20
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,6 +31,7 @@ _LAKE_DIR = Path.home() / ".aura" / "knowledge_lake"
 
 def _get_duckdb():
     import duckdb
+
     con = duckdb.connect()
     con.execute("SET threads=4; SET memory_limit='512MB'")
     return con
@@ -43,7 +45,8 @@ def _load_rag_to_duckdb(con) -> int:
     ).fetchall()
     sqlite_conn.close()
 
-    con.execute("""
+    con.execute(
+        """
         CREATE OR REPLACE TABLE chunks AS
         SELECT
             col0 AS id,
@@ -175,7 +178,9 @@ def query(table: str, top_n: int = 20, source_type: str | None = None) -> list[d
 def _cli() -> None:
     parser = argparse.ArgumentParser(description="AURA Knowledge Pipeline")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--query", metavar="TABLE", help="Query a knowledge table (after run)")
+    parser.add_argument(
+        "--query", metavar="TABLE", help="Query a knowledge table (after run)"
+    )
     parser.add_argument("--top", type=int, default=20)
     parser.add_argument("--type", dest="source_type", default=None)
     args = parser.parse_args()

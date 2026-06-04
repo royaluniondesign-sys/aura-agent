@@ -5,6 +5,7 @@ Uses AgentFactory for dynamic role creation (matryoshka pattern):
   - Unknown roles synthesized on the fly with auto system_prompt + optimal brain
   - Each agent can request sub-agents up to factory.MAX_DEPTH levels deep
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -59,7 +60,9 @@ class AgentSquad:
 
     def __init__(self, brain_router: Any) -> None:
         self._router = brain_router
-        self._factory: AgentFactory = get_factory(brain_router) or AgentFactory(brain_router)
+        self._factory: AgentFactory = get_factory(brain_router) or AgentFactory(
+            brain_router
+        )
         self._conversation: list[AgentMessage] = []
         self._active = False
         logger.info("agent_squad_ready", roles=list(ROLES.keys()), factory="matryoshka")
@@ -93,6 +96,7 @@ class AgentSquad:
         # Primary: meta_router complexity score (already wired in routing)
         try:
             from src.claude.meta_router import route_request, ModelTier
+
             decision = route_request(prompt)
             # Sonnet-level complexity (score ≥ 5) + multi-domain = squad territory
             if decision.score >= 8:
@@ -108,12 +112,33 @@ class AgentSquad:
             prompt,
         )
         # Count distinct domains mentioned
-        domains = sum([
-            bool(re.search(r"(?i)\b(código|code|implement|build|deploy|api|backend)\b", prompt)),
-            bool(re.search(r"(?i)\b(post|contenido|content|social|marketing|copy|campaign)\b", prompt)),
-            bool(re.search(r"(?i)\b(diseño|design|ux|ui|imagen|visual|brand)\b", prompt)),
-            bool(re.search(r"(?i)\b(investigar|research|analiza|datos|metrics|seo)\b", prompt)),
-        ])
+        domains = sum(
+            [
+                bool(
+                    re.search(
+                        r"(?i)\b(código|code|implement|build|deploy|api|backend)\b",
+                        prompt,
+                    )
+                ),
+                bool(
+                    re.search(
+                        r"(?i)\b(post|contenido|content|social|marketing|copy|campaign)\b",
+                        prompt,
+                    )
+                ),
+                bool(
+                    re.search(
+                        r"(?i)\b(diseño|design|ux|ui|imagen|visual|brand)\b", prompt
+                    )
+                ),
+                bool(
+                    re.search(
+                        r"(?i)\b(investigar|research|analiza|datos|metrics|seo)\b",
+                        prompt,
+                    )
+                ),
+            ]
+        )
         multi_domain = domains >= 2
         long_task = len(prompt) > 200
 
@@ -138,11 +163,47 @@ class AgentSquad:
         # Extended detection: new roles in catalog
         extended_keywords = {
             "copywriter": ["copy", "redacta", "texto", "headline", "eslogan"],
-            "designer": ["diseño", "design", "ui", "ux", "visual", "mockup", "wireframe"],
-            "researcher": ["investiga", "research", "busca info", "analiza el mercado", "trends", "seo"],
-            "devops": ["deploy", "docker", "ci/cd", "pipeline", "infraestructura", "kubernetes"],
-            "qa_engineer": ["pruebas", "tests", "testing", "calidad", "bugs", "edge cases"],
-            "data_analyst": ["datos", "métricas", "analytics", "dashboard", "kpi", "sql"],
+            "designer": [
+                "diseño",
+                "design",
+                "ui",
+                "ux",
+                "visual",
+                "mockup",
+                "wireframe",
+            ],
+            "researcher": [
+                "investiga",
+                "research",
+                "busca info",
+                "analiza el mercado",
+                "trends",
+                "seo",
+            ],
+            "devops": [
+                "deploy",
+                "docker",
+                "ci/cd",
+                "pipeline",
+                "infraestructura",
+                "kubernetes",
+            ],
+            "qa_engineer": [
+                "pruebas",
+                "tests",
+                "testing",
+                "calidad",
+                "bugs",
+                "edge cases",
+            ],
+            "data_analyst": [
+                "datos",
+                "métricas",
+                "analytics",
+                "dashboard",
+                "kpi",
+                "sql",
+            ],
         }
         for role_key, keywords in extended_keywords.items():
             if any(kw in prompt_lower for kw in keywords):
@@ -154,7 +215,18 @@ class AgentSquad:
         if not needed:
             needed.add(
                 "cto"
-                if any(w in prompt_lower for w in ["code", "build", "create", "make", "fix", "crea", "implementa"])
+                if any(
+                    w in prompt_lower
+                    for w in [
+                        "code",
+                        "build",
+                        "create",
+                        "make",
+                        "fix",
+                        "crea",
+                        "implementa",
+                    ]
+                )
                 else "cmo"
             )
 
@@ -174,7 +246,9 @@ class AgentSquad:
 
         brain = self._router.get_brain(synth_role.brain)
         if brain is None:
-            brain = self._router.get_brain("qwen-code") or self._router.get_brain("haiku")
+            brain = self._router.get_brain("qwen-code") or self._router.get_brain(
+                "haiku"
+            )
         if brain is None:
             return f"[Brain {synth_role.brain} unavailable]"
 
@@ -186,6 +260,7 @@ class AgentSquad:
         )
 
         from src.agents.activity import get_tracker
+
         tracker = get_tracker()
         tracker.set_working(role_key, task[:80])
 
@@ -222,6 +297,7 @@ class AgentSquad:
     ) -> str:
         """Detect and resolve __NEEDS__ sub-agent requests (matryoshka)."""
         from .factory import MAX_DEPTH
+
         if depth >= MAX_DEPTH:
             return content
 
@@ -266,6 +342,7 @@ class AgentSquad:
         self._conversation.clear()
 
         from src.agents.activity import get_tracker
+
         get_tracker().start_run(prompt)
 
         async def notify(msg: str) -> None:
@@ -281,8 +358,9 @@ class AgentSquad:
         # CEO knows about all available roles including synthesized ones
         known_roles = list(self._factory._synthesized.keys())
         roles_hint = ", ".join(known_roles[:12]) + (
-            " (+ cualquier otro especialista que necesites)" if len(known_roles) > 12 else
-            " (puedes inventar cualquier rol especialista que necesites)"
+            " (+ cualquier otro especialista que necesites)"
+            if len(known_roles) > 12
+            else " (puedes inventar cualquier rol especialista que necesites)"
         )
         ceo_decompose = await self._call_brain(
             "ceo",
@@ -336,7 +414,9 @@ Responde SOLO con JSON válido:
         # Step 1b: Opus escalation — Chief Architect weighs in on hard problems
         opus_insight = ""
         if self.needs_opus(prompt):
-            await notify("🧠 <b>Chief Architect</b> (Opus) — problema complejo detectado, pensando profundo...")
+            await notify(
+                "🧠 <b>Chief Architect</b> (Opus) — problema complejo detectado, pensando profundo..."
+            )
             opus_insight = await self._call_brain(
                 "chief_architect",
                 f"""El CEO necesita tu perspectiva para una tarea de alta complejidad.
@@ -354,9 +434,7 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
                 AgentMessage("chief_architect", "ceo", "review", opus_insight)
             )
             _tracker.add_message("chief_architect", "ceo", opus_insight[:120], "review")
-            await notify(
-                f"🧠 <b>Chief Architect</b>: {opus_insight[:120]}..."
-            )
+            await notify(f"🧠 <b>Chief Architect</b>: {opus_insight[:120]}...")
 
         agents_preview = ", ".join(s["role"].upper() for s in subtasks)
         await notify(
@@ -381,7 +459,11 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
                 self._call_brain(
                     s["role"],
                     s["task"],
-                    context=f"[Chief Architect guidance]\n{opus_insight}" if opus_insight else "",
+                    context=(
+                        f"[Chief Architect guidance]\n{opus_insight}"
+                        if opus_insight
+                        else ""
+                    ),
                     timeout=150,
                 )
                 for s in no_deps
@@ -416,9 +498,7 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
                 role, subtask["task"], context=dep_context, timeout=150
             )
             results[subtask["id"]] = result_text
-            self._conversation.append(
-                AgentMessage(role, "ceo", "result", result_text)
-            )
+            self._conversation.append(AgentMessage(role, "ceo", "result", result_text))
             await notify(f"✅ <b>{role_title}</b> completó")
 
         # Step 3: COO verification (if multiple agents worked and COO wasn't a subtask)
@@ -426,9 +506,7 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
         assigned_roles = [s["role"] for s in subtasks]
         if len(results) > 1 and "coo" not in assigned_roles:
             await notify("📋 <b>COO</b> verificando calidad...")
-            all_results = "\n\n".join(
-                f"[{tid}]: {r}" for tid, r in results.items()
-            )
+            all_results = "\n\n".join(f"[{tid}]: {r}" for tid, r in results.items())
             coo_result = await self._call_brain(
                 "coo",
                 (
@@ -440,9 +518,7 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
             )
             coo_verdict = coo_result
             verdict_emoji = "✅" if "APROBADO" in coo_result.upper() else "⚠️"
-            self._conversation.append(
-                AgentMessage("coo", "ceo", "verify", coo_result)
-            )
+            self._conversation.append(AgentMessage("coo", "ceo", "verify", coo_result))
             _tracker.add_message("coo", "ceo", coo_result[:120], "review")
             await notify(f"{verdict_emoji} <b>COO</b>: {coo_result[:120]}")
 
@@ -455,7 +531,9 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
         )
         coo_block = f"\nVerificación COO: {coo_verdict}" if coo_verdict else ""
 
-        opus_block = f"\nChief Architect insight (Opus):\n{opus_insight}" if opus_insight else ""
+        opus_block = (
+            f"\nChief Architect insight (Opus):\n{opus_insight}" if opus_insight else ""
+        )
 
         final = await self._call_brain(
             "ceo",
@@ -509,15 +587,21 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
         # CEO + org chart
         ceo = ROLES.get("ceo")
         if ceo:
-            lines.append(f"{ceo.emoji} <b>{ceo.title}</b> <code>{ceo.brain}</code> — {ceo.full_name}")
+            lines.append(
+                f"{ceo.emoji} <b>{ceo.title}</b> <code>{ceo.brain}</code> — {ceo.full_name}"
+            )
             direct_reports = [r for r in ROLES.values() if r.reports_to == "ceo"]
             for i, rep in enumerate(direct_reports):
                 connector = "└─" if i == len(direct_reports) - 1 else "├─"
-                lines.append(f"  {connector} {rep.emoji} <b>{rep.title}</b> <code>{rep.brain}</code>")
+                lines.append(
+                    f"  {connector} {rep.emoji} <b>{rep.title}</b> <code>{rep.brain}</code>"
+                )
                 sub_reports = [r for r in ROLES.values() if r.reports_to == rep.key]
                 for j, sub in enumerate(sub_reports):
                     sub_conn = "└─" if j == len(sub_reports) - 1 else "├─"
-                    lines.append(f"  │   {sub_conn} {sub.emoji} <b>{sub.title}</b> <code>{sub.brain}</code>")
+                    lines.append(
+                        f"  │   {sub_conn} {sub.emoji} <b>{sub.title}</b> <code>{sub.brain}</code>"
+                    )
 
         lines.append(f"\n{'🟢 <b>Activo</b>' if self._active else '⚡ Listo'}")
         lines.append("<i>Usa /team &lt;tarea&gt; para activar el squad</i>")

@@ -22,13 +22,9 @@ class FleetCommandsMixin:
         from ...infra.fleet import FleetManager
 
         fleet = FleetManager()
-        await update.message.reply_text(
-            fleet.format_fleet_status(), parse_mode="HTML"
-        )
+        await update.message.reply_text(fleet.format_fleet_status(), parse_mode="HTML")
 
-    async def _zt_ssh(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def _zt_ssh(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """⚡ Execute command on remote machine: /ssh <machine> <command>."""
         from ...infra.fleet import FleetManager
 
@@ -46,8 +42,7 @@ class FleetCommandsMixin:
                 return
             names = ", ".join(f"<code>{m.name}</code>" for m in machines)
             await update.message.reply_text(
-                f"Usage: <code>/ssh machine command</code>\n"
-                f"Available: {names}",
+                f"Usage: <code>/ssh machine command</code>\n" f"Available: {names}",
                 parse_mode="HTML",
             )
             return
@@ -202,9 +197,7 @@ class FleetCommandsMixin:
                 )
             return
 
-        await update.message.reply_text(
-            nodes.format_nodes_status(), parse_mode="HTML"
-        )
+        await update.message.reply_text(nodes.format_nodes_status(), parse_mode="HTML")
 
     async def _zt_dispatch(
         self, update: Update, context: ContextTypes.DEFAULT_TYPE
@@ -252,7 +245,9 @@ class FleetCommandsMixin:
             return
 
         profile = nodes.get_profile(best)
-        score_info = f"score {int(profile.score_for_task(task_type))}" if profile else ""
+        score_info = (
+            f"score {int(profile.score_for_task(task_type))}" if profile else ""
+        )
 
         msg = await update.message.reply_text(
             f"🚀 Dispatching to <b>{escape_html(best)}</b> ({score_info})\n"
@@ -264,7 +259,9 @@ class FleetCommandsMixin:
         result = await nodes.dispatch(command, task_type=task_type)
 
         output = escape_html(
-            (result.ssh_result.output if result.ssh_result else result.error or "?")[:3000]
+            (result.ssh_result.output if result.ssh_result else result.error or "?")[
+                :3000
+            ]
         )
         status = "✅" if result.success else "❌"
         await msg.edit_text(

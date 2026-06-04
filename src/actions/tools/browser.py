@@ -1,4 +1,5 @@
 """Browser tool — headless Chromium via Playwright for JS-heavy pages and screenshots."""
+
 from __future__ import annotations
 import asyncio
 import base64
@@ -9,9 +10,12 @@ def _pw():
     """Import playwright — raises clear error if not installed."""
     try:
         from playwright.async_api import async_playwright
+
         return async_playwright
     except ImportError:
-        raise RuntimeError("playwright not installed in this Python env. Run: playwright install chromium")
+        raise RuntimeError(
+            "playwright not installed in this Python env. Run: playwright install chromium"
+        )
 
 
 @aura_tool(
@@ -20,11 +24,19 @@ def _pw():
     category="web",
     parameters={
         "url": {"type": "str", "description": "URL to open"},
-        "wait_for": {"type": "str", "description": "CSS selector to wait for before extracting (optional)"},
-        "extract": {"type": "str", "description": "CSS selector to extract (optional, default: body)"},
+        "wait_for": {
+            "type": "str",
+            "description": "CSS selector to wait for before extracting (optional)",
+        },
+        "extract": {
+            "type": "str",
+            "description": "CSS selector to extract (optional, default: body)",
+        },
     },
 )
-async def browser_navigate(url: str, wait_for: str | None = None, extract: str | None = None) -> str:
+async def browser_navigate(
+    url: str, wait_for: str | None = None, extract: str | None = None
+) -> str:
     try:
         async_playwright = _pw()
         async with async_playwright() as p:
@@ -49,10 +61,15 @@ async def browser_navigate(url: str, wait_for: str | None = None, extract: str |
         "url": {"type": "str", "description": "URL to screenshot"},
         "width": {"type": "int", "description": "Viewport width (default 1280)"},
         "height": {"type": "int", "description": "Viewport height (default 800)"},
-        "full_page": {"type": "bool", "description": "Capture full page scroll (default False)"},
+        "full_page": {
+            "type": "bool",
+            "description": "Capture full page scroll (default False)",
+        },
     },
 )
-async def browser_screenshot(url: str, width: int = 1280, height: int = 800, full_page: bool = False) -> str:
+async def browser_screenshot(
+    url: str, width: int = 1280, height: int = 800, full_page: bool = False
+) -> str:
     try:
         async_playwright = _pw()
         async with async_playwright() as p:
@@ -74,10 +91,15 @@ async def browser_screenshot(url: str, width: int = 1280, height: int = 800, ful
     parameters={
         "url": {"type": "str", "description": "URL to open"},
         "click_selector": {"type": "str", "description": "CSS selector to click"},
-        "extract_selector": {"type": "str", "description": "CSS selector to extract after click"},
+        "extract_selector": {
+            "type": "str",
+            "description": "CSS selector to extract after click",
+        },
     },
 )
-async def browser_click_and_extract(url: str, click_selector: str, extract_selector: str) -> str:
+async def browser_click_and_extract(
+    url: str, click_selector: str, extract_selector: str
+) -> str:
     try:
         async_playwright = _pw()
         async with async_playwright() as p:

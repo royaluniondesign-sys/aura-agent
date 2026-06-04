@@ -6,6 +6,7 @@ and they appear automatically in:
   - MCP server (Claude Desktop, Cursor, etc.)
   - Self-healer diagnostics
 """
+
 from .registry import registry, get_tool, list_tools, call_tool
 
 __all__ = ["registry", "get_tool", "list_tools", "call_tool"]

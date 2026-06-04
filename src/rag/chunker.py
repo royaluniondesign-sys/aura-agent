@@ -1,4 +1,5 @@
 """Smart text chunker for AURA RAG."""
+
 from __future__ import annotations
 
 import hashlib
@@ -37,7 +38,9 @@ def chunk_markdown(text: str, source: str) -> List[Dict[str, Any]]:
         # Sub-split if too long
         combined = prefix + body
         if len(combined) <= 500:
-            chunks.append(_make_chunk(source, combined, {"header": header, "type": "markdown"}))
+            chunks.append(
+                _make_chunk(source, combined, {"header": header, "type": "markdown"})
+            )
         else:
             # Split at paragraph boundaries
             paragraphs = re.split(r"\n{2,}", body)
@@ -45,12 +48,22 @@ def chunk_markdown(text: str, source: str) -> List[Dict[str, Any]]:
             for para in paragraphs:
                 candidate = window + para + "\n\n"
                 if len(candidate) > 500 and window.strip():
-                    chunks.append(_make_chunk(source, window.strip(), {"header": header, "type": "markdown"}))
+                    chunks.append(
+                        _make_chunk(
+                            source,
+                            window.strip(),
+                            {"header": header, "type": "markdown"},
+                        )
+                    )
                     window = prefix + para + "\n\n"
                 else:
                     window = candidate
             if window.strip():
-                chunks.append(_make_chunk(source, window.strip(), {"header": header, "type": "markdown"}))
+                chunks.append(
+                    _make_chunk(
+                        source, window.strip(), {"header": header, "type": "markdown"}
+                    )
+                )
 
     for part in sections:
         if re.match(r"^#{1,3} ", part):
@@ -92,7 +105,7 @@ def chunk_text(text: str, source: str) -> List[Dict[str, Any]]:
 
 
 _LOG_CHUNK_MAX_CHARS = 1500  # safe ceiling for nomic-embed-text context limit
-_LOG_LINE_MAX_CHARS = 300    # truncate individual log lines (JSON blobs can be huge)
+_LOG_LINE_MAX_CHARS = 300  # truncate individual log lines (JSON blobs can be huge)
 
 
 def _truncate_line(line: str, max_chars: int = _LOG_LINE_MAX_CHARS) -> str:
@@ -110,7 +123,9 @@ def chunk_logs(text: str, source: str) -> List[Dict[str, Any]]:
         r"^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}|\[\d{4}-\d{2}-\d{2}|\d{2}/\d{2}/\d{4}"
     )
     msg_group_pattern = re.compile(r"^Message Group: ")
-    diag_timestamp_pattern = re.compile(r"^\{\"timestamp\":\"\d{4}-\d{2}-\d{2} \d{2}:\d{2}")
+    diag_timestamp_pattern = re.compile(
+        r"^\{\"timestamp\":\"\d{4}-\d{2}-\d{2} \d{2}:\d{2}"
+    )
 
     lines = text.splitlines()
     window_lines: List[str] = []
@@ -132,7 +147,12 @@ def chunk_logs(text: str, source: str) -> List[Dict[str, Any]]:
 
         is_msg_group = msg_group_pattern.match(line)
         is_diag_ts = diag_timestamp_pattern.match(line)
-        is_separator = stripped == "---" or ts_pattern.match(stripped) or is_msg_group or is_diag_ts
+        is_separator = (
+            stripped == "---"
+            or ts_pattern.match(stripped)
+            or is_msg_group
+            or is_diag_ts
+        )
 
         if is_separator and window_lines:
             if is_msg_group or is_diag_ts:
@@ -158,31 +178,33 @@ def chunk_logs(text: str, source: str) -> List[Dict[str, Any]]:
 def chunk_code(text: str, source: str) -> List[Dict[str, Any]]:
     """Split Python code into logical chunks based on classes and functions."""
     chunks: List[Dict[str, Any]] = []
-    
+
     # Split by class or top-level function
     sections = re.split(r"(?m)^(class |def )", text)
-    
+
     current_section = ""
-    prefix = "" # Imports, module-level vars at the top
-    
+    prefix = ""  # Imports, module-level vars at the top
+
     # The first element is everything before the first class/def
     if sections:
         prefix = sections[0].strip()
         sections = sections[1:]
-    
+
     # sections is now [tag, body, tag, body, ...] where tag is "class " or "def "
     for i in range(0, len(sections), 2):
         tag = sections[i]
-        body = sections[i+1] if i+1 < len(sections) else ""
+        body = sections[i + 1] if i + 1 < len(sections) else ""
         content = tag + body
-        
+
         # If it's a large class/function, sub-chunk it
         if len(content) > 1500:
             lines = content.splitlines()
             current = ""
             for line in lines:
                 if len(current) + len(line) + 1 > 1500:
-                    chunks.append(_make_chunk(source, current.strip(), {"type": "code"}))
+                    chunks.append(
+                        _make_chunk(source, current.strip(), {"type": "code"})
+                    )
                     current = line + "\n"
                 else:
                     current += line + "\n"
@@ -190,9 +212,9 @@ def chunk_code(text: str, source: str) -> List[Dict[str, Any]]:
                 chunks.append(_make_chunk(source, current.strip(), {"type": "code"}))
         else:
             chunks.append(_make_chunk(source, content.strip(), {"type": "code"}))
-            
+
     if not chunks and prefix:
         # If no classes/defs found, just chunk the whole thing as text
         return chunk_text(text, source)
-        
+
     return [c for c in chunks if c["content"]]

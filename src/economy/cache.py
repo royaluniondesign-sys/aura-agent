@@ -108,9 +108,9 @@ class ResponseCache:
         try:
             with sqlite3.connect(str(self._db_path)) as conn:
                 total = conn.execute("SELECT COUNT(*) FROM cache").fetchone()[0]
-                hits = conn.execute(
-                    "SELECT SUM(hit_count) FROM cache"
-                ).fetchone()[0] or 0
+                hits = (
+                    conn.execute("SELECT SUM(hit_count) FROM cache").fetchone()[0] or 0
+                )
                 fresh = conn.execute(
                     "SELECT COUNT(*) FROM cache WHERE created_at > ?",
                     (time.time() - self._ttl,),
@@ -119,9 +119,11 @@ class ResponseCache:
                     "total_entries": total,
                     "fresh_entries": fresh,
                     "total_hits": hits,
-                    "db_size_kb": round(self._db_path.stat().st_size / 1024, 1)
-                    if self._db_path.exists()
-                    else 0,
+                    "db_size_kb": (
+                        round(self._db_path.stat().st_size / 1024, 1)
+                        if self._db_path.exists()
+                        else 0
+                    ),
                 }
         except Exception as e:
             logger.debug("cache_stats_error", error=str(e))

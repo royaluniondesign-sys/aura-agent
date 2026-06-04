@@ -20,6 +20,7 @@ async def _after_squad_complete(original_task: str, result: str) -> None:
     try:
         from src.brains.router import BrainRouter as _BR
         from src.infra.task_store import create_task as _ct
+
         _router = _BR()
         suggestion_prompt = (
             f"Tarea completada: {original_task}\n\n"
@@ -89,6 +90,7 @@ async def get_team_activity() -> Dict[str, Any]:
     """Real-time squad activity snapshot."""
     try:
         from src.agents.activity import get_tracker
+
         return get_tracker().snapshot()
     except Exception as e:
         return {"run_active": False, "agents": {}, "messages": [], "error": str(e)}
@@ -99,11 +101,15 @@ async def stop_squad(_: Request) -> Dict[str, Any]:
     """Request the running squad to stop."""
     try:
         from src.agents.activity import get_tracker
+
         tracker = get_tracker()
         if not tracker._run_active:
             return {"ok": False, "msg": "Sin tarea activa"}
         tracker.request_stop()
-        return {"ok": True, "msg": "Stop solicitado — el squad finalizará tras la tarea actual"}
+        return {
+            "ok": True,
+            "msg": "Stop solicitado — el squad finalizará tras la tarea actual",
+        }
     except Exception as e:
         return {"ok": False, "error": str(e)}
 
@@ -121,6 +127,7 @@ async def run_squad_task(request: Request) -> Dict[str, Any]:
     try:
         from src.agents.squad import get_squad, AgentSquad
         from src.brains.router import BrainRouter
+
         squad = get_squad()
         if squad is None:
             # Bootstrap a fresh squad with default router

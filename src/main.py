@@ -185,6 +185,7 @@ async def create_application(config: Settings) -> Dict[str, Any]:
 
     # Initialize conductor singleton (3-layer orchestrator)
     from src.brains.conductor import Conductor, set_conductor
+
     set_conductor(Conductor(brain_router))
     logger.info("Conductor initialized (3-layer orchestrator ready)")
 
@@ -194,7 +195,9 @@ async def create_application(config: Settings) -> Dict[str, Any]:
     import src.infra.rate_monitor as _rm_module
 
     rate_monitor = get_global_monitor()
-    _rm_module._global_monitor = rate_monitor  # ensure singleton is the one we just created
+    _rm_module._global_monitor = (
+        rate_monitor  # ensure singleton is the one we just created
+    )
 
     # Create bot with all dependencies
     dependencies = {
@@ -269,6 +272,7 @@ async def run_application(app: Dict[str, Any]) -> None:
         # Load persisted voice-on user IDs so /voz state survives restarts
         try:
             from src.bot.features.voice_tts import load_voice_prefs
+
             _voice_users = load_voice_prefs()
             bot.deps["voice_users"] = _voice_users
             if _voice_users:
@@ -281,10 +285,12 @@ async def run_application(app: Dict[str, Any]) -> None:
         async def _warmup_xtts() -> None:
             try:
                 from src.voice.tts_engine import text_to_ogg
+
                 await text_to_ogg("hola")
                 logger.info("xtts_warmup_ok")
             except Exception as _w:
                 logger.debug("xtts_warmup_skip", reason=str(_w))
+
         asyncio.create_task(_warmup_xtts(), name="xtts_warmup")
 
         if config.enable_project_threads:
@@ -336,6 +342,7 @@ async def run_application(app: Dict[str, Any]) -> None:
         )
         try:
             from src.api.mesh_state import set_mesh_bot
+
             set_mesh_bot(telegram_bot, owner_chat_id)
             logger.info("mesh_bot_wired", owner_chat_id=owner_chat_id)
         except Exception as _e:
@@ -366,7 +373,9 @@ async def run_application(app: Dict[str, Any]) -> None:
 
             api_task = asyncio.create_task(
                 run_api_server(
-                    event_bus, config, storage.db_manager,
+                    event_bus,
+                    config,
+                    storage.db_manager,
                     brain_router=brain_router,
                     rate_monitor=rate_monitor,
                 )
@@ -396,8 +405,10 @@ async def run_application(app: Dict[str, Any]) -> None:
             # NOTE: notify_fn is set later (after _notify_proactive is defined below)
             try:
                 from src.scheduler.routine_runner import (
-                    init_routine_runner, load_all_routines,
+                    init_routine_runner,
+                    load_all_routines,
                 )
+
                 init_routine_runner(
                     scheduler._scheduler,  # APScheduler instance
                     brain_router,
@@ -411,6 +422,7 @@ async def run_application(app: Dict[str, Any]) -> None:
         # RAG — local vector memory (fire-and-forget: do NOT add to tasks list)
         try:
             from src.rag.indexer import RAGIndexer
+
             _rag_indexer = RAGIndexer()
             # One-shot background index — intentionally not in tasks list.
             # If added to tasks + FIRST_COMPLETED, it triggers full shutdown when done.
@@ -432,16 +444,23 @@ async def run_application(app: Dict[str, Any]) -> None:
                     if not report.all_healthy:
                         global _LAST_MEMORY_WARN
                         # Suppress repeated high-memory-only warnings — rate limit to once per 15 min
-                        mem_only = report.memory_used_pct > 0 and all(
-                            "High memory" in w for w in report.warnings
-                        ) and all(s.is_running for s in report.services)
+                        mem_only = (
+                            report.memory_used_pct > 0
+                            and all("High memory" in w for w in report.warnings)
+                            and all(s.is_running for s in report.services)
+                        )
                         if mem_only:
                             now = time.time()
-                            if report.memory_used_pct <= 99 or now - _LAST_MEMORY_WARN < 900:
+                            if (
+                                report.memory_used_pct <= 99
+                                or now - _LAST_MEMORY_WARN < 900
+                            ):
                                 pass  # skip — below new threshold or too soon
                             else:
                                 _LAST_MEMORY_WARN = now
-                                logger.warning("watchdog_issues", warnings=report.warnings)
+                                logger.warning(
+                                    "watchdog_issues", warnings=report.warnings
+                                )
                         else:
                             logger.warning("watchdog_issues", warnings=report.warnings)
                 except asyncio.CancelledError:
@@ -466,6 +485,7 @@ async def run_application(app: Dict[str, Any]) -> None:
         async def _brain_recovery_monitor() -> None:
             """Poll rate-limited brains every 60s, notify + auto-switch when recovered."""
             from src.infra.rate_monitor import get_global_monitor
+
             _was_rate_limited: dict = {}
             await asyncio.sleep(30)  # startup delay
             while True:
@@ -479,16 +499,21 @@ async def run_application(app: Dict[str, Any]) -> None:
                         if is_rl and not was_rl:
                             # Just became rate limited
                             _was_rate_limited[name] = True
-                            logger.info("brain_rate_limited", brain=name,
-                                        recover_in=usage.recover_in_str)
+                            logger.info(
+                                "brain_rate_limited",
+                                brain=name,
+                                recover_in=usage.recover_in_str,
+                            )
                             msg = (
                                 f"⛔ *{name}* rate limited\n"
                                 f"Recupera en: `{usage.recover_in_str}`\n"
                                 f"Usado: {usage.requests_in_window}/{usage.known_limit}"
                             )
-                            for cid in (config.notification_chat_ids or []):
+                            for cid in config.notification_chat_ids or []:
                                 try:
-                                    await telegram_bot.send_message(cid, msg, parse_mode="Markdown")
+                                    await telegram_bot.send_message(
+                                        cid, msg, parse_mode="Markdown"
+                                    )
                                 except Exception:
                                     pass
 
@@ -496,10 +521,14 @@ async def run_application(app: Dict[str, Any]) -> None:
                             # Rate limit cleared — brain available again
                             _was_rate_limited[name] = False
                             logger.info("brain_recovered", brain=name)
-                            msg = f"✅ *{name}* disponible de nuevo — tokens recuperados"
-                            for cid in (config.notification_chat_ids or []):
+                            msg = (
+                                f"✅ *{name}* disponible de nuevo — tokens recuperados"
+                            )
+                            for cid in config.notification_chat_ids or []:
                                 try:
-                                    await telegram_bot.send_message(cid, msg, parse_mode="Markdown")
+                                    await telegram_bot.send_message(
+                                        cid, msg, parse_mode="Markdown"
+                                    )
                                 except Exception:
                                     pass
                 except Exception as e:
@@ -510,14 +539,18 @@ async def run_application(app: Dict[str, Any]) -> None:
         tasks.append(brain_recovery_task)
 
         # Semantic Router + MemPalace load lazily on first use (saves ~300MB RAM at startup)
-        logger.info("AI stack: lazy load enabled (semantic router + MemPalace on first use)")
+        logger.info(
+            "AI stack: lazy load enabled (semantic router + MemPalace on first use)"
+        )
 
         # Auto-register AURA MCP with all available CLIs (background, non-blocking)
         async def _register_mcp_clients() -> None:
             try:
                 import asyncio as _asyncio
+
                 loop = _asyncio.get_event_loop()
                 from src.mcp.cli_registrar import register_all
+
                 results = await loop.run_in_executor(None, register_all)
                 logger.info("mcp_registered", clients=results)
             except Exception as e:
@@ -531,6 +564,7 @@ async def run_application(app: Dict[str, Any]) -> None:
             await asyncio.sleep(30)
             try:
                 from src.context.mempalace_memory import prewarm
+
                 await prewarm()
             except Exception as e:
                 logger.warning("mempalace_prewarm_error", error=str(e))
@@ -539,30 +573,46 @@ async def run_application(app: Dict[str, Any]) -> None:
 
         # Proactive conductor loop — autonomous AURA self-improvement every 15 min
         _notify_timestamps: list = []  # rolling window for rate limiting
-        _NOTIFY_MAX_PER_HOUR = 1       # max 1 proactive notification per hour (3/day max in practice)
-        _notify_lock = asyncio.Lock()  # prevents race between proactive_loop + routine_runner
+        _NOTIFY_MAX_PER_HOUR = (
+            1  # max 1 proactive notification per hour (3/day max in practice)
+        )
+        _notify_lock = (
+            asyncio.Lock()
+        )  # prevents race between proactive_loop + routine_runner
 
         async def _notify_proactive(msg: str) -> None:
             nonlocal _notify_timestamps
             import time as _time
+
             async with _notify_lock:  # atomic check+send — no duplicate sends
                 now = _time.time()
                 # Respect global Telegram flood ban (shared with orchestrator)
                 try:
-                    from src.bot.flood_guard import remaining_flood_wait, set_flood_wait, extract_retry_after
+                    from src.bot.flood_guard import (
+                        remaining_flood_wait,
+                        set_flood_wait,
+                        extract_retry_after,
+                    )
+
                     flood_remaining = remaining_flood_wait()
                     if flood_remaining > 0:
-                        logger.info("proactive_notify_skipped_flood", remaining_s=flood_remaining)
+                        logger.info(
+                            "proactive_notify_skipped_flood",
+                            remaining_s=flood_remaining,
+                        )
                         return
                 except Exception:
                     pass
                 # Per-hour rate limit: drop oldest outside 1h window
                 _notify_timestamps = [t for t in _notify_timestamps if now - t < 3600]
                 if len(_notify_timestamps) >= _NOTIFY_MAX_PER_HOUR:
-                    logger.info("proactive_notify_skipped_hourly_cap",
-                                sent=len(_notify_timestamps), cap=_NOTIFY_MAX_PER_HOUR)
+                    logger.info(
+                        "proactive_notify_skipped_hourly_cap",
+                        sent=len(_notify_timestamps),
+                        cap=_NOTIFY_MAX_PER_HOUR,
+                    )
                     return
-                for cid in (config.notification_chat_ids or []):
+                for cid in config.notification_chat_ids or []:
                     try:
                         await telegram_bot.send_message(cid, msg, parse_mode="HTML")
                         _notify_timestamps.append(now)
@@ -570,25 +620,35 @@ async def run_application(app: Dict[str, Any]) -> None:
                         err = str(e)
                         if "429" in err or "Too Many Requests" in err:
                             try:
-                                from src.bot.flood_guard import set_flood_wait, extract_retry_after
+                                from src.bot.flood_guard import (
+                                    set_flood_wait,
+                                    extract_retry_after,
+                                )
+
                                 wait = extract_retry_after(err) or 3600
                                 set_flood_wait(wait)
                             except Exception:
                                 pass
-                            logger.warning("proactive_notify_flood_wait", error=err[:80])
+                            logger.warning(
+                                "proactive_notify_flood_wait", error=err[:80]
+                            )
                         else:
                             logger.warning("proactive_notify_fail", error=err[:100])
 
         from src.infra.proactive_loop import start_proactive_loop
+
         proactive_task = asyncio.create_task(
             start_proactive_loop(brain_router, notify_fn=_notify_proactive)
         )
         tasks.append(proactive_task)
-        logger.info("Proactive conductor loop started (15min autonomous self-improvement)")
+        logger.info(
+            "Proactive conductor loop started (15min autonomous self-improvement)"
+        )
 
         # Wire notify_fn into routine_runner now that _notify_proactive is defined
         try:
             from src.scheduler.routine_runner import set_notify_fn
+
             set_notify_fn(_notify_proactive)
             logger.info("routine_runner_notify_fn_wired")
         except Exception:
@@ -598,6 +658,7 @@ async def run_application(app: Dict[str, Any]) -> None:
         _bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
         if _bot_token:
             from src.infra.watchdog import run_ping_loop
+
             watchdog_task = asyncio.create_task(run_ping_loop(_bot_token))
             tasks.append(watchdog_task)
             logger.info("Watchdog ping loop started (2min interval, 3-strike restart)")
@@ -647,6 +708,7 @@ async def run_application(app: Dict[str, Any]) -> None:
             import json as _json
             from datetime import datetime as _dt, timezone as _tz
             from pathlib import Path as _Path
+
             _sched_dir = _Path.home() / ".aura" / "social_scheduled"
             while True:
                 try:
@@ -659,23 +721,38 @@ async def run_application(app: Dict[str, Any]) -> None:
                             data = _json.loads(f.read_text())
                             if data.get("status") != "pending":
                                 continue
-                            due = _dt.fromisoformat(data["scheduled_for"].replace("Z", "+00:00"))
+                            due = _dt.fromisoformat(
+                                data["scheduled_for"].replace("Z", "+00:00")
+                            )
                             if due > now:
                                 continue
                             # Due — publish it
-                            from src.workflows.social_publisher import publish_social as _pub_social
+                            from src.workflows.social_publisher import (
+                                publish_social as _pub_social,
+                            )
+
                             result = await _pub_social(
                                 description=data["caption"],
                                 platforms=data.get("platforms", ["instagram"]),
                                 custom_caption=data["caption"],
                             )
-                            data["status"] = "published" if result.get("ok") else "failed"
+                            data["status"] = (
+                                "published" if result.get("ok") else "failed"
+                            )
                             data["published_at"] = now.isoformat()
                             data["result"] = str(result)[:500]
-                            f.write_text(_json.dumps(data, ensure_ascii=False, indent=2))
-                            logger.info("scheduled_post_published", file=f.name, ok=result.get("ok"))
+                            f.write_text(
+                                _json.dumps(data, ensure_ascii=False, indent=2)
+                            )
+                            logger.info(
+                                "scheduled_post_published",
+                                file=f.name,
+                                ok=result.get("ok"),
+                            )
                         except Exception as _e:
-                            logger.warning("scheduled_post_error", file=f.name, error=str(_e)[:100])
+                            logger.warning(
+                                "scheduled_post_error", file=f.name, error=str(_e)[:100]
+                            )
                 except asyncio.CancelledError:
                     return
                 except Exception as _e:
@@ -685,11 +762,15 @@ async def run_application(app: Dict[str, Any]) -> None:
 
         # Mesh loop — AURA↔Hermes autonomous conversation (30min interval)
         from src.infra.mesh_loop import start_mesh_loop
-        asyncio.create_task(start_mesh_loop(notify_fn=_notify_proactive), name="mesh_loop")
+
+        asyncio.create_task(
+            start_mesh_loop(notify_fn=_notify_proactive), name="mesh_loop"
+        )
         logger.info("mesh_loop_task_started")
 
         # Obsidian sync — keep vault current (hourly + startup)
         from src.infra.obsidian_sync import start_obsidian_sync_loop
+
         asyncio.create_task(start_obsidian_sync_loop(), name="obsidian_sync")
 
         # Shutdown task

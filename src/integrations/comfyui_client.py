@@ -21,11 +21,15 @@ COMFYUI_HOST = os.getenv("COMFYUI_HOST", "127.0.0.1")
 COMFYUI_PORT = int(os.getenv("COMFYUI_PORT", "8188"))
 COMFYUI_BASE = f"http://{COMFYUI_HOST}:{COMFYUI_PORT}"
 SKILLS_DIR = Path(os.getenv("COMFYUI_SKILLS_DIR", Path.home() / ".aura/comfyui/skills"))
-OUTPUT_DIR = Path(os.getenv("COMFYUI_OUTPUT_DIR", Path.home() / ".aura/comfyui/outputs"))
+OUTPUT_DIR = Path(
+    os.getenv("COMFYUI_OUTPUT_DIR", Path.home() / ".aura/comfyui/outputs")
+)
 
 # ComfyUI's own output dir
-COMFYUI_OUTPUT_DIR = Path(os.getenv("COMFYUI_INSTALL_DIR",
-    str(Path.home() / "Projects" / "ComfyUI"))) / "output"
+COMFYUI_OUTPUT_DIR = (
+    Path(os.getenv("COMFYUI_INSTALL_DIR", str(Path.home() / "Projects" / "ComfyUI")))
+    / "output"
+)
 
 
 def is_running() -> bool:
@@ -57,6 +61,7 @@ def _load_skill(skill_name: str) -> tuple[dict, dict]:
 def _apply_params(workflow: dict, schema: dict, params: dict) -> dict:
     """Apply user parameters to workflow nodes."""
     import copy
+
     wf = copy.deepcopy(workflow)
 
     # Apply schema defaults first
@@ -181,9 +186,15 @@ async def generate(
 
     workflow = _apply_params(workflow, schema, params)
 
-    steps = params.get("steps", schema["parameters"].get("steps", {}).get("default", 20))
-    width = params.get("width", schema["parameters"].get("width", {}).get("default", 1024))
-    height = params.get("height", schema["parameters"].get("height", {}).get("default", 1024))
+    steps = params.get(
+        "steps", schema["parameters"].get("steps", {}).get("default", 20)
+    )
+    width = params.get(
+        "width", schema["parameters"].get("width", {}).get("default", 1024)
+    )
+    height = params.get(
+        "height", schema["parameters"].get("height", {}).get("default", 1024)
+    )
     est = estimate_time(steps, width, height)
 
     prompt_id = submit_workflow(workflow)

@@ -35,10 +35,10 @@ logger = structlog.get_logger()
 # Free model cascade — two keys × 4 models = 8 slots before haiku fallback.
 # nemotron-120b removed: consistently rate-limited (stress-tested 2026-05-09).
 _FREE_MODELS: List[str] = [
-    "openai/gpt-oss-120b:free",                # primary — ~1s, proven reliable
-    "meta-llama/llama-4-maverick:free",        # Llama 4 MoE, 128k ctx
+    "openai/gpt-oss-120b:free",  # primary — ~1s, proven reliable
+    "meta-llama/llama-4-maverick:free",  # Llama 4 MoE, 128k ctx
     "meta-llama/llama-3.3-70b-instruct:free",  # Hermes model — strong chat
-    "deepseek/deepseek-r1-0528:free",          # reasoning fallback
+    "deepseek/deepseek-r1-0528:free",  # reasoning fallback
 ]
 
 _API_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -92,7 +92,9 @@ def _load_memory_context() -> str:
     lines.append("• Base de datos: ~/claude-code-telegram/data/bot.db (SQLite)")
     lines.append("• Hermes: agente hermano (configurable via HERMES_API_URL)")
     lines.append("• AURA→Hermes: curl $HERMES_API_URL (API local)")
-    lines.append("• Hermes→AURA: vía MCP tools (bash_run, file_read, git_*, instagram_publish)")
+    lines.append(
+        "• Hermes→AURA: vía MCP tools (bash_run, file_read, git_*, instagram_publish)"
+    )
     lines.append("• NO hay ~/.aura/mem0, NO hay IPC pipes, NO hay Qdrant")
 
     # Real MemPalace item count — only if readable without blocking
@@ -100,9 +102,14 @@ def _load_memory_context() -> str:
         palace_path = Path.home() / ".aura" / "palace"
         if palace_path.exists():
             import glob
-            parquet_files = glob.glob(str(palace_path / "**" / "*.parquet"), recursive=True)
+
+            parquet_files = glob.glob(
+                str(palace_path / "**" / "*.parquet"), recursive=True
+            )
             if parquet_files:
-                lines.append(f"• MemPalace tiene {len(parquet_files)} fragmentos en disco (count aproximado)")
+                lines.append(
+                    f"• MemPalace tiene {len(parquet_files)} fragmentos en disco (count aproximado)"
+                )
     except Exception:
         pass  # never block on this
 
@@ -217,16 +224,22 @@ class OpenRouterBrain(Brain):
                     )
                     if response and not response.is_error:
                         return response
-                    err = response.error_type or "unknown" if response else "no_response"
+                    err = (
+                        response.error_type or "unknown" if response else "no_response"
+                    )
                     # 401 on this key → try next key immediately (don't waste models)
                     if err in ("http_401", "no_api_key"):
                         logger.debug("openrouter_key_rejected", key_prefix=api_key[:12])
                         break
                     last_error = err
-                    logger.debug("openrouter_model_failed", model=model, error=last_error)
+                    logger.debug(
+                        "openrouter_model_failed", model=model, error=last_error
+                    )
                 except Exception as exc:
                     last_error = str(exc)[:120]
-                    logger.debug("openrouter_model_exception", model=model, error=last_error)
+                    logger.debug(
+                        "openrouter_model_exception", model=model, error=last_error
+                    )
 
         duration_ms = int((time.time() - start) * 1000)
         return BrainResponse(
@@ -484,13 +497,19 @@ class OpenRouterBrain(Brain):
                     if resp.status == 401:
                         # Try secondary key before declaring not-authenticated
                         if self._secondary_key and key != self._secondary_key:
-                            headers2 = {"Authorization": f"Bearer {self._secondary_key}"}
+                            headers2 = {
+                                "Authorization": f"Bearer {self._secondary_key}"
+                            }
                             async with session.get(
                                 _HEALTH_URL,
                                 headers=headers2,
                                 timeout=aiohttp.ClientTimeout(total=8),
                             ) as resp2:
-                                return BrainStatus.READY if resp2.status == 200 else BrainStatus.NOT_AUTHENTICATED
+                                return (
+                                    BrainStatus.READY
+                                    if resp2.status == 200
+                                    else BrainStatus.NOT_AUTHENTICATED
+                                )
                         return BrainStatus.NOT_AUTHENTICATED
                     return BrainStatus.ERROR
         except Exception:

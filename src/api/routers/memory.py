@@ -15,7 +15,12 @@ _CONTEXT_FILE = Path.home() / ".aura" / "context" / "claude_context.json"
 async def get_memory(q: str = "", limit: int = 10) -> Dict[str, Any]:
     """MemPalace stats and search."""
     try:
-        from src.context.mempalace_memory import palace_count, search_memories, get_all_memories
+        from src.context.mempalace_memory import (
+            palace_count,
+            search_memories,
+            get_all_memories,
+        )
+
         count = await palace_count()
         if q:
             results = await search_memories(q, n=limit)
@@ -31,6 +36,7 @@ async def clear_memory() -> Dict[str, Any]:
     """Clear all MemPalace memories."""
     try:
         from src.context.mempalace_memory import delete_all_memories
+
         ok = await delete_all_memories()
         return {"ok": ok}
     except Exception as e:
@@ -41,6 +47,7 @@ async def clear_memory() -> Dict[str, Any]:
 async def rag_status() -> Dict[str, Any]:
     try:
         from src.rag.retriever import RAGRetriever
+
         r = RAGRetriever()
         return await r.status()
     except Exception as e:
@@ -51,6 +58,7 @@ async def rag_status() -> Dict[str, Any]:
 async def rag_search(q: str, top_k: int = 5) -> Dict[str, Any]:
     try:
         from src.rag.retriever import RAGRetriever
+
         r = RAGRetriever()
         results = await r.search(q, top_k=top_k)
         return {"results": results, "query": q}
@@ -63,6 +71,7 @@ async def rag_reindex() -> Dict[str, Any]:
     """Trigger manual re-indexing of all sources."""
     try:
         from src.rag.indexer import RAGIndexer
+
         idx = RAGIndexer()
         stats = await idx.index_all()
         return {"ok": True, **stats}

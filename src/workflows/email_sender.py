@@ -11,7 +11,6 @@ import urllib.error
 import json
 from typing import Optional
 
-
 RESEND_API_URL = "https://api.resend.com/emails"
 _API_KEY = os.environ.get("RESEND_API_KEY", "")
 _FROM = os.environ.get("RESEND_FROM", "AURA <onboarding@resend.dev>")

@@ -10,6 +10,7 @@ Usage:
   python -m src.voice.voice_daemon status  # check status
   python -m src.voice.voice_daemon stop    # stop
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -275,14 +276,26 @@ setInterval(poll, 800);
     async def _handle_status(self, request: web.Request) -> web.Response:
         ready = self._agent is not None and self._agent.is_ready()
         sleeping = self._agent.is_sleeping() if self._agent else False
-        return web.json_response({
-            "status": "sleeping" if (ready and sleeping) else ("running" if ready else ("starting" if self._agent else "stopped")),
-            "sleeping": sleeping,
-            "uptime_s": int(time.time() - self._start_time) if self._start_time else 0,
-            "model": "gemini-2.5-flash-native-audio-preview",
-            "tools": "AURA registry + screen + computer + hermes + claude",
-            "transcript_count": len(self._transcript_log),
-        })
+        return web.json_response(
+            {
+                "status": (
+                    "sleeping"
+                    if (ready and sleeping)
+                    else (
+                        "running"
+                        if ready
+                        else ("starting" if self._agent else "stopped")
+                    )
+                ),
+                "sleeping": sleeping,
+                "uptime_s": (
+                    int(time.time() - self._start_time) if self._start_time else 0
+                ),
+                "model": "gemini-2.5-flash-native-audio-preview",
+                "tools": "AURA registry + screen + computer + hermes + claude",
+                "transcript_count": len(self._transcript_log),
+            }
+        )
 
     async def _handle_start(self, request: web.Request) -> web.Response:
         if self._agent and self._agent.is_ready():
@@ -313,7 +326,9 @@ setInterval(poll, 800);
             return web.json_response({"ok": False, "error": "No text"}, status=400)
 
         if not self._agent or not self._agent.is_ready():
-            return web.json_response({"ok": False, "error": "Agent not running"}, status=503)
+            return web.json_response(
+                {"ok": False, "error": "Agent not running"}, status=503
+            )
 
         self._agent.send_text(text)
         return web.json_response({"ok": True, "message": "Sent to voice agent"})
@@ -324,13 +339,17 @@ setInterval(poll, 800);
 
     async def _handle_sleep(self, request: web.Request) -> web.Response:
         if not self._agent or not self._agent.is_ready():
-            return web.json_response({"ok": False, "error": "Agent not running"}, status=503)
+            return web.json_response(
+                {"ok": False, "error": "Agent not running"}, status=503
+            )
         self._agent.sleep()
         return web.json_response({"ok": True, "sleeping": True})
 
     async def _handle_wake(self, request: web.Request) -> web.Response:
         if not self._agent or not self._agent.is_ready():
-            return web.json_response({"ok": False, "error": "Agent not running"}, status=503)
+            return web.json_response(
+                {"ok": False, "error": "Agent not running"}, status=503
+            )
         self._agent.wake()
         return web.json_response({"ok": True, "sleeping": False})
 
@@ -351,6 +370,7 @@ setInterval(poll, 800);
 
     def _start_agent(self) -> None:
         from src.voice.gemini_live_agent import create_agent
+
         # Preserve sleeping state across restarts
         was_sleeping = self._agent.is_sleeping() if self._agent else False
         self._agent = create_agent(
@@ -373,7 +393,9 @@ setInterval(poll, 800);
                 loop = asyncio.get_event_loop()
                 await loop.run_in_executor(None, self._start_agent)
                 print(f"✅ AURA Voice Agent running — listening on mic + port {_PORT}")
-                print("   Gemini 2.5 Flash Native Audio (FREE) | AURA tools | Hermes | Claude")
+                print(
+                    "   Gemini 2.5 Flash Native Audio (FREE) | AURA tools | Hermes | Claude"
+                )
             except Exception as e:
                 logger.error("voice_daemon_autostart_failed", error=str(e))
                 print(f"⚠️  Voice agent failed to start: {e}")
@@ -390,7 +412,9 @@ setInterval(poll, 800);
         _STATE_FILE.write_text(json.dumps({"pid": os.getpid(), "port": _PORT}))
 
         print(f"🎤 Voice daemon HTTP API: http://127.0.0.1:{_PORT}/")
-        print("   POST /start | POST /stop | GET /status | POST /send | GET /transcript")
+        print(
+            "   POST /start | POST /stop | GET /status | POST /send | GET /transcript"
+        )
 
         # Watchdog: restart agent if it dies (every 15s check)
         asyncio.create_task(self._watchdog())
@@ -410,10 +434,22 @@ setInterval(poll, 800);
         Uses macOS frontmost app — no extra installs needed.
         """
         import subprocess
+
         MEDIA_APPS = {
-            "Brave Browser", "Google Chrome", "Safari", "Firefox", "Arc",
-            "VLC", "IINA", "QuickTime Player", "Infuse", "Plex",
-            "Spotify", "Apple TV", "YouTube", "Miro",
+            "Brave Browser",
+            "Google Chrome",
+            "Safari",
+            "Firefox",
+            "Arc",
+            "VLC",
+            "IINA",
+            "QuickTime Player",
+            "Infuse",
+            "Plex",
+            "Spotify",
+            "Apple TV",
+            "YouTube",
+            "Miro",
         }
         _slept_by_media = False
         await asyncio.sleep(30)  # grace period on startup
@@ -423,10 +459,15 @@ setInterval(poll, 800);
                 continue
             try:
                 r = subprocess.run(
-                    ["osascript", "-e",
-                     "tell application \"System Events\" to return "
-                     "name of first process whose frontmost is true"],
-                    capture_output=True, text=True, timeout=3,
+                    [
+                        "osascript",
+                        "-e",
+                        'tell application "System Events" to return '
+                        "name of first process whose frontmost is true",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
                 )
                 front_app = r.stdout.strip()
                 is_media = front_app in MEDIA_APPS
@@ -461,6 +502,7 @@ setInterval(poll, 800);
 
 # ── AURA screen + image feed (for Telegram photos → voice) ───────────────────
 
+
 async def forward_image_to_voice(
     image_bytes: bytes,
     mime_type: str,
@@ -470,6 +512,7 @@ async def forward_image_to_voice(
     """Forward a Telegram image to the running voice agent for analysis."""
     try:
         import aiohttp
+
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"http://127.0.0.1:{daemon_port}/send",
@@ -485,6 +528,7 @@ async def send_text_to_voice(text: str, port: int = _PORT) -> bool:
     """Send text to running voice daemon (from Telegram /voice text)."""
     try:
         import aiohttp
+
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"http://127.0.0.1:{port}/send",
@@ -500,6 +544,7 @@ async def get_daemon_status(port: int = _PORT) -> Optional[dict]:
     """Query voice daemon status. Returns None if not running."""
     try:
         import aiohttp
+
         async with aiohttp.ClientSession() as session:
             async with session.get(
                 f"http://127.0.0.1:{port}/status",
@@ -514,9 +559,11 @@ async def get_daemon_status(port: int = _PORT) -> Optional[dict]:
 
 # ── Entry point ───────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     from pathlib import Path as P
     from dotenv import load_dotenv
+
     load_dotenv(P(__file__).parent.parent.parent / ".env")
 
     # Redirect all logging to stderr
@@ -526,6 +573,7 @@ def main() -> None:
 
     if cmd == "status":
         import asyncio as _a
+
         status = _a.run(get_daemon_status())
         if status:
             print(json.dumps(status, indent=2))
@@ -535,8 +583,11 @@ def main() -> None:
 
     if cmd == "stop":
         import urllib.request
+
         try:
-            urllib.request.urlopen(f"http://127.0.0.1:{_PORT}/stop", data=b"{}", timeout=5)
+            urllib.request.urlopen(
+                f"http://127.0.0.1:{_PORT}/stop", data=b"{}", timeout=5
+            )
             print("Voice daemon stopped")
         except Exception:
             print("Voice daemon not running or could not stop")

@@ -36,7 +36,9 @@ def track_request(brain_name: str) -> None:
     try:
         get_global_monitor().record_request(brain_name)
     except Exception as e:
-        logger.error("track_request_failed", brain=brain_name, error=str(e), exc_info=True)
+        logger.error(
+            "track_request_failed", brain=brain_name, error=str(e), exc_info=True
+        )
 
 
 def track_error(brain_name: str, is_rate_limit: bool = False) -> None:
@@ -66,62 +68,63 @@ def _fmt_secs(secs: int) -> str:
         return f"{mins}m {secs_r}s"
     return f"{secs_r}s"
 
+
 # Known rate limits per brain/tier (requests or tokens per window)
 BRAIN_LIMITS: Dict[str, Dict[str, Any]] = {
     "haiku": {
         "tier": "Claude Max (~$100/mo)",
         "window": "5h rolling",
         "window_seconds": 5 * 3600,
-        "limit": 450,          # ~450 Haiku msgs/5h on Max plan (Anthropic published)
+        "limit": 450,  # ~450 Haiku msgs/5h on Max plan (Anthropic published)
         "warn_threshold": 0.75,
     },
     "sonnet": {
         "tier": "Claude Max (~$100/mo)",
         "window": "5h rolling",
         "window_seconds": 5 * 3600,
-        "limit": 225,          # ~225 Sonnet msgs/5h on Max plan
+        "limit": 225,  # ~225 Sonnet msgs/5h on Max plan
         "warn_threshold": 0.75,
     },
     "opus": {
         "tier": "Claude Max (~$100/mo)",
         "window": "5h rolling",
         "window_seconds": 5 * 3600,
-        "limit": 45,           # ~45 Opus msgs/5h on Max plan
+        "limit": 45,  # ~45 Opus msgs/5h on Max plan
         "warn_threshold": 0.60,
     },
     "codex": {
         "tier": "OpenAI Plus ($20/mo)",
         "window": "daily",
         "window_seconds": 86400,
-        "limit": 200,          # generous daily limit on Plus subscription
+        "limit": 200,  # generous daily limit on Plus subscription
         "warn_threshold": 0.80,
     },
     "cline": {
         "tier": "Local Ollama ($0)",
         "window": "none",
         "window_seconds": 86400,
-        "limit": None,         # unlimited — CPU/GPU bound
+        "limit": None,  # unlimited — CPU/GPU bound
         "warn_threshold": 1.0,
     },
     "gemini": {
         "tier": "Google free (CLI)",
         "window": "daily",
         "window_seconds": 86400,
-        "limit": 60,           # ~60 Gemini CLI calls/day free tier estimate
+        "limit": 60,  # ~60 Gemini CLI calls/day free tier estimate
         "warn_threshold": 0.80,
     },
     "openrouter": {
         "tier": "OpenRouter free",
         "window": "daily",
         "window_seconds": 86400,
-        "limit": 200,          # free tier models: high volume but rate-limited per model
+        "limit": 200,  # free tier models: high volume but rate-limited per model
         "warn_threshold": 0.85,
     },
     "autonomous": {
         "tier": "Claude Max + AURA MCP",
         "window": "5h rolling",
         "window_seconds": 5 * 3600,
-        "limit": 225,          # uses sonnet tier — same pool as sonnet
+        "limit": 225,  # uses sonnet tier — same pool as sonnet
         "warn_threshold": 0.75,
     },
 }
@@ -229,12 +232,20 @@ class RateMonitor:
             if _USAGE_FILE.exists():
                 data = json.loads(_USAGE_FILE.read_text())
                 if not isinstance(data, dict):
-                    logger.error("rate_monitor_load_invalid_format", expected="dict", got=type(data).__name__)
+                    logger.error(
+                        "rate_monitor_load_invalid_format",
+                        expected="dict",
+                        got=type(data).__name__,
+                    )
                     return
                 for name, entry in data.items():
                     try:
                         if not isinstance(entry, dict):
-                            logger.warning("rate_monitor_entry_invalid", brain=name, expected="dict")
+                            logger.warning(
+                                "rate_monitor_entry_invalid",
+                                brain=name,
+                                expected="dict",
+                            )
                             continue
                         self._usage[name] = BrainUsage(
                             brain_name=name,
@@ -247,13 +258,24 @@ class RateMonitor:
                             rate_limited_at=entry.get("rate_limited_at"),
                         )
                     except Exception as e:
-                        logger.warning("rate_monitor_entry_parse_failed", brain=name, error=str(e))
+                        logger.warning(
+                            "rate_monitor_entry_parse_failed", brain=name, error=str(e)
+                        )
         except json.JSONDecodeError as e:
-            logger.error("rate_monitor_load_json_error", path=str(_USAGE_FILE), error=str(e))
+            logger.error(
+                "rate_monitor_load_json_error", path=str(_USAGE_FILE), error=str(e)
+            )
         except IOError as e:
-            logger.error("rate_monitor_load_io_error", path=str(_USAGE_FILE), error=str(e))
+            logger.error(
+                "rate_monitor_load_io_error", path=str(_USAGE_FILE), error=str(e)
+            )
         except Exception as e:
-            logger.error("rate_monitor_load_unexpected_error", path=str(_USAGE_FILE), error=str(e), exc_info=True)
+            logger.error(
+                "rate_monitor_load_unexpected_error",
+                path=str(_USAGE_FILE),
+                error=str(e),
+                exc_info=True,
+            )
 
     def _save(self) -> None:
         """Persist usage data."""
@@ -272,11 +294,18 @@ class RateMonitor:
                 }
             _USAGE_FILE.write_text(json.dumps(data, indent=2))
         except OSError as e:
-            logger.error("rate_monitor_save_os_error", path=str(_USAGE_FILE), error=str(e))
+            logger.error(
+                "rate_monitor_save_os_error", path=str(_USAGE_FILE), error=str(e)
+            )
         except json.JSONDecodeError as e:
             logger.error("rate_monitor_save_json_error", error=str(e))
         except Exception as e:
-            logger.error("rate_monitor_save_unexpected_error", path=str(_USAGE_FILE), error=str(e), exc_info=True)
+            logger.error(
+                "rate_monitor_save_unexpected_error",
+                path=str(_USAGE_FILE),
+                error=str(e),
+                exc_info=True,
+            )
 
     def _get_or_create(self, brain_name: str) -> BrainUsage:
         """Get or create usage tracker for a brain.
@@ -416,12 +445,14 @@ class RateMonitor:
                         f"   ⏱ resets: {reset} · last: {last_used} · errors: {usage.errors_in_window}"
                     )
                 except Exception as e:
-                    logger.error("format_status_brain_error", brain=usage.brain_name, error=str(e))
+                    logger.error(
+                        "format_status_brain_error",
+                        brain=usage.brain_name,
+                        error=str(e),
+                    )
                     lines.append(f"❌ {usage.brain_name} (error formatting stats)")
 
-            lines.append(
-                "\n💡 Requests tracked across conductor + direct calls."
-            )
+            lines.append("\n💡 Requests tracked across conductor + direct calls.")
             return "\n".join(lines)
         except Exception as e:
             logger.error("format_status_fatal_error", error=str(e), exc_info=True)
@@ -440,7 +471,9 @@ async def alert_autonomous_brain(message: str) -> None:
     logger.warning("background_job_rate_alert", message=message)
 
     token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
-    chat_ids_raw = os.environ.get("NOTIFICATION_CHAT_IDS", "") or os.environ.get("ALLOWED_USERS", "")
+    chat_ids_raw = os.environ.get("NOTIFICATION_CHAT_IDS", "") or os.environ.get(
+        "ALLOWED_USERS", ""
+    )
     if not token or not chat_ids_raw:
         logger.warning("alert_autonomous_brain_no_config")
         return
@@ -461,7 +494,9 @@ async def alert_autonomous_brain(message: str) -> None:
         logger.error("alert_autonomous_brain_failed", message=message, error=str(e))
 
 
-async def monitor_background_jobs(threshold: int = 10, check_interval: int = 60) -> None:
+async def monitor_background_jobs(
+    threshold: int = 10, check_interval: int = 60
+) -> None:
     """Monitors the rate of background job execution and alerts the autonomous brain if the rate exceeds a certain threshold.
 
     :param threshold: The maximum allowed rate of background job executions per minute.
@@ -479,7 +514,9 @@ async def monitor_background_jobs(threshold: int = 10, check_interval: int = 60)
 
             if current_rate > threshold:
                 # Alert the autonomous brain
-                await alert_autonomous_brain(f"Background job rate exceeded threshold: {current_rate} jobs/minute")
+                await alert_autonomous_brain(
+                    f"Background job rate exceeded threshold: {current_rate} jobs/minute"
+                )
 
         await asyncio.sleep(check_interval)
 
@@ -493,17 +530,15 @@ def monitor_rate() -> None:
     try:
         monitor = get_global_monitor()
         current_rate = monitor.get_all_usage()
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Log rate status for each brain
         for usage in current_rate:
-            logger.info(
-                f'RATE - {usage.brain_name}: {usage.usage_bar()}'
-            )
+            logger.info(f"RATE - {usage.brain_name}: {usage.usage_bar()}")
 
             # Check for rate limit warnings
             warning = monitor.should_warn(usage.brain_name)
             if warning:
-                logger.warning(f'RATE_WARN - {warning}')
+                logger.warning(f"RATE_WARN - {warning}")
     except Exception as e:
         logger.error("monitor_rate_failed", error=str(e), exc_info=True)

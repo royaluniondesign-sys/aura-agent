@@ -1,4 +1,5 @@
 """AURA Agent Team — named personas backed by existing brains."""
+
 from __future__ import annotations
 
 import time
@@ -8,7 +9,7 @@ from typing import Optional
 
 
 class AgentTier(str, Enum):
-    BOARD = "board"         # Opus — called only for the hardest problems
+    BOARD = "board"  # Opus — called only for the hardest problems
     EXECUTIVE = "executive"
     ENGINEER = "engineer"
 
@@ -36,8 +37,14 @@ ROLES: dict[str, AgentRole] = {
         tier=AgentTier.BOARD,
         reports_to=None,  # Peer of CEO, called on escalation
         skills=(
-            "deep_reasoning", "hard_problems", "research", "strategy",
-            "complex_architecture", "philosophical", "scientific", "innovation",
+            "deep_reasoning",
+            "hard_problems",
+            "research",
+            "strategy",
+            "complex_architecture",
+            "philosophical",
+            "scientific",
+            "innovation",
         ),
         system_prompt=(
             "You are the Chief Architect of AURA — the most powerful reasoning agent on the team. "
@@ -85,7 +92,13 @@ ROLES: dict[str, AgentRole] = {
         brain="sonnet",
         tier=AgentTier.EXECUTIVE,
         reports_to="ceo",
-        skills=("architecture", "code_review", "tech_decisions", "systems", "engineering"),
+        skills=(
+            "architecture",
+            "code_review",
+            "tech_decisions",
+            "systems",
+            "engineering",
+        ),
         system_prompt=(
             "You are the CTO of AURA. You make architectural decisions, review code quality, "
             "design technical solutions, and guide the engineering team. Think in systems, "
@@ -100,7 +113,14 @@ ROLES: dict[str, AgentRole] = {
         brain="gemini",
         tier=AgentTier.EXECUTIVE,
         reports_to="ceo",
-        skills=("content", "marketing", "social_media", "copywriting", "brand", "campaigns"),
+        skills=(
+            "content",
+            "marketing",
+            "social_media",
+            "copywriting",
+            "brand",
+            "campaigns",
+        ),
         system_prompt=(
             "Eres el CMO de AURA y un Community Manager experto de nivel internacional. "
             "Especialidad: contenido educativo-viral sobre herramientas de IA, especialmente Claude AI.\n\n"
@@ -151,7 +171,13 @@ ROLES: dict[str, AgentRole] = {
         brain="haiku",
         tier=AgentTier.ENGINEER,
         reports_to="cto",
-        skills=("implementation", "debugging", "refactoring", "testing", "complex_code"),
+        skills=(
+            "implementation",
+            "debugging",
+            "refactoring",
+            "testing",
+            "complex_code",
+        ),
         system_prompt=(
             "You are ClaudeCoder, a skilled implementation engineer. You handle complex coding tasks, "
             "debug tricky issues, refactor existing code, and write comprehensive tests. "
@@ -167,7 +193,13 @@ ROLES: dict[str, AgentRole] = {
         brain="qwen-code",
         tier=AgentTier.ENGINEER,
         reports_to="cto",
-        skills=("code_generation", "multilingual", "analysis", "refactoring", "frontend"),
+        skills=(
+            "code_generation",
+            "multilingual",
+            "analysis",
+            "refactoring",
+            "frontend",
+        ),
         system_prompt=(
             "You are QwenCoder, a multilingual code engineer powered by Qwen. "
             "You excel at code generation, analysis, frontend work, and tasks requiring "

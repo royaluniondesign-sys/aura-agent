@@ -18,8 +18,10 @@ router = APIRouter()
 async def get_brains_status() -> Dict[str, Any]:
     """Real-time rate limit status for all brains with exact reset times."""
     import time as _time
+
     try:
         from ...infra.rate_monitor import BRAIN_LIMITS, RateMonitor
+
         monitor = RateMonitor()
         brains = []
         for u in monitor.get_all_usage():
@@ -27,34 +29,39 @@ async def get_brains_status() -> Dict[str, Any]:
             pct = u.usage_pct
             warn_t = limits.get("warn_threshold", 0.75)
             is_rl = u.is_rate_limited
-            brains.append({
-                "name": u.brain_name,
-                "tier": limits.get("tier", "?"),
-                "requests": u.requests_in_window,
-                "limit": u.known_limit,
-                "usage_pct": round(pct * 100, 1) if pct is not None else None,
-                "window": limits.get("window", "?"),
-                "window_seconds": u.window_seconds,
-                "window_remaining_seconds": u.window_remaining_seconds,
-                "window_remaining_str": u.window_remaining_str,
-                "errors": u.errors_in_window,
-                "unlimited": u.known_limit is None,
-                "is_rate_limited": is_rl,
-                # Rate limit recovery info
-                "recover_at": u.recover_at,          # unix timestamp or null
-                "recover_in_seconds": u.recover_in_seconds if is_rl else 0,
-                "recover_in_str": u.recover_in_str if is_rl else None,
-                "rate_limited_at": u.rate_limited_at,
-                "status": (
-                    "rate_limited" if is_rl
-                    else ("warn" if pct and pct >= warn_t else "ok")
-                ),
-                "available": not is_rl,
-            })
+            brains.append(
+                {
+                    "name": u.brain_name,
+                    "tier": limits.get("tier", "?"),
+                    "requests": u.requests_in_window,
+                    "limit": u.known_limit,
+                    "usage_pct": round(pct * 100, 1) if pct is not None else None,
+                    "window": limits.get("window", "?"),
+                    "window_seconds": u.window_seconds,
+                    "window_remaining_seconds": u.window_remaining_seconds,
+                    "window_remaining_str": u.window_remaining_str,
+                    "errors": u.errors_in_window,
+                    "unlimited": u.known_limit is None,
+                    "is_rate_limited": is_rl,
+                    # Rate limit recovery info
+                    "recover_at": u.recover_at,  # unix timestamp or null
+                    "recover_in_seconds": u.recover_in_seconds if is_rl else 0,
+                    "recover_in_str": u.recover_in_str if is_rl else None,
+                    "rate_limited_at": u.rate_limited_at,
+                    "status": (
+                        "rate_limited"
+                        if is_rl
+                        else ("warn" if pct and pct >= warn_t else "ok")
+                    ),
+                    "available": not is_rl,
+                }
+            )
         # Pick the current best brain (first available in priority order)
         priority = ["haiku", "sonnet", "opus", "gemini", "codex", "openrouter"]
-        best = next((b["name"] for b in brains
-                     if b["available"] and b["name"] in priority), None)
+        best = next(
+            (b["name"] for b in brains if b["available"] and b["name"] in priority),
+            None,
+        )
         return {
             "brains": brains,
             "best_available": best,
@@ -132,7 +139,19 @@ async def get_learnings(days: int = 7, limit: int = 100) -> Dict[str, Any]:
     log_path = Path.home() / ".aura" / "memory" / "conductor_log.md"
     try:
         if not log_path.exists():
-            return {"ok": True, "entries": [], "stats": {"total": 0, "success": 0, "failed": 0, "success_rate": 0, "top_brains": [], "days": days}, "note": "No hay learnings registrados aún"}
+            return {
+                "ok": True,
+                "entries": [],
+                "stats": {
+                    "total": 0,
+                    "success": 0,
+                    "failed": 0,
+                    "success_rate": 0,
+                    "top_brains": [],
+                    "days": days,
+                },
+                "note": "No hay learnings registrados aún",
+            }
 
         text = log_path.read_text(encoding="utf-8")
         cutoff = datetime.now(UTC) - timedelta(days=days)
@@ -145,7 +164,9 @@ async def get_learnings(days: int = 7, limit: int = 100) -> Dict[str, Any]:
             if not block.startswith("## "):
                 continue
             first_line = block.split("\n")[0]
-            header_m = _re.match(r"^## (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) — (.+)$", first_line)
+            header_m = _re.match(
+                r"^## (\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}) — (.+)$", first_line
+            )
             if not header_m:
                 continue
             ts_str, status_str = header_m.group(1), header_m.group(2)
@@ -160,19 +181,21 @@ async def get_learnings(days: int = 7, limit: int = 100) -> Dict[str, Any]:
                 m = _re.search(rf"\*\*{name}\*\*: (.+)", b)
                 return m.group(1).strip() if m else ""
 
-            entries.append({
-                "timestamp": ts_str,
-                "status": "success" if "SUCCESS" in status_str else "failed",
-                "task": _field("Task"),
-                "strategy": _field("Strategy"),
-                "duration": _field("Duration"),
-                "steps": _field("Steps"),
-                "brains": _field("Brains"),
-                "layers": _field("Layers"),
-                "run_id": _field("Run ID").strip("`"),
-                "error": _field("Error"),
-                "failed_brains": _field("Failed brains"),
-            })
+            entries.append(
+                {
+                    "timestamp": ts_str,
+                    "status": "success" if "SUCCESS" in status_str else "failed",
+                    "task": _field("Task"),
+                    "strategy": _field("Strategy"),
+                    "duration": _field("Duration"),
+                    "steps": _field("Steps"),
+                    "brains": _field("Brains"),
+                    "layers": _field("Layers"),
+                    "run_id": _field("Run ID").strip("`"),
+                    "error": _field("Error"),
+                    "failed_brains": _field("Failed brains"),
+                }
+            )
 
         entries = list(reversed(entries))[:limit]
 

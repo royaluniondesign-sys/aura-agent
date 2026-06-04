@@ -232,11 +232,12 @@ def search_similar(query: str, max_results: int = 5) -> list[str]:
         result = subprocess.run(  # noqa: S603
             [
                 "grep",
-                "-r",          # recursive
-                "-i",          # case-insensitive
-                "-h",          # suppress filenames
+                "-r",  # recursive
+                "-i",  # case-insensitive
+                "-h",  # suppress filenames
                 "--include=*.md",
-                "-A", "0",
+                "-A",
+                "0",
                 query,
                 str(_JOURNAL_DIR),
             ],

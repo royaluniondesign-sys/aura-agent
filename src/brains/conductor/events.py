@@ -1,9 +1,9 @@
 """Event bus for orchestration pub/sub (SSE clients)."""
+
 from __future__ import annotations
 
 import asyncio
 from typing import Any, Dict, List
-
 
 _subscribers: List[asyncio.Queue] = []
 

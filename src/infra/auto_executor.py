@@ -18,6 +18,7 @@ Improvements:
 - Task journal: learnings persist in ~/.aura/task_journal/{id}.md
 - Meta-router: complexity detection → escalate to Sonnet/Opus
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -49,12 +50,13 @@ logger = structlog.get_logger()
 
 _LAST_EVAL: float = 0.0
 _EVAL_INTERVAL = 1800  # 30 min
-_EXEC_INTERVAL = 300   # 5 min
+_EXEC_INTERVAL = 300  # 5 min
 
 # Hours (local time) when RAM pressure notifications are sent to Telegram.
 # Auto-fix still runs silently at all times — only the notification is gated.
 _RAM_NOTIFY_HOURS: frozenset[int] = frozenset({11, 16, 23})
 _LAST_RAM_NOTIFY_HOUR: int = -1
+
 
 def _ram_notify_allowed() -> bool:
     """Return True only during the three daily notification windows, once per window."""
@@ -87,6 +89,7 @@ async def _store_memory(fact: str, category: str = "fix") -> None:
     """Persist a learned fact to MemPalace."""
     try:
         from ..context.mempalace_memory import store_interaction
+
         await store_interaction(f"[auto-executor {category}]", fact)
     except Exception as e:
         logger.debug("auto_executor_mem_fail", error=str(e))
@@ -103,18 +106,21 @@ def _format_fix_message(title: str, output: str) -> str:
     # RAM pressure: parse structured output
     if "ram" in title.lower() and "RAM_BEFORE=" in output:
         lines = {
-            k: v for k, v in (
+            k: v
+            for k, v in (
                 line.split("=", 1) for line in output.splitlines() if "=" in line
             )
         }
         before = lines.get("RAM_BEFORE", "?")
-        after  = lines.get("RAM_AFTER",  "?")
-        freed  = lines.get("RAM_FREED",  "?")
+        after = lines.get("RAM_AFTER", "?")
+        freed = lines.get("RAM_FREED", "?")
         return f"💾 *RAM limpiada*\n{before} → {after}\n_{freed} liberados_"
 
     # Generic: trim raw output, keep it short
     clean = output.strip()[:200]
-    return f"✅ *Auto-fixed:* {title}\n`{clean}`" if clean else f"✅ *Auto-fixed:* {title}"
+    return (
+        f"✅ *Auto-fixed:* {title}\n`{clean}`" if clean else f"✅ *Auto-fixed:* {title}"
+    )
 
 
 async def _execute_single_task(
@@ -164,7 +170,9 @@ async def _execute_single_task(
 
     # Journal the attempt
     try:
-        journal_attempt(task_id, attempt=attempts, command=cmd, output=output, success=ok)
+        journal_attempt(
+            task_id, attempt=attempts, command=cmd, output=output, success=ok
+        )
     except Exception:
         pass
 
@@ -193,7 +201,9 @@ async def _execute_single_task(
                 complete_task_journal(task_id, f"❌ Gave up after {attempts} attempts")
             except Exception:
                 pass
-            logger.error("auto_executor_gave_up", task_id=task_id[:8], attempts=attempts)
+            logger.error(
+                "auto_executor_gave_up", task_id=task_id[:8], attempts=attempts
+            )
             if notify and not silent:
                 msg = f"❌ *Auto-fix failed* ({attempts}× tried): {title}\n\n`{output[:200]}`"
                 try:
@@ -220,10 +230,7 @@ async def run_pending_tasks(notify: _NotifyFn = None) -> int:
 
     # Skip tasks without fix_command — those go to the conductor (proactive_loop)
     # This includes phase:* tasks AND any auto_fix task without a bash command.
-    tasks = [
-        t for t in tasks
-        if (t.get("fix_command") or "").strip()
-    ]
+    tasks = [t for t in tasks if (t.get("fix_command") or "").strip()]
     if not tasks:
         return 0
 
@@ -275,16 +282,20 @@ async def self_evaluate(notify: _NotifyFn = None) -> None:
     # 2. Check for recurring log errors
     try:
         from pathlib import Path
+
         log = Path.home() / "claude-code-telegram/logs/bot.stdout.log"
         if log.exists():
             lines = log.read_text(errors="replace").splitlines()[-500:]
-            error_lines = [l for l in lines if "error" in l.lower() and "warn" not in l.lower()]
+            error_lines = [
+                l for l in lines if "error" in l.lower() and "warn" not in l.lower()
+            ]
             # Find patterns
             patterns: dict[str, int] = {}
             for line in error_lines:
                 # Extract key event from structlog lines
                 if "event" in line:
                     import re
+
                     m = re.search(r'"event"\s*[=:]\s*"([^"]{4,60})"', line)
                     if m:
                         key = m.group(1)
@@ -309,6 +320,7 @@ async def self_evaluate(notify: _NotifyFn = None) -> None:
     # 3. Check disk pressure
     try:
         import shutil
+
         du = shutil.disk_usage("/")
         free_gb = du.free / 1e9
         if free_gb < 10:
@@ -336,8 +348,14 @@ async def self_evaluate(notify: _NotifyFn = None) -> None:
         page_sz = os.sysconf("SC_PAGE_SIZE")
         total_b = page_sz * os.sysconf("SC_PHYS_PAGES")
         _vm_result = subprocess.run(
-            ["bash", "-c", "vm_stat | grep 'Pages free' | awk '{print $3}' | tr -d '.'"],
-            capture_output=True, text=True, timeout=3,
+            [
+                "bash",
+                "-c",
+                "vm_stat | grep 'Pages free' | awk '{print $3}' | tr -d '.'",
+            ],
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         free_pages = int(_vm_result.stdout.strip() or "0")
         free_gb = free_pages * page_sz / 1e9
@@ -361,11 +379,17 @@ async def self_evaluate(notify: _NotifyFn = None) -> None:
         logger.info("auto_executor_eval_done", tasks_created=tasks_created)
         if notify and new_task_titles:
             # Skip batch notification if the only new tasks are silent RAM fixes
-            visible_titles = [t for t in new_task_titles if "RAM pressure" not in t or _ram_notify_allowed()]
+            visible_titles = [
+                t
+                for t in new_task_titles
+                if "RAM pressure" not in t or _ram_notify_allowed()
+            ]
             if visible_titles:
                 lines = "\n".join(f"• {t}" for t in visible_titles[:5])
                 try:
-                    await notify(f"🔍 *Auto-detecté {len(visible_titles)} tarea(s) nueva(s):*\n{lines}")
+                    await notify(
+                        f"🔍 *Auto-detecté {len(visible_titles)} tarea(s) nueva(s):*\n{lines}"
+                    )
                 except Exception:
                     pass
     else:

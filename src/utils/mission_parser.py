@@ -4,6 +4,7 @@ This module reads the MISSION.md file and extracts uncompleted tasks,
 organizing them by priority tier and creating executable task objects
 that the autonomous brain can work on.
 """
+
 from __future__ import annotations
 
 import re

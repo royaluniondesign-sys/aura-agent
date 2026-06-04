@@ -12,9 +12,7 @@ logger = structlog.get_logger()
 class ZeroTokenWebMixin:
     """Mixin: web, search, and task queue zero-token commands."""
 
-    async def _zt_web(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def _zt_web(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """⚡ Fetch and analyze a URL via Gemini (has web access).
 
         /web https://example.com
@@ -41,10 +39,15 @@ class ZeroTokenWebMixin:
         prompt = f"Analiza esta URL: {url_and_rest}"
 
         from ...bot.orchestrator import MessageOrchestrator
+
         if hasattr(self, "_handle_alt_brain"):
             await self._handle_alt_brain(
-                update, context, router, prompt,
-                update.effective_user.id, brain_name="gemini",
+                update,
+                context,
+                router,
+                prompt,
+                update.effective_user.id,
+                brain_name="gemini",
             )
 
     async def _zt_search(
@@ -73,8 +76,12 @@ class ZeroTokenWebMixin:
 
         if hasattr(self, "_handle_alt_brain"):
             await self._handle_alt_brain(
-                update, context, router, query,
-                update.effective_user.id, brain_name="gemini",
+                update,
+                context,
+                router,
+                query,
+                update.effective_user.id,
+                brain_name="gemini",
             )
 
     async def _zt_queue(

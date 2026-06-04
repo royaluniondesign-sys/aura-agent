@@ -22,18 +22,19 @@ logger = structlog.get_logger()
 
 # Voz XTTS v2 fija
 XTTS_SPEAKER = "Claribel Dervla"
-XTTS_LANG    = "es"
+XTTS_LANG = "es"
 
 # Paths
-_WORKER     = Path(__file__).parent / "xtts_worker.py"
-_PYTHON311  = Path.home() / ".aura/tts_env/bin/python3.11"
-_FFMPEG     = "ffmpeg"
+_WORKER = Path(__file__).parent / "xtts_worker.py"
+_PYTHON311 = Path.home() / ".aura/tts_env/bin/python3.11"
+_FFMPEG = "ffmpeg"
 
 # Límite de texto (~4000 chars — XTTS maneja bien hasta aquí)
-_MAX_CHARS  = 4000
+_MAX_CHARS = 4000
 
 
 # ── Text cleaning ─────────────────────────────────────────────────────────────
+
 
 def _clean_for_speech(text: str) -> str:
     """Elimina markdown/código/URLs que suenan mal en TTS."""
@@ -45,11 +46,12 @@ def _clean_for_speech(text: str) -> str:
     text = re.sub(r"\n{3,}", "\n\n", text)
     text = re.sub(r"[ \t]+", " ", text)
     if len(text) > _MAX_CHARS:
-        text = text[:_MAX_CHARS - 30] + "... mensaje recortado"
+        text = text[: _MAX_CHARS - 30] + "... mensaje recortado"
     return text.strip()
 
 
 # ── XTTS v2 ───────────────────────────────────────────────────────────────────
+
 
 async def _xtts_to_wav(text: str, wav_path: str) -> bool:
     """Llama al worker XTTS v2 en Python 3.11 via subprocess.
@@ -64,7 +66,10 @@ async def _xtts_to_wav(text: str, wav_path: str) -> bool:
         return False
 
     proc = await asyncio.create_subprocess_exec(
-        str(_PYTHON311), str(_WORKER), wav_path, "--stdin",
+        str(_PYTHON311),
+        str(_WORKER),
+        wav_path,
+        "--stdin",
         stdin=asyncio.subprocess.PIPE,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
@@ -79,7 +84,11 @@ async def _xtts_to_wav(text: str, wav_path: str) -> bool:
         logger.error("xtts_timeout")
         return False
 
-    ok = proc.returncode == 0 and Path(wav_path).exists() and Path(wav_path).stat().st_size > 0
+    ok = (
+        proc.returncode == 0
+        and Path(wav_path).exists()
+        and Path(wav_path).stat().st_size > 0
+    )
     if not ok:
         logger.error("xtts_failed", returncode=proc.returncode)
     return ok
@@ -88,8 +97,18 @@ async def _xtts_to_wav(text: str, wav_path: str) -> bool:
 async def _wav_to_ogg(wav_path: str, ogg_path: str) -> bool:
     """Convierte WAV → OGG OPUS con ffmpeg."""
     proc = await asyncio.create_subprocess_exec(
-        _FFMPEG, "-y", "-i", wav_path,
-        "-c:a", "libopus", "-b:a", "64k", "-ar", "48000", "-ac", "1",
+        _FFMPEG,
+        "-y",
+        "-i",
+        wav_path,
+        "-c:a",
+        "libopus",
+        "-b:a",
+        "64k",
+        "-ar",
+        "48000",
+        "-ac",
+        "1",
         ogg_path,
         stdout=asyncio.subprocess.DEVNULL,
         stderr=asyncio.subprocess.DEVNULL,
@@ -99,6 +118,7 @@ async def _wav_to_ogg(wav_path: str, ogg_path: str) -> bool:
 
 
 # ── edge-tts fallback ─────────────────────────────────────────────────────────
+
 
 async def _edgetts_to_ogg(text: str, ogg_path: str) -> bool:
     """Fallback a edge-tts si XTTS no está disponible."""
@@ -116,6 +136,7 @@ async def _edgetts_to_ogg(text: str, ogg_path: str) -> bool:
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
+
 
 async def text_to_ogg(
     text: str,
@@ -142,8 +163,12 @@ async def text_to_ogg(
         if await _xtts_to_wav(clean, wav_path):
             if await _wav_to_ogg(wav_path, ogg_path):
                 data = Path(ogg_path).read_bytes()
-                logger.info("tts_xtts_ok", speaker=XTTS_SPEAKER,
-                            text_len=len(clean), ogg_kb=round(len(data) / 1024, 1))
+                logger.info(
+                    "tts_xtts_ok",
+                    speaker=XTTS_SPEAKER,
+                    text_len=len(clean),
+                    ogg_kb=round(len(data) / 1024, 1),
+                )
                 return data
 
         # Intento 2: edge-tts

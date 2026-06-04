@@ -16,6 +16,7 @@ Decision flow:
 Both routes write outcomes to the unified task memory so the router
 learns from ALL tasks, not just self-improvement runs.
 """
+
 from __future__ import annotations
 
 import re
@@ -33,19 +34,60 @@ _CONDUCTOR_LOG = Path.home() / ".aura" / "memory" / "conductor_log.md"
 # ── Heuristics ────────────────────────────────────────────────────────────────
 
 # Keywords that strongly suggest a complex multi-step task → Ruta B
-_COMPLEX_KEYWORDS = frozenset({
-    # Spanish
-    "analiza", "análisis", "informe", "reporte", "estrategia", "plan",
-    "implementa", "desarrolla", "construye", "crea", "diseña",
-    "investiga", "investiga", "cliente", "propuesta", "campaña",
-    "optimiza", "seo", "redacta", "documenta", "refactoriza",
-    "arquitectura", "integra", "migra", "debug", "depura",
-    # English
-    "analyze", "report", "strategy", "plan", "implement", "develop",
-    "build", "create", "design", "research", "client", "proposal",
-    "campaign", "optimize", "document", "refactor", "architecture",
-    "integrate", "migrate", "audit", "review", "generate",
-})
+_COMPLEX_KEYWORDS = frozenset(
+    {
+        # Spanish
+        "analiza",
+        "análisis",
+        "informe",
+        "reporte",
+        "estrategia",
+        "plan",
+        "implementa",
+        "desarrolla",
+        "construye",
+        "crea",
+        "diseña",
+        "investiga",
+        "investiga",
+        "cliente",
+        "propuesta",
+        "campaña",
+        "optimiza",
+        "seo",
+        "redacta",
+        "documenta",
+        "refactoriza",
+        "arquitectura",
+        "integra",
+        "migra",
+        "debug",
+        "depura",
+        # English
+        "analyze",
+        "report",
+        "strategy",
+        "plan",
+        "implement",
+        "develop",
+        "build",
+        "create",
+        "design",
+        "research",
+        "client",
+        "proposal",
+        "campaign",
+        "optimize",
+        "document",
+        "refactor",
+        "architecture",
+        "integrate",
+        "migrate",
+        "audit",
+        "review",
+        "generate",
+    }
+)
 
 # Patterns that strongly suggest a simple query → Ruta A
 _SIMPLE_PATTERNS = [
@@ -53,7 +95,7 @@ _SIMPLE_PATTERNS = [
     r"^(what|how|when|where|who|why|is|are|can|does|do)\b",
     r"^(hola|hi|hello|ok|gracias|thanks|sí|si|no)\b",
     r"^[!$]",  # bash passthrough
-    r"^/",     # command
+    r"^/",  # command
 ]
 
 # Intent values that have dedicated handlers — never route to conductor
@@ -63,20 +105,24 @@ _NATIVE_INTENTS = frozenset({"image", "video", "social", "email", "zero_token"})
 @dataclass
 class RouteDecision:
     """Result of task routing classification."""
-    route: str          # "simple" | "complex"
-    confidence: float   # 0.0 – 1.0
-    reason: str         # human-readable explanation
-    source: str         # "heuristic" | "history" | "llm" | "fallback"
+
+    route: str  # "simple" | "complex"
+    confidence: float  # 0.0 – 1.0
+    reason: str  # human-readable explanation
+    source: str  # "heuristic" | "history" | "llm" | "fallback"
 
 
 # ── History-based learning ────────────────────────────────────────────────────
+
 
 def _extract_task_type(text: str) -> str:
     """Normalize task text to a category for history matching."""
     text_lower = text.lower()
     if any(w in text_lower for w in ("seo", "keyword", "ranking", "google")):
         return "seo"
-    if any(w in text_lower for w in ("código", "code", "function", "bug", "error", "fix")):
+    if any(
+        w in text_lower for w in ("código", "code", "function", "bug", "error", "fix")
+    ):
         return "code"
     if any(w in text_lower for w in ("cliente", "client", "propuesta", "proposal")):
         return "client"
@@ -130,6 +176,7 @@ def _historical_route_confidence(task_type: str) -> Optional[RouteDecision]:
 
 # ── LLM classifier ────────────────────────────────────────────────────────────
 
+
 async def _llm_classify(task: str, brain_router: Any) -> Optional[RouteDecision]:
     """Use local-ollama to classify task complexity. ~2s, free."""
     try:
@@ -149,6 +196,7 @@ Task: "{task[:300]}"
 Reply with exactly one word: SIMPLE or COMPLEX"""
 
         import asyncio
+
         resp = await asyncio.wait_for(
             ollama.execute(prompt, timeout_seconds=15),
             timeout=18,
@@ -180,6 +228,7 @@ Reply with exactly one word: SIMPLE or COMPLEX"""
 
 # ── Main router ───────────────────────────────────────────────────────────────
 
+
 async def classify_task(
     task: str,
     brain_router: Any = None,
@@ -197,7 +246,9 @@ async def classify_task(
     # 1. Native intent → don't interfere with dedicated handlers
     if intent is not None:
         try:
-            intent_val = intent.intent.value if hasattr(intent, 'intent') else str(intent)
+            intent_val = (
+                intent.intent.value if hasattr(intent, "intent") else str(intent)
+            )
             if intent_val in _NATIVE_INTENTS:
                 return RouteDecision(
                     route="simple",
@@ -231,7 +282,7 @@ async def classify_task(
         )
 
     # 2c. Complex keyword match
-    words = set(re.findall(r'\b\w{4,}\b', text_lower))
+    words = set(re.findall(r"\b\w{4,}\b", text_lower))
     matched = words & _COMPLEX_KEYWORDS
     if len(matched) >= 2:
         return RouteDecision(
@@ -272,6 +323,7 @@ async def classify_task(
 
 # ── Outcome writer (unified memory for both routes) ───────────────────────────
 
+
 def write_external_outcome(
     task: str,
     route: str,
@@ -288,6 +340,7 @@ def write_external_outcome(
     """
     try:
         from datetime import UTC, datetime
+
         _CONDUCTOR_LOG.parent.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
         status = "✅ SUCCESS" if success else "❌ FAILED"

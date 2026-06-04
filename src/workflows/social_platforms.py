@@ -1,4 +1,5 @@
 """Meta Graph API operations — Instagram, Facebook posting, and CDN image upload."""
+
 from __future__ import annotations
 
 import os
@@ -45,7 +46,10 @@ async def upload_image_to_host(png_bytes: bytes) -> str:
             async with aiohttp.ClientSession() as session:
                 async with session.put(
                     f"https://api.github.com/repos/{gh_repo}/contents/{filename}",
-                    headers={"Authorization": f"Bearer {gh_token}", "Content-Type": "application/json"},
+                    headers={
+                        "Authorization": f"Bearer {gh_token}",
+                        "Content-Type": "application/json",
+                    },
                     json={"message": "social draft", "content": b64_content},
                     timeout=aiohttp.ClientTimeout(total=30),
                 ) as resp:
@@ -54,7 +58,9 @@ async def upload_image_to_host(png_bytes: bytes) -> str:
                         logger.info("image_uploaded_github", url=raw_url[:80])
                         return raw_url
                     body = await resp.text()
-                    logger.debug("github_upload_failed", status=resp.status, body=body[:100])
+                    logger.debug(
+                        "github_upload_failed", status=resp.status, body=body[:100]
+                    )
         except Exception as e:
             logger.debug("github_upload_exception", error=str(e))
 
@@ -63,7 +69,12 @@ async def upload_image_to_host(png_bytes: bytes) -> str:
             form = aiohttp.FormData()
             form.add_field("reqtype", "fileupload")
             form.add_field("time", "24h")
-            form.add_field("fileToUpload", png_bytes, filename="post.jpg", content_type="image/jpeg")
+            form.add_field(
+                "fileToUpload",
+                png_bytes,
+                filename="post.jpg",
+                content_type="image/jpeg",
+            )
             async with session.post(
                 "https://litterbox.catbox.moe/resources/internals/api.php",
                 data=form,
@@ -140,6 +151,7 @@ async def _ig_wait_ready(
 ) -> None:
     """Poll container status until FINISHED. Raises if ERROR or timeout."""
     import asyncio
+
     for attempt in range(max_wait // 3):
         await asyncio.sleep(3)
         async with session.get(
@@ -187,7 +199,9 @@ async def post_to_instagram(image_url: str, caption: str) -> dict:
 
     try:
         async with aiohttp.ClientSession() as session:
-            creation_id = await _ig_create_single_container(session, account_id, image_url, caption)
+            creation_id = await _ig_create_single_container(
+                session, account_id, image_url, caption
+            )
             post_id = await _ig_publish(session, account_id, creation_id)
             return {
                 "ok": True,
@@ -246,7 +260,9 @@ async def post_carousel_to_instagram(image_urls: list[str], caption: str) -> dic
             ) as resp:
                 data = await resp.json()
                 if "error" in data:
-                    raise RuntimeError(f"Carousel container: {data['error'].get('message', data)}")
+                    raise RuntimeError(
+                        f"Carousel container: {data['error'].get('message', data)}"
+                    )
                 carousel_id = data.get("id")
                 if not carousel_id:
                     raise RuntimeError(f"No carousel_id: {data}")
@@ -263,7 +279,11 @@ async def post_carousel_to_instagram(image_urls: list[str], caption: str) -> dic
 
     except RuntimeError as e:
         if "M3:account_invalid" in str(e):
-            return {"ok": False, "error": "Instagram account ID inválido (M3).", "action_required": "M3"}
+            return {
+                "ok": False,
+                "error": "Instagram account ID inválido (M3).",
+                "action_required": "M3",
+            }
         return {"ok": False, "error": str(e), "platform": "instagram"}
     except Exception as e:
         return {"ok": False, "error": str(e), "platform": "instagram"}
@@ -307,7 +327,9 @@ async def post_to_facebook(image_url: str, caption: str) -> dict:
             ) as resp:
                 data = await resp.json()
                 if "error" in data:
-                    raise RuntimeError(f"Facebook error: {data['error'].get('message', data)}")
+                    raise RuntimeError(
+                        f"Facebook error: {data['error'].get('message', data)}"
+                    )
                 post_id = data.get("post_id", data.get("id", ""))
                 return {
                     "ok": True,

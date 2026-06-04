@@ -10,9 +10,13 @@ logger = structlog.get_logger()
 
 # Brain display metadata
 _BRAIN_EMOJIS = {
-    "haiku": "🟡", "sonnet": "🟠", "opus": "🔴",
-    "codex": "🟢", "cline": "🟣",
-    "gemini": "🔵", "openrouter": "🌐",
+    "haiku": "🟡",
+    "sonnet": "🟠",
+    "opus": "🔴",
+    "codex": "🟢",
+    "cline": "🟣",
+    "gemini": "🔵",
+    "openrouter": "🌐",
 }
 
 _VALID_BRAINS = ["haiku", "sonnet", "opus", "codex", "cline", "gemini", "openrouter"]
@@ -71,26 +75,39 @@ class ZeroTokenBrainMixin:
 
         # Brain definitions with CLI binary checks
         BRAINS = [
-            ("🟡", "haiku",       "claude",    "Max plan · ~$0",    "análisis ligero"),
-            ("🟠", "sonnet",      "claude",    "Max plan · ~$0",    "código complejo"),
-            ("🔴", "opus",        "claude",    "Max plan · ~$0",    "arquitectura deep"),
-            ("🔵", "gemini",      "gemini",    "Google free (CLI)", "chat · búsqueda · análisis"),
-            ("🌐", "openrouter",  "curl",      "OpenRouter free",   "code · deep · cascade 7 modelos"),
-            ("🟣", "cline",       "cline",     "Ollama local · $0", "código local offline"),
-            ("🟢", "codex",       "codex",     "OpenAI sub",        "agente código OpenAI"),
+            ("🟡", "haiku", "claude", "Max plan · ~$0", "análisis ligero"),
+            ("🟠", "sonnet", "claude", "Max plan · ~$0", "código complejo"),
+            ("🔴", "opus", "claude", "Max plan · ~$0", "arquitectura deep"),
+            (
+                "🔵",
+                "gemini",
+                "gemini",
+                "Google free (CLI)",
+                "chat · búsqueda · análisis",
+            ),
+            (
+                "🌐",
+                "openrouter",
+                "curl",
+                "OpenRouter free",
+                "code · deep · cascade 7 modelos",
+            ),
+            ("🟣", "cline", "cline", "Ollama local · $0", "código local offline"),
+            ("🟢", "codex", "codex", "OpenAI sub", "agente código OpenAI"),
         ]
 
         ROUTING = [
-            ("⚡", "BASH/GIT/FILES",    "zero-token",        "sin LLM"),
-            ("🔵", "SEARCH",            "gemini CLI",         "web tools Google"),
-            ("🌐", "CHAT/CODE/DEEP",    "openrouter",         "HTTP cascade free"),
-            ("🟡", "EMAIL/CALENDAR",    "haiku",              "Claude tools"),
-            ("↗️", "fallback",           "gemini→openrouter→haiku→sonnet→opus", "cascade"),
+            ("⚡", "BASH/GIT/FILES", "zero-token", "sin LLM"),
+            ("🔵", "SEARCH", "gemini CLI", "web tools Google"),
+            ("🌐", "CHAT/CODE/DEEP", "openrouter", "HTTP cascade free"),
+            ("🟡", "EMAIL/CALENDAR", "haiku", "Claude tools"),
+            ("↗️", "fallback", "gemini→openrouter→haiku→sonnet→opus", "cascade"),
         ]
 
         # Load real usage data from global rate monitor
         try:
             from ...infra.rate_monitor import get_global_monitor
+
             _rm = get_global_monitor()
         except Exception:
             _rm = None
@@ -142,11 +159,13 @@ class ZeroTokenBrainMixin:
         valid = ["haiku", "sonnet", "opus", "codex", "opencode", "cline", "gemini"]
 
         if len(parts) < 3:
-            examples = "\n".join([
-                "<code>/task opencode crea un script bash que liste los 5 procesos más pesados</code>",
-                "<code>/task haiku explica qué hace esta función: ...</code>",
-                "<code>/task cline refactoriza ~/proyecto/main.py</code>",
-            ])
+            examples = "\n".join(
+                [
+                    "<code>/task opencode crea un script bash que liste los 5 procesos más pesados</code>",
+                    "<code>/task haiku explica qué hace esta función: ...</code>",
+                    "<code>/task cline refactoriza ~/proyecto/main.py</code>",
+                ]
+            )
             await update.message.reply_text(
                 f"<b>⚡ /task</b> — ejecuta una tarea con un brain específico (sin bloquear el routing)\n\n"
                 f"<b>Uso:</b> <code>/task &lt;brain&gt; &lt;prompt&gt;</code>\n\n"
@@ -174,22 +193,32 @@ class ZeroTokenBrainMixin:
 
         brain = router.get_brain(brain_name)
         if not brain:
-            await update.message.reply_text(f"Brain <code>{brain_name}</code> no inicializado.", parse_mode="HTML")
+            await update.message.reply_text(
+                f"Brain <code>{brain_name}</code> no inicializado.", parse_mode="HTML"
+            )
             return
 
         # Run the task — reuse _handle_alt_brain via the orchestrator parent
         from ...bot.orchestrator import MessageOrchestrator
+
         orchestrator = context.bot_data.get("orchestrator")
         if orchestrator and hasattr(orchestrator, "_handle_alt_brain"):
             await orchestrator._handle_alt_brain(
-                update, context, router, prompt,
-                update.effective_user.id, brain_name=brain_name,
+                update,
+                context,
+                router,
+                prompt,
+                update.effective_user.id,
+                brain_name=brain_name,
             )
         else:
             # Fallback: direct execute
-            current_dir = str(context.user_data.get("current_directory", str(Path.home())))
+            current_dir = str(
+                context.user_data.get("current_directory", str(Path.home()))
+            )
             progress = await update.message.reply_text(
-                f"{brain.emoji} <b>{brain.display_name}</b> trabajando...", parse_mode="HTML"
+                f"{brain.emoji} <b>{brain.display_name}</b> trabajando...",
+                parse_mode="HTML",
             )
             try:
                 resp = await brain.execute(prompt=prompt, working_directory=current_dir)

@@ -98,7 +98,7 @@ class Watchdog:
         # Disk space
         try:
             usage = shutil.disk_usage(str(Path.home()))
-            report.disk_free_gb = round(usage.free / (1024 ** 3), 1)
+            report.disk_free_gb = round(usage.free / (1024**3), 1)
             if report.disk_free_gb < 5:
                 report.warnings.append(f"⚠️ Low disk: {report.disk_free_gb}GB free")
         except Exception:
@@ -118,11 +118,17 @@ class Watchdog:
             for line in lines:
                 if "Pages free" in line:
                     free_pages = int(line.split(":")[1].strip().rstrip("."))
-                    free_gb = (free_pages * page_size) / (1024 ** 3)
-                    total_gb = os.sysconf("SC_PAGE_SIZE") * os.sysconf("SC_PHYS_PAGES") / (1024 ** 3)
+                    free_gb = (free_pages * page_size) / (1024**3)
+                    total_gb = (
+                        os.sysconf("SC_PAGE_SIZE")
+                        * os.sysconf("SC_PHYS_PAGES")
+                        / (1024**3)
+                    )
                     report.memory_used_pct = round((1 - free_gb / total_gb) * 100, 1)
                     if report.memory_used_pct > 90:
-                        severity = "🔴 CRÍTICA" if report.memory_used_pct > 97 else "⚠️ Alta"
+                        severity = (
+                            "🔴 CRÍTICA" if report.memory_used_pct > 97 else "⚠️ Alta"
+                        )
                         report.warnings.append(
                             f"{severity}: RAM {report.memory_used_pct}% — cierra Chrome/Brave para mejorar velocidad"
                         )
@@ -176,9 +182,7 @@ class Watchdog:
                 error=str(e),
             )
 
-    async def _check_cli(
-        self, brain_name: str, info: Dict[str, str]
-    ) -> ServiceStatus:
+    async def _check_cli(self, brain_name: str, info: Dict[str, str]) -> ServiceStatus:
         """Check if a brain CLI is available."""
         # Extend PATH for LaunchAgent environment
         extra_paths = "/opt/homebrew/bin:/usr/local/bin"
@@ -191,9 +195,7 @@ class Watchdog:
             details=cmd_path or "not in PATH",
         )
 
-    async def _attempt_repair(
-        self, service_name: str, report: HealthReport
-    ) -> None:
+    async def _attempt_repair(self, service_name: str, report: HealthReport) -> None:
         """Log failed service — NO auto-restart (causes duplicate instances)."""
         count = self._failure_counts.get(service_name, 0) + 1
         self._failure_counts[service_name] = count
@@ -237,9 +239,9 @@ class Watchdog:
 
 # ── Active Telegram ping loop ────────────────────────────────────────────────
 
-_PING_INTERVAL = 120      # seconds between pings
-_PING_TIMEOUT = 10        # seconds to wait for getMe
-_PING_MAX_FAILURES = 3    # consecutive failures before self-restart
+_PING_INTERVAL = 120  # seconds between pings
+_PING_TIMEOUT = 10  # seconds to wait for getMe
+_PING_MAX_FAILURES = 3  # consecutive failures before self-restart
 _NOTIFY_CHAT_ID = os.environ.get("OWNER_CHAT_ID", "")
 
 
@@ -248,6 +250,7 @@ async def _ping_telegram(token: str) -> bool:
     try:
         import json
         import urllib.request
+
         url = f"https://api.telegram.org/bot{token}/getMe"
         with urllib.request.urlopen(url, timeout=_PING_TIMEOUT) as resp:
             data = json.loads(resp.read())
@@ -262,12 +265,13 @@ async def _send_restart_notice(token: str, reason: str) -> None:
     try:
         import urllib.parse
         import urllib.request
+
         text = f"⚠️ AURA watchdog auto-restart\nReason: {reason}"
         params = urllib.parse.urlencode({"chat_id": _NOTIFY_CHAT_ID, "text": text})
         url = f"https://api.telegram.org/bot{token}/sendMessage?{params}"
         urllib.request.urlopen(url, timeout=5)
     except Exception:
-        pass   # best-effort — Telegram might be down
+        pass  # best-effort — Telegram might be down
 
 
 async def run_ping_loop(token: str) -> None:
@@ -280,8 +284,11 @@ async def run_ping_loop(token: str) -> None:
     import signal
 
     failures = 0
-    logger.info("watchdog_ping_loop_started",
-                interval_s=_PING_INTERVAL, max_failures=_PING_MAX_FAILURES)
+    logger.info(
+        "watchdog_ping_loop_started",
+        interval_s=_PING_INTERVAL,
+        max_failures=_PING_MAX_FAILURES,
+    )
 
     while True:
         await asyncio.sleep(_PING_INTERVAL)
@@ -293,15 +300,19 @@ async def run_ping_loop(token: str) -> None:
             failures = 0
         else:
             failures += 1
-            logger.warning("watchdog_ping_failure", consecutive=failures, max=_PING_MAX_FAILURES)
+            logger.warning(
+                "watchdog_ping_failure", consecutive=failures, max=_PING_MAX_FAILURES
+            )
 
             if failures >= _PING_MAX_FAILURES:
                 reason = f"{failures} consecutive getMe failures"
                 logger.error("watchdog_triggering_restart", reason=reason)
                 try:
-                    await asyncio.wait_for(_send_restart_notice(token, reason), timeout=6)
+                    await asyncio.wait_for(
+                        _send_restart_notice(token, reason), timeout=6
+                    )
                 except Exception:
                     pass
                 os.kill(os.getpid(), signal.SIGTERM)
                 await asyncio.sleep(5)
-                os._exit(1)   # hard exit if SIGTERM didn't propagate
+                os._exit(1)  # hard exit if SIGTERM didn't propagate

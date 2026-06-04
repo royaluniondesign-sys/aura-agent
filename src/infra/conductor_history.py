@@ -11,6 +11,7 @@ Each run entry:
   steps: [{step, layer, brain, role, status, prompt, output, duration_ms, error}]
 }
 """
+
 from __future__ import annotations
 
 import json
@@ -98,7 +99,7 @@ def conductor_metrics() -> Dict[str, Any]:
             "best_brain": None,
             "best_brain_rate": 0,
             "overall_success_rate": 0,
-            "total_runs": 0
+            "total_runs": 0,
         }
 
     # Collect all steps from all runs
@@ -123,7 +124,12 @@ def conductor_metrics() -> Dict[str, Any]:
 
             # Track by brain
             if brain not in brain_stats:
-                brain_stats[brain] = {"success": 0, "failed": 0, "total_duration_ms": 0, "count": 0}
+                brain_stats[brain] = {
+                    "success": 0,
+                    "failed": 0,
+                    "total_duration_ms": 0,
+                    "count": 0,
+                }
             if status == "done":
                 brain_stats[brain]["success"] += 1
             elif status == "failed":
@@ -141,7 +147,7 @@ def conductor_metrics() -> Dict[str, Any]:
             "success": stats["success"],
             "failed": stats["failed"],
             "total": total,
-            "success_rate": round(rate, 2)
+            "success_rate": round(rate, 2),
         }
 
     # Calculate success rates by brain
@@ -153,13 +159,15 @@ def conductor_metrics() -> Dict[str, Any]:
         stats = brain_stats[brain]
         total = stats["success"] + stats["failed"]
         rate = (stats["success"] / total * 100) if total > 0 else 0
-        avg_duration_ms = (stats["total_duration_ms"] / stats["count"]) if stats["count"] > 0 else 0
+        avg_duration_ms = (
+            (stats["total_duration_ms"] / stats["count"]) if stats["count"] > 0 else 0
+        )
         by_brain[brain] = {
             "success": stats["success"],
             "failed": stats["failed"],
             "total": total,
             "success_rate": round(rate, 2),
-            "avg_duration_ms": round(avg_duration_ms, 2)
+            "avg_duration_ms": round(avg_duration_ms, 2),
         }
 
         if rate > best_rate:
@@ -167,7 +175,9 @@ def conductor_metrics() -> Dict[str, Any]:
             best_brain = brain
 
     # Overall success rate
-    total_steps = sum(stats["success"] + stats["failed"] for stats in layer_stats.values())
+    total_steps = sum(
+        stats["success"] + stats["failed"] for stats in layer_stats.values()
+    )
     total_success = sum(stats["success"] for stats in layer_stats.values())
     overall_rate = (total_success / total_steps * 100) if total_steps > 0 else 0
 
@@ -177,5 +187,5 @@ def conductor_metrics() -> Dict[str, Any]:
         "best_brain": best_brain,
         "best_brain_rate": round(best_rate, 2) if best_brain else 0,
         "overall_success_rate": round(overall_rate, 2),
-        "total_runs": len(runs)
+        "total_runs": len(runs),
     }

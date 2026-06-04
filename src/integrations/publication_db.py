@@ -51,15 +51,30 @@ _DRIVE_ROOT_ID_PATH = Path.home() / ".aura" / "google_drive_root_id.txt"
 _AURA_PARENT_ID_PATH = Path.home() / ".aura" / "google_drive_aura_parent_id.txt"
 
 # Google Drive folder names
-_DRIVE_ROOT_NAME = "Social Media"   # created inside AURA/
+_DRIVE_ROOT_NAME = "Social Media"  # created inside AURA/
 _SPREADSHEET_NAME = "AURA — Base de Publicaciones"
 
 # Spreadsheet columns (in order)
 COLUMNS = [
-    "ID", "Fecha Creación", "Fecha Publicación", "Plataforma", "Formato",
-    "Tema", "Headline", "Subheadline", "Caption", "Tag",
-    "Status", "URL Post", "Drive Carpeta", "Drive Imagen", "Drive Video",
-    "Likes", "Comments", "Shares", "Notas",
+    "ID",
+    "Fecha Creación",
+    "Fecha Publicación",
+    "Plataforma",
+    "Formato",
+    "Tema",
+    "Headline",
+    "Subheadline",
+    "Caption",
+    "Tag",
+    "Status",
+    "URL Post",
+    "Drive Carpeta",
+    "Drive Imagen",
+    "Drive Video",
+    "Likes",
+    "Comments",
+    "Shares",
+    "Notas",
 ]
 
 
@@ -67,16 +82,17 @@ COLUMNS = [
 # Data model
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class Publication:
-    platform: str                    # instagram | twitter | linkedin
-    format: str                      # 1:1 | 4:3 | 9:16
+    platform: str  # instagram | twitter | linkedin
+    format: str  # 1:1 | 4:3 | 9:16
     topic: str
     headline: str
     subheadline: str
     caption: str
     tag: str
-    status: str = "generated"        # generated | scheduled | published | failed
+    status: str = "generated"  # generated | scheduled | published | failed
     post_url: str = ""
     drive_folder_id: str = ""
     drive_folder_url: str = ""
@@ -97,6 +113,7 @@ class Publication:
 # ---------------------------------------------------------------------------
 # SQLite layer (always available)
 # ---------------------------------------------------------------------------
+
 
 def _init_db() -> sqlite3.Connection:
     _DB_PATH.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +152,7 @@ def _init_db() -> sqlite3.Connection:
 
 def _gen_pub_id(platform: str) -> str:
     import time
+
     ts = int(time.time())
     return f"{platform[:2].upper()}-{ts}"
 
@@ -143,7 +161,8 @@ def _save_to_sqlite(pub: Publication) -> str:
     pub_id = pub.pub_id or _gen_pub_id(pub.platform)
     pub.pub_id = pub_id
     conn = _init_db()
-    conn.execute("""
+    conn.execute(
+        """
         INSERT OR REPLACE INTO publications (
             id, created_at, scheduled_at, published_at,
             platform, format, topic, headline, subheadline,
@@ -153,19 +172,33 @@ def _save_to_sqlite(pub: Publication) -> str:
             drive_video_id, drive_video_url,
             likes, comments, shares, notes
         ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
-    """, (
-        pub_id,
-        pub.created_at.isoformat(),
-        pub.scheduled_at.isoformat() if pub.scheduled_at else None,
-        pub.published_at.isoformat() if pub.published_at else None,
-        pub.platform, pub.format, pub.topic,
-        pub.headline, pub.subheadline, pub.caption, pub.tag,
-        pub.status, pub.post_url,
-        pub.drive_folder_id, pub.drive_folder_url,
-        pub.drive_image_id, pub.drive_image_url,
-        pub.drive_video_id, pub.drive_video_url,
-        pub.likes, pub.comments, pub.shares, pub.notes,
-    ))
+    """,
+        (
+            pub_id,
+            pub.created_at.isoformat(),
+            pub.scheduled_at.isoformat() if pub.scheduled_at else None,
+            pub.published_at.isoformat() if pub.published_at else None,
+            pub.platform,
+            pub.format,
+            pub.topic,
+            pub.headline,
+            pub.subheadline,
+            pub.caption,
+            pub.tag,
+            pub.status,
+            pub.post_url,
+            pub.drive_folder_id,
+            pub.drive_folder_url,
+            pub.drive_image_id,
+            pub.drive_image_url,
+            pub.drive_video_id,
+            pub.drive_video_url,
+            pub.likes,
+            pub.comments,
+            pub.shares,
+            pub.notes,
+        ),
+    )
     conn.commit()
     conn.close()
     logger.info("publication_saved_sqlite", pub_id=pub_id, platform=pub.platform)
@@ -192,16 +225,19 @@ def update_publication_status(
 ) -> None:
     """Update status + post URL after publishing."""
     conn = _init_db()
-    conn.execute("""
+    conn.execute(
+        """
         UPDATE publications
         SET status=?, post_url=?, published_at=?
         WHERE id=?
-    """, (
-        status,
-        post_url,
-        published_at.isoformat() if published_at else None,
-        pub_id,
-    ))
+    """,
+        (
+            status,
+            post_url,
+            published_at.isoformat() if published_at else None,
+            pub_id,
+        ),
+    )
     conn.commit()
     conn.close()
 
@@ -209,6 +245,7 @@ def update_publication_status(
 # ---------------------------------------------------------------------------
 # Google Drive helpers
 # ---------------------------------------------------------------------------
+
 
 def _get_google_service(api: str, version: str) -> Any:
     """Build Google API service from credentials file. Returns None if not configured."""
@@ -231,6 +268,7 @@ def _get_google_service(api: str, version: str) -> Any:
         else:
             # OAuth token (from /drive-auth flow)
             from google.oauth2.credentials import Credentials
+
             creds = Credentials.from_authorized_user_info(creds_data)
 
         return build(api, version, credentials=creds, cache_discovery=False)
@@ -239,7 +277,9 @@ def _get_google_service(api: str, version: str) -> Any:
         return None
 
 
-def _get_or_create_folder(drive_svc: Any, name: str, parent_id: Optional[str] = None) -> str:
+def _get_or_create_folder(
+    drive_svc: Any, name: str, parent_id: Optional[str] = None
+) -> str:
     """Get existing Drive folder by name+parent or create it. Returns folder ID."""
     query = f"name='{name}' and mimeType='application/vnd.google-apps.folder' and trashed=false"
     if parent_id:
@@ -299,7 +339,7 @@ def _get_publication_folder(drive_svc: Any, pub: Publication) -> tuple[str, str]
     ref_dt = pub.scheduled_at or pub.created_at
     year = ref_dt.strftime("%Y")
     quarter = f"Q{(ref_dt.month - 1) // 3 + 1}"
-    month = ref_dt.strftime("%B")   # "April"
+    month = ref_dt.strftime("%B")  # "April"
     week_num = ref_dt.isocalendar()[1]
     week = f"Week-{week_num:02d}"
 
@@ -331,9 +371,9 @@ def _upload_file_to_drive(
 
     media = MediaIoBaseUpload(io.BytesIO(file_bytes), mimetype=mime_type)
     meta = {"name": filename, "parents": [parent_folder_id]}
-    result = drive_svc.files().create(
-        body=meta, media_body=media, fields="id"
-    ).execute()
+    result = (
+        drive_svc.files().create(body=meta, media_body=media, fields="id").execute()
+    )
     file_id = result["id"]
     # Make readable by anyone with link
     drive_svc.permissions().create(
@@ -347,18 +387,27 @@ def _upload_file_to_drive(
 # Google Sheets helpers
 # ---------------------------------------------------------------------------
 
+
 def _get_or_create_spreadsheet(sheets_svc: Any, drive_svc: Any) -> str:
     """Get existing spreadsheet ID or create new one. Returns sheet ID."""
     if _SHEET_ID_PATH.exists():
         return _SHEET_ID_PATH.read_text().strip()
 
     # Create spreadsheet
-    spreadsheet = sheets_svc.spreadsheets().create(body={
-        "properties": {"title": _SPREADSHEET_NAME, "locale": "es_MX"},
-        "sheets": [{
-            "properties": {"title": "Publicaciones", "index": 0},
-        }],
-    }).execute()
+    spreadsheet = (
+        sheets_svc.spreadsheets()
+        .create(
+            body={
+                "properties": {"title": _SPREADSHEET_NAME, "locale": "es_MX"},
+                "sheets": [
+                    {
+                        "properties": {"title": "Publicaciones", "index": 0},
+                    }
+                ],
+            }
+        )
+        .execute()
+    )
     sheet_id = spreadsheet["spreadsheetId"]
 
     # Write header row
@@ -372,26 +421,48 @@ def _get_or_create_spreadsheet(sheets_svc: Any, drive_svc: Any) -> str:
     # Format header (bold, frozen, background)
     sheets_svc.spreadsheets().batchUpdate(
         spreadsheetId=sheet_id,
-        body={"requests": [
-            # Freeze row 1
-            {"updateSheetProperties": {
-                "properties": {"sheetId": 0, "gridProperties": {"frozenRowCount": 1}},
-                "fields": "gridProperties.frozenRowCount",
-            }},
-            # Bold header
-            {"repeatCell": {
-                "range": {"sheetId": 0, "startRowIndex": 0, "endRowIndex": 1},
-                "cell": {"userEnteredFormat": {
-                    "textFormat": {"bold": True},
-                    "backgroundColor": {"red": 0.851, "green": 0.467, "blue": 0.341},
-                }},
-                "fields": "userEnteredFormat(textFormat,backgroundColor)",
-            }},
-            # Auto-resize columns
-            {"autoResizeDimensions": {
-                "dimensions": {"sheetId": 0, "dimension": "COLUMNS", "startIndex": 0, "endIndex": len(COLUMNS)},
-            }},
-        ]},
+        body={
+            "requests": [
+                # Freeze row 1
+                {
+                    "updateSheetProperties": {
+                        "properties": {
+                            "sheetId": 0,
+                            "gridProperties": {"frozenRowCount": 1},
+                        },
+                        "fields": "gridProperties.frozenRowCount",
+                    }
+                },
+                # Bold header
+                {
+                    "repeatCell": {
+                        "range": {"sheetId": 0, "startRowIndex": 0, "endRowIndex": 1},
+                        "cell": {
+                            "userEnteredFormat": {
+                                "textFormat": {"bold": True},
+                                "backgroundColor": {
+                                    "red": 0.851,
+                                    "green": 0.467,
+                                    "blue": 0.341,
+                                },
+                            }
+                        },
+                        "fields": "userEnteredFormat(textFormat,backgroundColor)",
+                    }
+                },
+                # Auto-resize columns
+                {
+                    "autoResizeDimensions": {
+                        "dimensions": {
+                            "sheetId": 0,
+                            "dimension": "COLUMNS",
+                            "startIndex": 0,
+                            "endIndex": len(COLUMNS),
+                        },
+                    }
+                },
+            ]
+        },
     ).execute()
 
     _SHEET_ID_PATH.write_text(sheet_id)
@@ -436,6 +507,7 @@ def _append_to_sheet(sheets_svc: Any, sheet_id: str, pub: Publication) -> None:
 # ---------------------------------------------------------------------------
 # Main PublicationDB class
 # ---------------------------------------------------------------------------
+
 
 class PublicationDB:
     """Central publication tracker. SQLite always, Drive+Sheets when configured."""
@@ -500,7 +572,14 @@ class PublicationDB:
         """Upload to Drive + append to Sheets. Runs in background."""
         loop = asyncio.get_event_loop()
         try:
-            await loop.run_in_executor(None, self._sync_to_google_sync, pub, image_bytes, video_bytes, video_url)
+            await loop.run_in_executor(
+                None,
+                self._sync_to_google_sync,
+                pub,
+                image_bytes,
+                video_bytes,
+                video_url,
+            )
         except Exception as e:
             logger.error("google_sync_error", pub_id=pub.pub_id, error=str(e))
 
@@ -562,24 +641,33 @@ class PublicationDB:
         }
         meta_bytes = json.dumps(metadata, indent=2, ensure_ascii=False).encode()
         _upload_file_to_drive(
-            drive_svc, meta_bytes, f"{pub.pub_id}_metadata.json",
-            "application/json", folder_id
+            drive_svc,
+            meta_bytes,
+            f"{pub.pub_id}_metadata.json",
+            "application/json",
+            folder_id,
         )
 
         # 5. Update SQLite with Drive links
         conn = _init_db()
-        conn.execute("""
+        conn.execute(
+            """
             UPDATE publications SET
                 drive_folder_id=?, drive_folder_url=?,
                 drive_image_id=?, drive_image_url=?,
                 drive_video_id=?, drive_video_url=?
             WHERE id=?
-        """, (
-            pub.drive_folder_id, pub.drive_folder_url,
-            pub.drive_image_id, pub.drive_image_url,
-            pub.drive_video_id, pub.drive_video_url,
-            pub.pub_id,
-        ))
+        """,
+            (
+                pub.drive_folder_id,
+                pub.drive_folder_url,
+                pub.drive_image_id,
+                pub.drive_image_url,
+                pub.drive_video_id,
+                pub.drive_video_url,
+                pub.pub_id,
+            ),
+        )
         conn.commit()
         conn.close()
 

@@ -38,7 +38,7 @@ async def _fetch_unread_emails(limit: int = 20) -> List[Dict[str, Any]]:
 
     try:
         proc = await asyncio.create_subprocess_shell(
-            f'npx google-workspace-mcp gmail list --unread --limit {limit} --json',
+            f"npx google-workspace-mcp gmail list --unread --limit {limit} --json",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -47,6 +47,7 @@ async def _fetch_unread_emails(limit: int = 20) -> List[Dict[str, Any]]:
             return []
 
         import json
+
         return json.loads(stdout.decode())
     except Exception as e:
         logger.warning("email_fetch_failed", error=str(e))

@@ -59,6 +59,7 @@ def _pick_image(category: str) -> str:
 def _slugify(title: str) -> str:
     """Convert title to URL slug."""
     import unicodedata
+
     # Normalize and remove accents
     normalized = unicodedata.normalize("NFD", title.lower())
     ascii_str = "".join(c for c in normalized if unicodedata.category(c) != "Mn")
@@ -135,12 +136,14 @@ async def _gh_put(
 
 def _inject_post_to_page_tsx(tsx_content: str, post: BlogPost) -> str:
     """Add post entry to the posts[] array in blog/page.tsx."""
+    title_esc = post.title.replace("'", "\\'")
+    excerpt_esc = post.excerpt.replace("'", "\\'")
     new_entry = f"""  {{
     slug: '{post.slug}',
-    title: '{post.title.replace("'", "\\'")}',
+    title: '{title_esc}',
     date: '{post.date}', category: '{post.category}', readTime: '{post.read_time}',
     image: '{post.image}',
-    excerpt: '{post.excerpt.replace("'", "\\'")}',
+    excerpt: '{excerpt_esc}',
     featured: false,
   }},"""
 
@@ -157,7 +160,9 @@ def _inject_post_to_page_tsx(tsx_content: str, post: BlogPost) -> str:
         idx = tsx_content.find("const posts = [")
         if idx >= 0:
             insert_at = tsx_content.index("[", idx) + 1
-            updated = tsx_content[:insert_at] + "\n" + new_entry + tsx_content[insert_at:]
+            updated = (
+                tsx_content[:insert_at] + "\n" + new_entry + tsx_content[insert_at:]
+            )
 
     return updated
 
@@ -166,17 +171,16 @@ def _inject_post_to_slug_tsx(tsx_content: str, post: BlogPost) -> str:
     """Add post content to POSTS dict in blog/[slug]/page.tsx."""
     # Escape content for JS template literal
     content_escaped = (
-        post.content
-        .replace("\\", "\\\\")
-        .replace("`", "\\`")
-        .replace("${", "\\${")
+        post.content.replace("\\", "\\\\").replace("`", "\\`").replace("${", "\\${")
     )
 
+    title_esc = post.title.replace("'", "\\'")
+    excerpt_esc = post.excerpt.replace("'", "\\'")
     new_entry = f"""  '{post.slug}': {{
-    title: '{post.title.replace("'", "\\'")}',
+    title: '{title_esc}',
     date: '{post.date}', category: '{post.category}', readTime: '{post.read_time}',
     image: '{post.image}',
-    excerpt: '{post.excerpt.replace("'", "\\'")}',
+    excerpt: '{excerpt_esc}',
     content: `{content_escaped}`,
   }},"""
 
@@ -190,7 +194,9 @@ def _inject_post_to_slug_tsx(tsx_content: str, post: BlogPost) -> str:
         idx = tsx_content.find("const POSTS")
         if idx >= 0:
             brace_idx = tsx_content.index("{", idx) + 1
-            updated = tsx_content[:brace_idx] + "\n" + new_entry + tsx_content[brace_idx:]
+            updated = (
+                tsx_content[:brace_idx] + "\n" + new_entry + tsx_content[brace_idx:]
+            )
 
     return updated
 
@@ -201,23 +207,43 @@ async def generate_blog_content(topic: str) -> BlogPost:
 
     # Build date string
     from datetime import datetime
-    months_es = ["Enero","Febrero","Marzo","Abril","Mayo","Junio",
-                  "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"]
+
+    months_es = [
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+    ]
     now = datetime.now()
     date_str = f"{months_es[now.month - 1]} {now.year}"
 
     # Categorize topic
     topic_lower = topic.lower()
-    if any(w in topic_lower for w in ["ia", "ai", "inteligencia", "llm", "modelo", "aura", "automatiz"]):
+    if any(
+        w in topic_lower
+        for w in ["ia", "ai", "inteligencia", "llm", "modelo", "aura", "automatiz"]
+    ):
         category = "IA & Tecnología"
         img_key = "ia"
-    elif any(w in topic_lower for w in ["brand", "marca", "identidad", "logo", "visual"]):
+    elif any(
+        w in topic_lower for w in ["brand", "marca", "identidad", "logo", "visual"]
+    ):
         category = "Branding"
         img_key = "branding"
     elif any(w in topic_lower for w in ["shop", "ecommerce", "tienda", "venta"]):
         category = "E-commerce"
         img_key = "ecommerce"
-    elif any(w in topic_lower for w in ["web", "next", "react", "frontend", "desarrollo"]):
+    elif any(
+        w in topic_lower for w in ["web", "next", "react", "frontend", "desarrollo"]
+    ):
         category = "Desarrollo Web"
         img_key = "web"
     elif any(w in topic_lower for w in ["n8n", "workflow", "pipeline", "automatiza"]):
@@ -244,7 +270,9 @@ Responde EXACTAMENTE en este formato JSON (sin markdown, sin ```):
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "gemini", "-p", prompt,
+            "gemini",
+            "-p",
+            prompt,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -252,7 +280,9 @@ Responde EXACTAMENTE en este formato JSON (sin markdown, sin ```):
         raw = stdout.decode("utf-8").strip()
 
         # Try to parse JSON from response
-        json_match = re.search(r'\{[^{}]*"title"[^{}]*"excerpt"[^{}]*"content".*\}', raw, re.DOTALL)
+        json_match = re.search(
+            r'\{[^{}]*"title"[^{}]*"excerpt"[^{}]*"content".*\}', raw, re.DOTALL
+        )
         if json_match:
             data = json.loads(json_match.group(0))
         else:
@@ -267,7 +297,11 @@ Responde EXACTAMENTE en este formato JSON (sin markdown, sin ```):
                 data = {
                     "title": title_m.group(1) if title_m else topic,
                     "excerpt": excerpt_m.group(1) if excerpt_m else topic,
-                    "content": content_m.group(1).replace("\\n", "\n") if content_m else raw[:1000],
+                    "content": (
+                        content_m.group(1).replace("\\n", "\n")
+                        if content_m
+                        else raw[:1000]
+                    ),
                 }
 
         title = data["title"].strip()
@@ -327,15 +361,21 @@ async def publish_blog_post(
 
             # 3. Commit page.tsx
             page_result = await _gh_put(
-                session, _BLOG_PAGE, updated_page,
-                page_data["sha"], commit_msg,
+                session,
+                _BLOG_PAGE,
+                updated_page,
+                page_data["sha"],
+                commit_msg,
             )
 
             # 4. Commit slug/page.tsx (get new sha after first commit)
             slug_page_data = await _gh_get(session, _BLOG_SLUG)
             await _gh_put(
-                session, _BLOG_SLUG, updated_slug,
-                slug_page_data["sha"], f"feat(blog): content for {post.slug}",
+                session,
+                _BLOG_SLUG,
+                updated_slug,
+                slug_page_data["sha"],
+                f"feat(blog): content for {post.slug}",
             )
 
             commit_sha = page_result.get("commit", {}).get("sha", "")[:7]

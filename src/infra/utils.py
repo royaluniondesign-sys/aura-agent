@@ -1,4 +1,5 @@
 """AURA infrastructure utilities."""
+
 from pathlib import Path
 import requests
 import backoff
@@ -21,11 +22,12 @@ def send_telegram_message(token: str, chat_id: int | str, message: str) -> dict:
     Raises:
         RequestException: If message fails after max retries
     """
+
     @backoff.on_exception(backoff.expo, RequestException, max_tries=5)
     def _send_with_retry() -> dict:
         response = requests.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
-            json={"chat_id": chat_id, "text": message}
+            json={"chat_id": chat_id, "text": message},
         )
         response.raise_for_status()
         return response.json()

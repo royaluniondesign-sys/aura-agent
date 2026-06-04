@@ -190,6 +190,7 @@ class ClaudeSDKManager:
             # request), AURA knows her history, brain health, and mission priorities.
             try:
                 from ..infra.meta_context import build_compact_context
+
                 meta_ctx = build_compact_context()
                 if meta_ctx:
                     base_prompt += (

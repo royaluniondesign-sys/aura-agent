@@ -9,6 +9,7 @@ Daily flow:
 
 Token budget per run: ~4k tokens total (haiku pricing).
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -43,11 +44,11 @@ PLATFORMS = {
 
 # Posting schedule — optimal windows (local time, 24h)
 POST_SCHEDULE = {
-    "post_4_5": {"days": [1, 3], "hour": 10},      # Mon, Wed 10am
-    "carousel": {"days": [2, 4], "hour": 17},       # Tue, Thu 5pm
-    "reel": {"days": [1, 3, 5], "hour": 19},        # Mon, Wed, Fri 7pm
-    "story": {"days": [0, 1, 2, 3, 4], "hour": 9}, # Weekdays 9am
-    "text_post": {"days": [1, 3], "hour": 11},      # Mon, Wed 11am
+    "post_4_5": {"days": [1, 3], "hour": 10},  # Mon, Wed 10am
+    "carousel": {"days": [2, 4], "hour": 17},  # Tue, Thu 5pm
+    "reel": {"days": [1, 3, 5], "hour": 19},  # Mon, Wed, Fri 7pm
+    "story": {"days": [0, 1, 2, 3, 4], "hour": 9},  # Weekdays 9am
+    "text_post": {"days": [1, 3], "hour": 11},  # Mon, Wed 11am
 }
 
 
@@ -55,7 +56,9 @@ def _load_voice() -> str:
     try:
         return RUD_VOICE_PATH.read_text(encoding="utf-8")
     except Exception:
-        return "RUD Studio — premium branding agency. Sharp, opinionated, design-forward."
+        return (
+            "RUD Studio — premium branding agency. Sharp, opinionated, design-forward."
+        )
 
 
 def _items_to_digest(items: list[FeedItem]) -> str:
@@ -135,7 +138,11 @@ async def _call_openrouter(prompt: str, system: str, max_tokens: int = 1200) -> 
                 r = await client.post(
                     "https://openrouter.ai/api/v1/chat/completions",
                     headers=headers,
-                    json={"model": model, "messages": messages, "max_tokens": max_tokens},
+                    json={
+                        "model": model,
+                        "messages": messages,
+                        "max_tokens": max_tokens,
+                    },
                 )
                 if r.status_code == 429:
                     wait = 5 * (i + 1)
@@ -145,7 +152,11 @@ async def _call_openrouter(prompt: str, system: str, max_tokens: int = 1200) -> 
                     r = await client.post(
                         "https://openrouter.ai/api/v1/chat/completions",
                         headers=headers,
-                        json={"model": model, "messages": messages, "max_tokens": max_tokens},
+                        json={
+                            "model": model,
+                            "messages": messages,
+                            "max_tokens": max_tokens,
+                        },
                     )
                 if r.status_code == 200:
                     data = r.json()
@@ -273,14 +284,16 @@ Return JSON:
         plan = {"headline": angle["headline"], "body_copy": "", "hashtags": []}
 
     # Merge angle metadata into plan
-    plan.update({
-        "topic_key": angle.get("topic_key", ""),
-        "format": fmt,
-        "platforms": platforms,
-        "pillar": angle.get("pillar", "design"),
-        "angle": angle.get("angle", ""),
-        "why_now": angle.get("why_now", ""),
-    })
+    plan.update(
+        {
+            "topic_key": angle.get("topic_key", ""),
+            "format": fmt,
+            "platforms": platforms,
+            "pillar": angle.get("pillar", "design"),
+            "angle": angle.get("angle", ""),
+            "why_now": angle.get("why_now", ""),
+        }
+    )
     return plan
 
 
@@ -335,11 +348,18 @@ async def run_daily_brain() -> dict:
                 title=plan.get("headline", ""),
                 fmt=plan.get("format", "post_4_5"),
                 platform=",".join(plan.get("platforms", ["instagram"])),
-                meta={"angle": plan.get("angle", ""), "scheduled_at": plan.get("scheduled_at")},
+                meta={
+                    "angle": plan.get("angle", ""),
+                    "scheduled_at": plan.get("scheduled_at"),
+                },
             )
             plan["memory_id"] = row_id
             plans.append(plan)
-            log.info("plan_created topic=%s fmt=%s", plan.get("topic_key"), plan.get("format"))
+            log.info(
+                "plan_created topic=%s fmt=%s",
+                plan.get("topic_key"),
+                plan.get("format"),
+            )
         except Exception as e:
             log.error("plan_generation_error: %s", e)
 
@@ -347,8 +367,11 @@ async def run_daily_brain() -> dict:
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     plan_file = PLANS_DIR / f"{today}.json"
     plan_file.write_text(
-        json.dumps({"date": today, "feed_count": len(items), "plans": plans},
-                   ensure_ascii=False, indent=2),
+        json.dumps(
+            {"date": today, "feed_count": len(items), "plans": plans},
+            ensure_ascii=False,
+            indent=2,
+        ),
         encoding="utf-8",
     )
     log.info("plans_saved path=%s count=%d", plan_file, len(plans))

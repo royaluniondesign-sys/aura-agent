@@ -14,6 +14,7 @@ Claude Desktop config (~/.config/claude/claude_desktop_config.json):
       }
     }
 """
+
 from __future__ import annotations
 
 # ── Redirect ALL logging to stderr BEFORE any other import ──────────────────
@@ -21,9 +22,11 @@ from __future__ import annotations
 # Any non-JSON bytes on stdout corrupt the protocol.
 import logging as _logging
 import sys as _sys
+
 _logging.basicConfig(stream=_sys.stderr, level=_logging.WARNING)
 try:
     import structlog as _structlog
+
     _structlog.configure(logger_factory=_structlog.PrintLoggerFactory(file=_sys.stderr))
 except Exception:
     pass
@@ -38,6 +41,7 @@ ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
 from dotenv import load_dotenv
+
 load_dotenv(ROOT / ".env")
 
 from mcp.server.fastmcp import FastMCP
@@ -73,6 +77,7 @@ except Exception as _reg_err:
 
 
 # ── Entrypoint ─────────────────────────────────────────────────────────────────
+
 
 def _main() -> None:
     transport = sys.argv[1] if len(sys.argv) > 1 else "stdio"

@@ -1,4 +1,5 @@
 """Incremental file indexer for AURA RAG."""
+
 from __future__ import annotations
 
 import asyncio
@@ -56,7 +57,9 @@ class RAGIndexer:
             return chunk_markdown
         return chunk_text
 
-    async def index_file(self, path: Path, source_type: str, last_n_lines: Optional[int] = None) -> Dict[str, int]:
+    async def index_file(
+        self, path: Path, source_type: str, last_n_lines: Optional[int] = None
+    ) -> Dict[str, int]:
         """Chunk a file, embed changed chunks, upsert. Returns {"indexed": N, "skipped": N, "errors": N}."""
         await self._ensure_init()
 
@@ -126,7 +129,13 @@ class RAGIndexer:
                 logger.warning("rag_upsert_error", chunk_id=chunk["id"], error=str(exc))
                 errors += 1
 
-        logger.info("rag_file_indexed", path=source, indexed=indexed, skipped=skipped, errors=errors)
+        logger.info(
+            "rag_file_indexed",
+            path=source,
+            indexed=indexed,
+            skipped=skipped,
+            errors=errors,
+        )
         return {"indexed": indexed, "skipped": skipped, "errors": errors}
 
     async def index_all(self) -> Dict[str, int]:
@@ -147,11 +156,15 @@ class RAGIndexer:
 
             for path in matched_paths:
                 try:
-                    stats = await self.index_file(path, source_type, last_n_lines=last_n)
+                    stats = await self.index_file(
+                        path, source_type, last_n_lines=last_n
+                    )
                     for key in total:
                         total[key] += stats[key]
                 except Exception as exc:
-                    logger.warning("rag_index_source_error", path=str(path), error=str(exc))
+                    logger.warning(
+                        "rag_index_source_error", path=str(path), error=str(exc)
+                    )
                     total["errors"] += 1
 
         logger.info("rag_index_all_done", **total)
@@ -166,7 +179,9 @@ class RAGIndexer:
         except Exception as exc:
             logger.warning("rag_index_all_background_error", error=str(exc))
 
-    async def index_text(self, text: str, source: str, source_type: str) -> Dict[str, int]:
+    async def index_text(
+        self, text: str, source: str, source_type: str
+    ) -> Dict[str, int]:
         """Index arbitrary text (e.g. chat message, routine result) on demand."""
         await self._ensure_init()
 

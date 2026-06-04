@@ -3,6 +3,7 @@
 Supports both local (Docker, localhost:5678) and remote (RUD server) N8N.
 Uses session-cookie auth — no API key or manual setup required.
 """
+
 from __future__ import annotations
 
 import json
@@ -110,7 +111,10 @@ async def execute_social_flow(post_data: dict[str, Any]) -> dict[str, Any]:
 
     exec_id = resp.get("data", {}).get("executionId")
     if not exec_id:
-        return {"ok": False, "error": f"N8N run failed: {resp.get('message', str(resp))[:80]}"}
+        return {
+            "ok": False,
+            "error": f"N8N run failed: {resp.get('message', str(resp))[:80]}",
+        }
 
     for _ in range(15):
         await asyncio.sleep(1)
@@ -121,9 +125,7 @@ async def execute_social_flow(post_data: dict[str, Any]) -> dict[str, Any]:
             if status == "success":
                 try:
                     run_data = (
-                        ex.get("data", {})
-                        .get("resultData", {})
-                        .get("runData", {})
+                        ex.get("data", {}).get("resultData", {}).get("runData", {})
                     )
                     for node_name in ["Success Response", "Mock Response", "Respond"]:
                         if node_name in run_data:

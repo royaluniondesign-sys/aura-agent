@@ -37,8 +37,16 @@ async def get_system_metrics() -> Dict[str, Any]:
 
     # RAM via vm_stat (macOS accurate, no psutil needed)
     try:
-        _pg = int(_sp.check_output(["/usr/sbin/sysctl", "-n", "hw.pagesize"], timeout=3).strip())
-        _tb = int(_sp.check_output(["/usr/sbin/sysctl", "-n", "hw.memsize"], timeout=3).strip())
+        _pg = int(
+            _sp.check_output(
+                ["/usr/sbin/sysctl", "-n", "hw.pagesize"], timeout=3
+            ).strip()
+        )
+        _tb = int(
+            _sp.check_output(
+                ["/usr/sbin/sysctl", "-n", "hw.memsize"], timeout=3
+            ).strip()
+        )
         _vm = _sp.check_output("vm_stat", shell=True, timeout=3, text=True)
 
         def _pgs(pat: str) -> int:
@@ -76,6 +84,7 @@ async def get_system_metrics() -> Dict[str, Any]:
     # CPU (load average — no psutil needed)
     try:
         import os as _os
+
         load = _os.getloadavg()
         result["cpu"] = {
             "load_1m": round(load[0], 2),
@@ -131,12 +140,16 @@ async def get_status() -> Dict[str, Any]:
         if pid:
             try:
                 import time as _t
+
                 r2 = _sp.run(
                     ["ps", "-o", "lstart=", "-p", str(pid)],
-                    capture_output=True, text=True, timeout=3,
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
                 )
                 if r2.stdout.strip():
                     from datetime import datetime as _dt
+
                     started = _dt.strptime(r2.stdout.strip(), "%c")
                     uptime_sec = int(_t.time() - started.timestamp())
                     result["uptime_sec"] = uptime_sec
@@ -163,7 +176,7 @@ async def get_status() -> Dict[str, Any]:
 
         _sysctl = "/usr/sbin/sysctl"
         _pg = int(_sp2.check_output([_sysctl, "-n", "hw.pagesize"], timeout=3).strip())
-        _tb = int(_sp2.check_output([_sysctl, "-n", "hw.memsize"],  timeout=3).strip())
+        _tb = int(_sp2.check_output([_sysctl, "-n", "hw.memsize"], timeout=3).strip())
         _vm = _sp2.check_output("vm_stat", shell=True, timeout=3, text=True)
 
         def _pgs(pat: str) -> int:
@@ -177,7 +190,7 @@ async def get_status() -> Dict[str, Any]:
             + _pgs(r"Pages inactive:\s+(\d+)")
         ) * _pg
         if _tb > 0:
-            result["system"]["ram_pct"]     = round((_tb - _avail) / _tb * 100, 1)
+            result["system"]["ram_pct"] = round((_tb - _avail) / _tb * 100, 1)
             result["system"]["ram_free_gb"] = round(_avail / 1e9, 1)
             result["system"]["ram_total_gb"] = round(_tb / 1e9, 1)
     except Exception as _ram_err:
@@ -276,6 +289,7 @@ async def stream_logs() -> StreamingResponse:
 
         import json as _j
         import time as _t
+
         last_heartbeat = _t.time()
 
         while True:
@@ -292,11 +306,18 @@ async def stream_logs() -> StreamingResponse:
                             if not clean:
                                 continue
                             cl = clean.lower()
-                            lvl = ("error" if "error" in cl else
-                                   "warning" if "warn" in cl else
-                                   "debug" if "debug" in cl else "info")
-                            data = _j.dumps({"text": clean[:500], "level": lvl,
-                                             "ts": _t.time()})
+                            lvl = (
+                                "error"
+                                if "error" in cl
+                                else (
+                                    "warning"
+                                    if "warn" in cl
+                                    else "debug" if "debug" in cl else "info"
+                                )
+                            )
+                            data = _j.dumps(
+                                {"text": clean[:500], "level": lvl, "ts": _t.time()}
+                            )
                             yield f"data: {data}\n\n"
 
                 # Heartbeat every 15s to keep connection alive

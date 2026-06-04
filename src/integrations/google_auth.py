@@ -87,9 +87,11 @@ async def start_oauth_flow(
     auth_url = f"{_AUTH_URI}?{urlencode(params)}"
 
     # Start local server to catch callback
-    asyncio.create_task(_run_oauth_callback_server(
-        client_id, client_secret, redirect_uri, redirect_port
-    ))
+    asyncio.create_task(
+        _run_oauth_callback_server(
+            client_id, client_secret, redirect_uri, redirect_port
+        )
+    )
 
     return auth_url
 

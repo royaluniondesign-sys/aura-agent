@@ -21,14 +21,20 @@ from src.integrations import comfyui_client as comfy
     ),
     category="image",
     parameters={
-        "prompt": {"type": "str", "description": "Detailed description of the image to generate"},
+        "prompt": {
+            "type": "str",
+            "description": "Detailed description of the image to generate",
+        },
         "preset": {
             "type": "str",
             "description": "Optional preset: social_post | story | banner | mockup | archviz | hyperreal | branding",
         },
         "width": {"type": "int", "description": "Width in pixels (default 1024)"},
         "height": {"type": "int", "description": "Height in pixels (default 1024)"},
-        "steps": {"type": "int", "description": "Sampling steps 10-50 (default 20). More = better quality, slower."},
+        "steps": {
+            "type": "int",
+            "description": "Sampling steps 10-50 (default 20). More = better quality, slower.",
+        },
     },
 )
 async def comfyui_generate(
@@ -112,7 +118,9 @@ async def comfyui_status() -> str:
         "height": {"type": "int", "description": "Alto en pixels (default 1024)"},
     },
 )
-async def comfyui_estimate(steps: int = 20, width: int = 1024, height: int = 1024) -> str:
+async def comfyui_estimate(
+    steps: int = 20, width: int = 1024, height: int = 1024
+) -> str:
     est = comfy.estimate_time(steps, width, height)
     pixels = width * height
     quality = "rápida" if steps <= 20 else "calidad" if steps <= 30 else "alta calidad"
@@ -135,12 +143,12 @@ async def comfyui_estimate(steps: int = 20, width: int = 1024, height: int = 102
 async def comfyui_presets() -> str:
     presets = {
         "social_post": "1080×1080px — Posts Instagram/LinkedIn, fotografía de producto",
-        "story":       "1080×1920px — Stories y Reels, formato vertical",
-        "banner":      "1536×512px  — Banners web, cabeceras LinkedIn",
-        "mockup":      "1024×1024px — Product mockups, packaging, branding aplicado",
-        "archviz":     "1536×1024px — Renders arquitectónicos, interiores, exteriores",
-        "hyperreal":   "1024×1024px — Fotografía hiperrealista, portrait, producto",
-        "branding":    "1024×1024px — Identidad visual, logos concept, marca",
+        "story": "1080×1920px — Stories y Reels, formato vertical",
+        "banner": "1536×512px  — Banners web, cabeceras LinkedIn",
+        "mockup": "1024×1024px — Product mockups, packaging, branding aplicado",
+        "archviz": "1536×1024px — Renders arquitectónicos, interiores, exteriores",
+        "hyperreal": "1024×1024px — Fotografía hiperrealista, portrait, producto",
+        "branding": "1024×1024px — Identidad visual, logos concept, marca",
     }
     lines = ["🎨 **Presets ComfyUI disponibles:**\n"]
     for name, desc in presets.items():

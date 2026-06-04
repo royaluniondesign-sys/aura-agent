@@ -221,7 +221,9 @@ class ClaudeCodeBot:
                     while self.is_running:
                         await asyncio.sleep(1)
 
-                async def _polling_error_callback(attempt: int, next_backoff: int, error: str) -> None:
+                async def _polling_error_callback(
+                    attempt: int, next_backoff: int, error: str
+                ) -> None:
                     """Log polling retry attempt."""
                     logger.warning(
                         "polling_retry_callback",

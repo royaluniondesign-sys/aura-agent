@@ -3,6 +3,7 @@
 Full keyboard/mouse automation + Gemini-powered element detection.
 Mac-first (uses osascript for window focus, AVFoundation for camera).
 """
+
 from __future__ import annotations
 
 import random
@@ -18,7 +19,8 @@ _PYPERCLIP_OK = False
 
 try:
     import pyautogui
-    pyautogui.FAILSAFE = True   # move mouse to corner to abort
+
+    pyautogui.FAILSAFE = True  # move mouse to corner to abort
     pyautogui.PAUSE = 0.05
     _PYAUTOGUI_OK = True
 except ImportError:
@@ -26,6 +28,7 @@ except ImportError:
 
 try:
     import pyperclip
+
     _PYPERCLIP_OK = True
 except ImportError:
     pass
@@ -37,6 +40,7 @@ def _require_pyautogui() -> None:
 
 
 # ── Primitive actions ─────────────────────────────────────────────────────────
+
 
 def type_text(text: str, interval: float = 0.03) -> str:
     _require_pyautogui()
@@ -60,8 +64,12 @@ def smart_type(text: str, clear_first: bool = True) -> str:
     return f"Smart-typed: {text[:80]}{'…' if len(text) > 80 else ''}"
 
 
-def click(x: Optional[int] = None, y: Optional[int] = None,
-          button: str = "left", clicks: int = 1) -> str:
+def click(
+    x: Optional[int] = None,
+    y: Optional[int] = None,
+    button: str = "left",
+    clicks: int = 1,
+) -> str:
     _require_pyautogui()
     if x is not None and y is not None:
         pyautogui.click(x, y, button=button, clicks=clicks)
@@ -143,7 +151,12 @@ def take_screenshot(save_path: Optional[str] = None) -> str:
     """Save screenshot using mss (no Screen Recording permission needed on macOS)."""
     import mss
     import mss.tools as mss_tools
-    path = Path(save_path) if save_path else Path.home() / "Desktop" / "aura_screenshot.png"
+
+    path = (
+        Path(save_path)
+        if save_path
+        else Path.home() / "Desktop" / "aura_screenshot.png"
+    )
     path.parent.mkdir(parents=True, exist_ok=True)
     with mss.MSS() as sct:
         shot = sct.grab(sct.monitors[1])
@@ -161,7 +174,8 @@ def focus_window(title: str) -> str:
     try:
         subprocess.run(
             ["osascript", "-e", script],
-            capture_output=True, timeout=5,
+            capture_output=True,
+            timeout=5,
         )
         time.sleep(0.3)
         return f"Focused: {title}"
@@ -181,6 +195,7 @@ def open_application(app_name: str) -> str:
 
 # ── AI-powered screen finder ──────────────────────────────────────────────────
 
+
 def screen_find(description: str, api_key: str) -> Optional[Tuple[int, int]]:
     """Use Gemini Flash Lite to locate a UI element by description.
 
@@ -196,6 +211,7 @@ def screen_find(description: str, api_key: str) -> Optional[Tuple[int, int]]:
 
     import mss as _mss
     import mss.tools as _mss_tools
+
     with _mss.MSS() as sct:
         mon = sct.monitors[1]
         w, h = mon["width"], mon["height"]
@@ -240,29 +256,39 @@ def screen_click(description: str, api_key: str) -> str:
 # ── Random data generator (for form filling) ──────────────────────────────────
 
 _FIRST = ["Alex", "Jordan", "Taylor", "Morgan", "Casey", "Riley", "Blake", "Quinn"]
-_LAST  = ["Smith", "Johnson", "Williams", "Brown", "Garcia", "Miller", "Davis"]
+_LAST = ["Smith", "Johnson", "Williams", "Brown", "Garcia", "Miller", "Davis"]
 _DOMAINS = ["gmail.com", "yahoo.com", "outlook.com", "proton.me"]
 
 
 def random_data(data_type: str) -> str:
     dt = data_type.lower().strip()
-    if dt == "first_name":  return random.choice(_FIRST)
-    if dt == "last_name":   return random.choice(_LAST)
-    if dt == "name":        return f"{random.choice(_FIRST)} {random.choice(_LAST)}"
+    if dt == "first_name":
+        return random.choice(_FIRST)
+    if dt == "last_name":
+        return random.choice(_LAST)
+    if dt == "name":
+        return f"{random.choice(_FIRST)} {random.choice(_LAST)}"
     if dt == "email":
         return f"{random.choice(_FIRST).lower()}.{random.choice(_LAST).lower()}{random.randint(10,999)}@{random.choice(_DOMAINS)}"
-    if dt == "username":    return f"{random.choice(_FIRST).lower()}{random.randint(100,9999)}"
+    if dt == "username":
+        return f"{random.choice(_FIRST).lower()}{random.randint(100,9999)}"
     if dt == "password":
         chars = string.ascii_letters + string.digits + "!@#$%"
-        raw = random.choice(string.ascii_uppercase) + random.choice(string.digits) + "".join(random.choices(chars, k=10))
+        raw = (
+            random.choice(string.ascii_uppercase)
+            + random.choice(string.digits)
+            + "".join(random.choices(chars, k=10))
+        )
         return "".join(random.sample(raw, len(raw)))
-    if dt == "phone":       return f"+1{random.randint(200,999)}{random.randint(1_000_000,9_999_999)}"
+    if dt == "phone":
+        return f"+1{random.randint(200,999)}{random.randint(1_000_000,9_999_999)}"
     if dt == "birthday":
         return f"{random.randint(1,12):02d}/{random.randint(1,28):02d}/{random.randint(1980,2000)}"
     return f"random_{data_type}_{random.randint(1000,9999)}"
 
 
 # ── Main dispatch ─────────────────────────────────────────────────────────────
+
 
 def computer_control(action: str, params: dict, gemini_api_key: str = "") -> str:
     """Dispatch computer control action. All Mark XXXIX actions supported.
@@ -288,8 +314,12 @@ def computer_control(action: str, params: dict, gemini_api_key: str = "") -> str
         if a == "move":
             return move_mouse(int(params["x"]), int(params["y"]))
         if a == "drag":
-            return drag(int(params["x1"]), int(params["y1"]),
-                        int(params["x2"]), int(params["y2"]))
+            return drag(
+                int(params["x1"]),
+                int(params["y1"]),
+                int(params["x2"]),
+                int(params["y2"]),
+            )
         if a == "hotkey":
             raw = params.get("keys", "")
             keys = [k.strip() for k in raw.split("+")] if isinstance(raw, str) else raw

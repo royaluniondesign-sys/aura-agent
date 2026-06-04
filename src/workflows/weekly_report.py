@@ -66,14 +66,14 @@ async def _weekly_git_stats(
         )
 
         if commit_count > 0:
-            stats.append({
-                "project": project_dir.name,
-                "commits": commit_count,
-                "diff": diff_stat or "N/A",
-                "highlights": [
-                    c for c in top_commits.split("\n") if c
-                ][:5],
-            })
+            stats.append(
+                {
+                    "project": project_dir.name,
+                    "commits": commit_count,
+                    "diff": diff_stat or "N/A",
+                    "highlights": [c for c in top_commits.split("\n") if c][:5],
+                }
+            )
 
     return stats
 
@@ -108,6 +108,7 @@ async def _cache_stats() -> Dict[str, Any]:
 
     try:
         import sqlite3
+
         conn = sqlite3.connect(str(cache_db))
         cursor = conn.cursor()
         cursor.execute("SELECT COUNT(*) FROM response_cache")
@@ -174,6 +175,7 @@ async def generate_weekly_report(
 
     # 4. System health
     import shutil
+
     try:
         disk = shutil.disk_usage(str(Path.home()))
         free_gb = round(disk.free / (1024**3), 1)

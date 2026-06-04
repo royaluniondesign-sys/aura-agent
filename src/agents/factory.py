@@ -47,83 +47,83 @@ MAX_DEPTH = 3  # Matryoshka recursion limit
 # First match wins (ordered by specificity).
 _SKILL_BRAIN: list[tuple[str, str]] = [
     # Deep reasoning — Opus (expensive, only for hard problems)
-    ("deep_reasoning",    "opus"),
-    ("architecture",      "sonnet"),
-    ("strategy",          "sonnet"),
-    ("product_strategy",  "sonnet"),
-    ("legal",             "sonnet"),
-    ("compliance",        "sonnet"),
+    ("deep_reasoning", "opus"),
+    ("architecture", "sonnet"),
+    ("strategy", "sonnet"),
+    ("product_strategy", "sonnet"),
+    ("legal", "sonnet"),
+    ("compliance", "sonnet"),
     # Web-aware research — Gemini
-    ("research",          "gemini"),
-    ("seo",               "gemini"),
-    ("web_analysis",      "gemini"),
-    ("trends",            "gemini"),
-    ("competitor",        "gemini"),
-    ("market",            "gemini"),
+    ("research", "gemini"),
+    ("seo", "gemini"),
+    ("web_analysis", "gemini"),
+    ("trends", "gemini"),
+    ("competitor", "gemini"),
+    ("market", "gemini"),
     # Code/engineering — Ollama RUD (free, unlimited)
-    ("backend",           "ollama-rud"),
-    ("api",               "ollama-rud"),
-    ("database",          "ollama-rud"),
-    ("devops",            "ollama-rud"),
-    ("infrastructure",    "ollama-rud"),
-    ("code",              "ollama-rud"),
-    ("engineering",       "ollama-rud"),
+    ("backend", "ollama-rud"),
+    ("api", "ollama-rud"),
+    ("database", "ollama-rud"),
+    ("devops", "ollama-rud"),
+    ("infrastructure", "ollama-rud"),
+    ("code", "ollama-rud"),
+    ("engineering", "ollama-rud"),
     # Frontend / creative code — Qwen
-    ("frontend",          "qwen-code"),
-    ("ui",                "qwen-code"),
-    ("mobile",            "qwen-code"),
+    ("frontend", "qwen-code"),
+    ("ui", "qwen-code"),
+    ("mobile", "qwen-code"),
     # Creative / content — Qwen (1000/day, multilingual)
-    ("copy",              "qwen-code"),
-    ("copywriting",       "qwen-code"),
-    ("content",           "qwen-code"),
-    ("design",            "qwen-code"),
-    ("ux",                "qwen-code"),
-    ("brand",             "qwen-code"),
-    ("social",            "gemini"),
-    ("marketing",         "gemini"),
-    ("email_marketing",   "qwen-code"),
-    ("data",              "qwen-code"),
-    ("analytics",         "qwen-code"),
+    ("copy", "qwen-code"),
+    ("copywriting", "qwen-code"),
+    ("content", "qwen-code"),
+    ("design", "qwen-code"),
+    ("ux", "qwen-code"),
+    ("brand", "qwen-code"),
+    ("social", "gemini"),
+    ("marketing", "gemini"),
+    ("email_marketing", "qwen-code"),
+    ("data", "qwen-code"),
+    ("analytics", "qwen-code"),
     # QA / ops — Haiku (fast, reliable)
-    ("testing",           "haiku"),
-    ("qa",                "haiku"),
-    ("quality",           "haiku"),
-    ("review",            "haiku"),
-    ("verification",      "haiku"),
-    ("operations",        "haiku"),
+    ("testing", "haiku"),
+    ("qa", "haiku"),
+    ("quality", "haiku"),
+    ("review", "haiku"),
+    ("verification", "haiku"),
+    ("operations", "haiku"),
     # Default
-    ("general",           "qwen-code"),
+    ("general", "qwen-code"),
 ]
 
 # Role name → skill keywords (for unknown roles, inferred from name)
 _ROLE_NAME_SKILLS: list[tuple[str, list[str]]] = [
-    ("copywriter",       ["copy", "copywriting"]),
-    ("copy",             ["copy", "copywriting"]),
-    ("designer",         ["design", "ux"]),
-    ("ux",               ["ux", "design"]),
-    ("ui",               ["ui", "frontend"]),
-    ("seo",              ["seo", "research"]),
-    ("researcher",       ["research"]),
-    ("analyst",          ["analytics", "data"]),
-    ("data",             ["data", "analytics"]),
-    ("devops",           ["devops", "infrastructure"]),
-    ("backend",          ["backend", "code"]),
-    ("frontend",         ["frontend", "ui"]),
-    ("engineer",         ["code", "engineering"]),
-    ("developer",        ["code", "engineering"]),
-    ("qa",               ["qa", "testing"]),
-    ("tester",           ["testing", "qa"]),
-    ("marketer",         ["marketing", "social"]),
-    ("social",           ["social", "marketing"]),
-    ("product",          ["product_strategy", "strategy"]),
-    ("pm",               ["product_strategy", "strategy"]),
-    ("strategist",       ["strategy"]),
-    ("legal",            ["legal", "compliance"]),
-    ("compliance",       ["compliance", "legal"]),
-    ("writer",           ["copy", "content"]),
-    ("editor",           ["copy", "review"]),
-    ("architect",        ["architecture", "strategy"]),
-    ("manager",          ["operations", "strategy"]),
+    ("copywriter", ["copy", "copywriting"]),
+    ("copy", ["copy", "copywriting"]),
+    ("designer", ["design", "ux"]),
+    ("ux", ["ux", "design"]),
+    ("ui", ["ui", "frontend"]),
+    ("seo", ["seo", "research"]),
+    ("researcher", ["research"]),
+    ("analyst", ["analytics", "data"]),
+    ("data", ["data", "analytics"]),
+    ("devops", ["devops", "infrastructure"]),
+    ("backend", ["backend", "code"]),
+    ("frontend", ["frontend", "ui"]),
+    ("engineer", ["code", "engineering"]),
+    ("developer", ["code", "engineering"]),
+    ("qa", ["qa", "testing"]),
+    ("tester", ["testing", "qa"]),
+    ("marketer", ["marketing", "social"]),
+    ("social", ["social", "marketing"]),
+    ("product", ["product_strategy", "strategy"]),
+    ("pm", ["product_strategy", "strategy"]),
+    ("strategist", ["strategy"]),
+    ("legal", ["legal", "compliance"]),
+    ("compliance", ["compliance", "legal"]),
+    ("writer", ["copy", "content"]),
+    ("editor", ["copy", "review"]),
+    ("architect", ["architecture", "strategy"]),
+    ("manager", ["operations", "strategy"]),
 ]
 
 
@@ -145,7 +145,9 @@ def _assign_brain(skills: list[str]) -> str:
     return "qwen-code"  # default: free, capable
 
 
-def _synthesize_system_prompt(role_name: str, skills: list[str], task_hint: str = "") -> str:
+def _synthesize_system_prompt(
+    role_name: str, skills: list[str], task_hint: str = ""
+) -> str:
     """Generate a system prompt for a dynamically created role."""
     skills_str = ", ".join(skills).replace("_", " ")
     name_clean = role_name.replace("_", " ").title()
@@ -163,9 +165,11 @@ def _synthesize_system_prompt(role_name: str, skills: list[str], task_hint: str 
 
 # ── Dynamic Agent ─────────────────────────────────────────────────────────────
 
+
 @dataclass
 class SynthesizedRole:
     """A role created on the fly by the factory."""
+
     key: str
     title: str
     emoji: str
@@ -177,6 +181,7 @@ class SynthesizedRole:
 @dataclass
 class AgentResult:
     """Result from a dynamic agent execution."""
+
     role: str
     brain: str
     content: str
@@ -188,9 +193,7 @@ class AgentResult:
         """Return content with all sub-results integrated."""
         parts = [self.content]
         for sub in self.sub_results:
-            parts.append(
-                f"\n[{sub.role.upper()} input]\n{sub.flat_content()}"
-            )
+            parts.append(f"\n[{sub.role.upper()} input]\n{sub.flat_content()}")
         return "\n".join(parts)
 
 
@@ -224,7 +227,9 @@ class DynamicAgent:
 
         brain = self._router.get_brain(self._role.brain)
         if brain is None:
-            brain = self._router.get_brain("qwen-code") or self._router.get_brain("haiku")
+            brain = self._router.get_brain("qwen-code") or self._router.get_brain(
+                "haiku"
+            )
         if brain is None:
             return AgentResult(
                 role=self._role.key,
@@ -304,6 +309,7 @@ class DynamicAgent:
 
 # ── Agent Factory ─────────────────────────────────────────────────────────────
 
+
 class AgentFactory:
     """Creates agents on demand. Synthesizes unknown roles automatically.
 
@@ -322,6 +328,7 @@ class AgentFactory:
         """Load existing team roles into factory catalog."""
         try:
             from .team import ROLES
+
             for key, role in ROLES.items():
                 self._synthesized[key] = SynthesizedRole(
                     key=key,
@@ -334,7 +341,9 @@ class AgentFactory:
         except Exception as e:
             logger.warning("factory_team_load_failed", error=str(e))
 
-    def get_or_create_role(self, role_name: str, task_hint: str = "") -> SynthesizedRole:
+    def get_or_create_role(
+        self, role_name: str, task_hint: str = ""
+    ) -> SynthesizedRole:
         """Return existing role or synthesize a new one."""
         key = role_name.lower().strip().replace(" ", "_").replace("-", "_")
 
@@ -367,16 +376,26 @@ class AgentFactory:
 
     def _pick_emoji(self, skills: list[str]) -> str:
         skill_str = " ".join(skills)
-        if any(s in skill_str for s in ["design", "ux", "ui"]):       return "🎨"
-        if any(s in skill_str for s in ["copy", "content", "write"]): return "✍️"
-        if any(s in skill_str for s in ["code", "backend", "dev"]):   return "💻"
-        if any(s in skill_str for s in ["research", "seo", "web"]):   return "🔍"
-        if any(s in skill_str for s in ["data", "analytics"]):        return "📊"
-        if any(s in skill_str for s in ["marketing", "social"]):      return "📣"
-        if any(s in skill_str for s in ["qa", "testing", "quality"]): return "🧪"
-        if any(s in skill_str for s in ["strategy", "product"]):      return "🗺️"
-        if any(s in skill_str for s in ["legal", "compliance"]):      return "⚖️"
-        if any(s in skill_str for s in ["devops", "infra"]):          return "🔧"
+        if any(s in skill_str for s in ["design", "ux", "ui"]):
+            return "🎨"
+        if any(s in skill_str for s in ["copy", "content", "write"]):
+            return "✍️"
+        if any(s in skill_str for s in ["code", "backend", "dev"]):
+            return "💻"
+        if any(s in skill_str for s in ["research", "seo", "web"]):
+            return "🔍"
+        if any(s in skill_str for s in ["data", "analytics"]):
+            return "📊"
+        if any(s in skill_str for s in ["marketing", "social"]):
+            return "📣"
+        if any(s in skill_str for s in ["qa", "testing", "quality"]):
+            return "🧪"
+        if any(s in skill_str for s in ["strategy", "product"]):
+            return "🗺️"
+        if any(s in skill_str for s in ["legal", "compliance"]):
+            return "⚖️"
+        if any(s in skill_str for s in ["devops", "infra"]):
+            return "🔧"
         return "🤖"
 
     def spawn(
@@ -413,6 +432,7 @@ class AgentFactory:
     def _get_known_keys(self) -> set[str]:
         try:
             from .team import ROLES
+
             return set(ROLES.keys())
         except Exception:
             return set()

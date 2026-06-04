@@ -11,6 +11,7 @@ Architecture:
 
 Based on Mark XXXIX pattern, adapted for AURA infrastructure.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,29 +32,36 @@ _LIVE_MODEL = "models/gemini-2.5-flash-native-audio-preview-12-2025"
 
 # Audio config
 _CHANNELS = 1
-_SEND_SAMPLE_RATE = 16000    # mic input
+_SEND_SAMPLE_RATE = 16000  # mic input
 _RECEIVE_SAMPLE_RATE = 24000  # speaker output
 _CHUNK_SIZE = 1024
+
 
 # System prompt for voice agent
 def _build_system_prompt() -> str:
     """Build system prompt with live context from memory files."""
     import subprocess
+
     memory = ""
     obsidian = ""
     import os as _os
+
     _home = _os.path.expanduser("~")
     try:
         memory = subprocess.check_output(
             ["cat", f"{_home}/.aura/memory/MEMORY.md"],
-            timeout=3, text=True, stderr=subprocess.DEVNULL
+            timeout=3,
+            text=True,
+            stderr=subprocess.DEVNULL,
         )[:2000]
     except Exception:
         pass
     try:
         obsidian = subprocess.check_output(
             ["cat", f"{_home}/Obsidian/AURA_Dashboard.md"],
-            timeout=3, text=True, stderr=subprocess.DEVNULL
+            timeout=3,
+            text=True,
+            stderr=subprocess.DEVNULL,
         )[:2000]
     except Exception:
         pass
@@ -123,8 +131,8 @@ class GeminiLiveAgent:
         owner_chat_id: str = "",
     ) -> None:
         self._api_key = api_key or os.environ.get("GEMINI_API_KEY", "")
-        self._on_transcript = on_transcript   # cb(speaker, text)
-        self._on_tool_call = on_tool_call     # cb(tool_name, args)
+        self._on_transcript = on_transcript  # cb(speaker, text)
+        self._on_tool_call = on_tool_call  # cb(tool_name, args)
 
         # Thread + event loop for the session
         self._loop: Optional[asyncio.AbstractEventLoop] = None
@@ -150,6 +158,7 @@ class GeminiLiveAgent:
 
         # Tool executor
         from src.voice.tool_bridge import ToolExecutor
+
         self._executor = ToolExecutor(
             gemini_api_key=self._api_key,
             telegram_bot_token=bot_token,
@@ -293,9 +302,7 @@ class GeminiLiveAgent:
             session_resumption=gtypes.SessionResumptionConfig(),
             speech_config=gtypes.SpeechConfig(
                 voice_config=gtypes.VoiceConfig(
-                    prebuilt_voice_config=gtypes.PrebuiltVoiceConfig(
-                        voice_name="Aoede"
-                    )
+                    prebuilt_voice_config=gtypes.PrebuiltVoiceConfig(voice_name="Aoede")
                 )
             ),
         )
@@ -304,7 +311,9 @@ class GeminiLiveAgent:
         while self._running:
             try:
                 logger.info("gemini_live_connecting")
-                async with client.aio.live.connect(model=_LIVE_MODEL, config=config) as session:
+                async with client.aio.live.connect(
+                    model=_LIVE_MODEL, config=config
+                ) as session:
                     self._session = session
                     self._out_queue = asyncio.Queue(maxsize=10)
                     self._audio_in_queue = asyncio.Queue()
@@ -375,6 +384,7 @@ class GeminiLiveAgent:
                 elif isinstance(item, tuple) and item[0] == "image":
                     img_bytes, mime, text = item[1]
                     import base64
+
                     b64 = base64.b64encode(img_bytes).decode()
                     parts: list = [{"inline_data": {"mime_type": mime, "data": b64}}]
                     if text:
@@ -434,10 +444,21 @@ class GeminiLiveAgent:
                                 self._on_transcript("aura", full)
                             # Auto-trigger sleep/wake based on AURA's own words
                             lower = full.lower()
-                            _sleep_kw = ("me duermo", "voy a dormir", "en espera",
-                                         "estaré en espera", "modo silencio", "silencio")
-                            _wake_kw  = ("aquí estoy", "estoy aquí", "despierta",
-                                         "me he despertado", "ya estoy")
+                            _sleep_kw = (
+                                "me duermo",
+                                "voy a dormir",
+                                "en espera",
+                                "estaré en espera",
+                                "modo silencio",
+                                "silencio",
+                            )
+                            _wake_kw = (
+                                "aquí estoy",
+                                "estoy aquí",
+                                "despierta",
+                                "me he despertado",
+                                "ya estoy",
+                            )
                             if any(k in lower for k in _sleep_kw):
                                 threading.Thread(
                                     target=lambda: (
@@ -477,6 +498,7 @@ class GeminiLiveAgent:
 
         try:
             from google.genai import types as gtypes  # type: ignore[import]
+
             await session.send_tool_response(
                 function_responses=[
                     gtypes.FunctionResponse(
@@ -507,6 +529,7 @@ class GeminiLiveAgent:
             return
 
         import numpy as np  # type: ignore[import]
+
         logger.info("audio_play_loop_start")
         stream = sd.OutputStream(
             samplerate=_RECEIVE_SAMPLE_RATE,
@@ -614,12 +637,14 @@ class GeminiLiveAgent:
 
 # ── Convenience factory ───────────────────────────────────────────────────────
 
+
 def create_agent(
     on_transcript: Optional[Callable[[str, str], None]] = None,
     on_tool_call: Optional[Callable[[str, dict], None]] = None,
 ) -> GeminiLiveAgent:
     """Create and configure a GeminiLiveAgent from environment."""
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).parent.parent.parent / ".env")
 
     return GeminiLiveAgent(
@@ -627,6 +652,8 @@ def create_agent(
         on_transcript=on_transcript,
         on_tool_call=on_tool_call,
         bot_token=os.environ.get("TELEGRAM_BOT_TOKEN", ""),
-        owner_chat_id=os.environ.get("TELEGRAM_OWNER_CHAT_ID",
-                                     os.environ.get("NOTIFICATION_CHAT_IDS", "").split(",")[0]),
+        owner_chat_id=os.environ.get(
+            "TELEGRAM_OWNER_CHAT_ID",
+            os.environ.get("NOTIFICATION_CHAT_IDS", "").split(",")[0],
+        ),
     )

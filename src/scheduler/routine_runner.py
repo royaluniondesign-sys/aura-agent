@@ -7,6 +7,7 @@ Auto-creation API: `propose_routine()` lets the conductor suggest a new
 routine by name + prompt. If no routine with that name exists, it's created
 and scheduled automatically.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -106,8 +107,9 @@ async def run_routine(routine_id: str) -> dict:
     )
     await append_log(routine_id, status, output, elapsed, brain)
 
-    logger.info("routine_executed", id=routine_id, name=r.name,
-                status=status, ms=elapsed)
+    logger.info(
+        "routine_executed", id=routine_id, name=r.name, status=status, ms=elapsed
+    )
 
     # Notify Ricardo if configured
     if _notify_fn and status == "ok" and r.auto_created:
@@ -119,8 +121,12 @@ async def run_routine(routine_id: str) -> dict:
         except Exception:
             pass
 
-    return {"ok": status == "ok", "output": output[:1000],
-            "brain": brain, "duration_ms": elapsed}
+    return {
+        "ok": status == "ok",
+        "output": output[:1000],
+        "brain": brain,
+        "duration_ms": elapsed,
+    }
 
 
 def get_job_status(job_id: str) -> Optional[Dict[str, Any]]:
@@ -148,7 +154,9 @@ async def run_routine_background(routine_id: str) -> str:
     """
     existing = get_running_job_for_routine(routine_id)
     if existing:
-        logger.info("routine_bg_already_running", job_id=existing, routine_id=routine_id)
+        logger.info(
+            "routine_bg_already_running", job_id=existing, routine_id=routine_id
+        )
         return existing
 
     job_id = str(uuid.uuid4())[:8]
@@ -166,19 +174,23 @@ async def run_routine_background(routine_id: str) -> str:
     async def _run() -> None:
         try:
             result = await run_routine(routine_id)
-            _jobs[job_id].update({
-                "status": "ok" if result.get("ok") else "error",
-                "output": result.get("output", ""),
-                "brain": result.get("brain"),
-                "duration_ms": result.get("duration_ms"),
-                "finished_at": datetime.now(UTC).isoformat(),
-            })
+            _jobs[job_id].update(
+                {
+                    "status": "ok" if result.get("ok") else "error",
+                    "output": result.get("output", ""),
+                    "brain": result.get("brain"),
+                    "duration_ms": result.get("duration_ms"),
+                    "finished_at": datetime.now(UTC).isoformat(),
+                }
+            )
         except Exception as exc:
-            _jobs[job_id].update({
-                "status": "error",
-                "output": f"ERROR: {exc}",
-                "finished_at": datetime.now(UTC).isoformat(),
-            })
+            _jobs[job_id].update(
+                {
+                    "status": "error",
+                    "output": f"ERROR: {exc}",
+                    "finished_at": datetime.now(UTC).isoformat(),
+                }
+            )
         # Evict old jobs after 10 minutes to prevent memory leak
         asyncio.get_event_loop().call_later(600, lambda: _jobs.pop(job_id, None))
 
@@ -206,8 +218,11 @@ def schedule_routine(r: Routine) -> None:
 
     minute, hour, dom, month, dow = parts
     trigger = CronTrigger(
-        minute=minute, hour=hour,
-        day=dom, month=month, day_of_week=dow,
+        minute=minute,
+        hour=hour,
+        day=dom,
+        month=month,
+        day_of_week=dow,
     )
 
     # Remove old job if exists
@@ -217,8 +232,13 @@ def schedule_routine(r: Routine) -> None:
     async def _job() -> None:
         await run_routine(r.id)
 
-    _scheduler.add_job(_job, trigger=trigger, id=job_id,
-                       name=f"routine:{r.name}", replace_existing=True)
+    _scheduler.add_job(
+        _job,
+        trigger=trigger,
+        id=job_id,
+        name=f"routine:{r.name}",
+        replace_existing=True,
+    )
     logger.info("routine_scheduled", id=r.id, name=r.name, cron=cron_str)
 
 

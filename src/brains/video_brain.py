@@ -15,6 +15,7 @@ Auth: API keys via env vars (all optional — graceful fallback)
   RUNWAY_API_KEY   — Runway ML
   JSON2VIDEO_API_KEY — json2video.com
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -29,8 +30,8 @@ from .base import Brain, BrainResponse, BrainStatus
 logger = structlog.get_logger()
 
 # Polling configuration
-_POLL_INTERVAL = 5      # seconds between status checks
-_MAX_POLL_TIME = 180    # 3-minute max wait per provider
+_POLL_INTERVAL = 5  # seconds between status checks
+_MAX_POLL_TIME = 180  # 3-minute max wait per provider
 
 
 class VideoBrain(Brain):
@@ -107,7 +108,9 @@ class VideoBrain(Brain):
                 logger.warning("video_brain_timeout", provider=provider_name)
             except Exception as exc:
                 last_error = f"{provider_name}: {exc}"
-                logger.warning("video_brain_provider_error", provider=provider_name, error=str(exc))
+                logger.warning(
+                    "video_brain_provider_error", provider=provider_name, error=str(exc)
+                )
 
         elapsed = int((time.time() - start) * 1000)
         return BrainResponse(
@@ -168,14 +171,18 @@ class VideoBrain(Brain):
                     assets = status_data.get("assets", {})
                     video_url = assets.get("video", "")
                     if not video_url:
-                        raise ValueError(f"Luma: completed but no video URL: {status_data}")
+                        raise ValueError(
+                            f"Luma: completed but no video URL: {status_data}"
+                        )
                     return video_url
                 elif state in ("failed", "error"):
                     failure = status_data.get("failure_reason", "unknown")
                     raise RuntimeError(f"Luma generation failed: {failure}")
                 # states: pending, dreaming → keep polling
 
-            raise asyncio.TimeoutError(f"Luma: generation did not complete in {_MAX_POLL_TIME}s")
+            raise asyncio.TimeoutError(
+                f"Luma: generation did not complete in {_MAX_POLL_TIME}s"
+            )
 
     async def _kling(self, prompt: str, api_key: str) -> str:
         """Kling AI — text-to-video, poll for completion."""
@@ -220,13 +227,14 @@ class VideoBrain(Brain):
                     resp.raise_for_status()
                     status_data = await resp.json()
 
-                task_status = (
-                    status_data.get("data", {}).get("task_status")
-                    or status_data.get("task_status", "")
-                )
+                task_status = status_data.get("data", {}).get(
+                    "task_status"
+                ) or status_data.get("task_status", "")
                 if task_status == "succeed":
                     videos = (
-                        status_data.get("data", {}).get("task_result", {}).get("videos", [])
+                        status_data.get("data", {})
+                        .get("task_result", {})
+                        .get("videos", [])
                     )
                     if videos:
                         return videos[0].get("url", "")
@@ -234,7 +242,9 @@ class VideoBrain(Brain):
                 elif task_status in ("failed", "error"):
                     raise RuntimeError(f"Kling task failed: {status_data}")
 
-            raise asyncio.TimeoutError(f"Kling: task did not complete in {_MAX_POLL_TIME}s")
+            raise asyncio.TimeoutError(
+                f"Kling: task did not complete in {_MAX_POLL_TIME}s"
+            )
 
     async def _runway(self, prompt: str, api_key: str) -> str:
         """Runway ML — text-to-video generation."""
@@ -283,12 +293,16 @@ class VideoBrain(Brain):
                     output = status_data.get("output", [])
                     if output:
                         return output[0]
-                    raise ValueError(f"Runway: SUCCEEDED but no output URL: {status_data}")
+                    raise ValueError(
+                        f"Runway: SUCCEEDED but no output URL: {status_data}"
+                    )
                 elif status in ("FAILED", "CANCELLED"):
                     failure = status_data.get("failure", "unknown")
                     raise RuntimeError(f"Runway task {status}: {failure}")
 
-            raise asyncio.TimeoutError(f"Runway: task did not complete in {_MAX_POLL_TIME}s")
+            raise asyncio.TimeoutError(
+                f"Runway: task did not complete in {_MAX_POLL_TIME}s"
+            )
 
     async def health_check(self) -> BrainStatus:
         has_key = any(

@@ -1,4 +1,5 @@
 """Termora terminal provisioning tool."""
+
 from __future__ import annotations
 from src.actions.registry import aura_tool
 
@@ -11,13 +12,16 @@ from src.actions.registry import aura_tool
 )
 async def get_terminal_url() -> str:
     import asyncio
+
     proc = await asyncio.create_subprocess_shell(
         "curl -s http://localhost:4030/api/info 2>/dev/null",
-        stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
     )
     try:
         out, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         import json
+
         data = json.loads(out.decode())
         auth_url = data.get("authUrl")
         if auth_url:

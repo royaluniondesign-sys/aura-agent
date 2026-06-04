@@ -8,6 +8,7 @@ Exposes everything to the Gemini Live voice agent:
   • Claude escalation (for complex code/analysis — min usage)
   • Telegram send (notify owner on phone)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -18,6 +19,7 @@ from typing import Any, Dict, List, Optional
 # ── Gemini types ──────────────────────────────────────────────────────────────
 try:
     from google.genai import types as gtypes  # type: ignore[import]
+
     _GEMINI_OK = True
 except ImportError:
     _GEMINI_OK = False
@@ -83,15 +85,25 @@ _EXTRA_TOOLS = [
         "name": "screen_capture",
         "description": "Capture the Mac screen and analyze it visually. Returns description of what's on screen. Use when asked 'what's on my screen', 'what do you see', etc.",
         "parameters": {
-            "question": {"type": "str", "description": "What to analyze or look for on screen"},
-            "monitor": {"type": "int", "description": "Monitor index (1=primary, optional)", "optional": True},
+            "question": {
+                "type": "str",
+                "description": "What to analyze or look for on screen",
+            },
+            "monitor": {
+                "type": "int",
+                "description": "Monitor index (1=primary, optional)",
+                "optional": True,
+            },
         },
     },
     {
         "name": "screen_find_and_click",
         "description": "Find a UI element on screen by description and click it. Use for 'click on X', 'press the Save button', etc.",
         "parameters": {
-            "description": {"type": "str", "description": "Natural language description of element to click"},
+            "description": {
+                "type": "str",
+                "description": "Natural language description of element to click",
+            },
         },
     },
     # Computer control
@@ -99,19 +111,70 @@ _EXTRA_TOOLS = [
         "name": "computer_control",
         "description": "Full keyboard/mouse control. Actions: type, smart_type, click, double_click, right_click, move, drag, hotkey, press, scroll, copy, paste, screenshot, wait, clear_field, focus_window, open_app, screen_find, screen_click, random_data.",
         "parameters": {
-            "action": {"type": "str", "description": "Action name (type/click/hotkey/scroll/focus_window/open_app/etc)"},
-            "text": {"type": "str", "description": "Text to type or paste (for type/smart_type/paste)", "optional": True},
-            "x": {"type": "int", "description": "Screen X coordinate", "optional": True},
-            "y": {"type": "int", "description": "Screen Y coordinate", "optional": True},
-            "keys": {"type": "str", "description": "Hotkey combo e.g. 'command+c' (for hotkey action)", "optional": True},
-            "key": {"type": "str", "description": "Single key name e.g. 'enter' (for press action)", "optional": True},
-            "direction": {"type": "str", "description": "Scroll direction: up/down/left/right", "optional": True},
-            "amount": {"type": "int", "description": "Scroll amount (default 3)", "optional": True},
-            "title": {"type": "str", "description": "Window title for focus_window", "optional": True},
-            "app": {"type": "str", "description": "App name for open_app", "optional": True},
-            "description": {"type": "str", "description": "Element description for screen_find/screen_click", "optional": True},
-            "seconds": {"type": "float", "description": "Seconds to wait (for wait action)", "optional": True},
-            "type": {"type": "str", "description": "Data type for random_data (name/email/phone/etc)", "optional": True},
+            "action": {
+                "type": "str",
+                "description": "Action name (type/click/hotkey/scroll/focus_window/open_app/etc)",
+            },
+            "text": {
+                "type": "str",
+                "description": "Text to type or paste (for type/smart_type/paste)",
+                "optional": True,
+            },
+            "x": {
+                "type": "int",
+                "description": "Screen X coordinate",
+                "optional": True,
+            },
+            "y": {
+                "type": "int",
+                "description": "Screen Y coordinate",
+                "optional": True,
+            },
+            "keys": {
+                "type": "str",
+                "description": "Hotkey combo e.g. 'command+c' (for hotkey action)",
+                "optional": True,
+            },
+            "key": {
+                "type": "str",
+                "description": "Single key name e.g. 'enter' (for press action)",
+                "optional": True,
+            },
+            "direction": {
+                "type": "str",
+                "description": "Scroll direction: up/down/left/right",
+                "optional": True,
+            },
+            "amount": {
+                "type": "int",
+                "description": "Scroll amount (default 3)",
+                "optional": True,
+            },
+            "title": {
+                "type": "str",
+                "description": "Window title for focus_window",
+                "optional": True,
+            },
+            "app": {
+                "type": "str",
+                "description": "App name for open_app",
+                "optional": True,
+            },
+            "description": {
+                "type": "str",
+                "description": "Element description for screen_find/screen_click",
+                "optional": True,
+            },
+            "seconds": {
+                "type": "float",
+                "description": "Seconds to wait (for wait action)",
+                "optional": True,
+            },
+            "type": {
+                "type": "str",
+                "description": "Data type for random_data (name/email/phone/etc)",
+                "optional": True,
+            },
         },
     },
     # Hermes bridge
@@ -127,8 +190,15 @@ _EXTRA_TOOLS = [
         "name": "claude_task",
         "description": "Escalate a complex task to Claude (Haiku/Sonnet). Use ONLY for: complex code generation, deep analysis, multi-step reasoning. NOT for simple questions — Gemini handles those. Costs Claude subscription tokens.",
         "parameters": {
-            "task": {"type": "str", "description": "The complex task for Claude to handle"},
-            "model": {"type": "str", "description": "claude-haiku (default, faster) or claude-sonnet (deeper)", "optional": True},
+            "task": {
+                "type": "str",
+                "description": "The complex task for Claude to handle",
+            },
+            "model": {
+                "type": "str",
+                "description": "claude-haiku (default, faster) or claude-sonnet (deeper)",
+                "optional": True,
+            },
         },
     },
     # Telegram notification
@@ -137,7 +207,11 @@ _EXTRA_TOOLS = [
         "description": "Send a message to the owner's Telegram. Use to notify of completed tasks, send results, or share files when away from the Mac.",
         "parameters": {
             "message": {"type": "str", "description": "Message text to send"},
-            "parse_mode": {"type": "str", "description": "Markdown or HTML (optional)", "optional": True},
+            "parse_mode": {
+                "type": "str",
+                "description": "Markdown or HTML (optional)",
+                "optional": True,
+            },
         },
     },
     # Camera
@@ -145,7 +219,10 @@ _EXTRA_TOOLS = [
         "name": "camera_capture",
         "description": "Capture a photo from Mac webcam and analyze it.",
         "parameters": {
-            "question": {"type": "str", "description": "What to look for or analyze in the camera image"},
+            "question": {
+                "type": "str",
+                "description": "What to look for or analyze in the camera image",
+            },
         },
     },
 ]
@@ -161,6 +238,7 @@ def build_gemini_tools() -> List[Any]:
     # 1. AURA registry tools
     try:
         from src.actions.registry import registry
+
         for name, spec in registry().items():
             d = _make_decl(name, spec.description, spec.parameters or {})
             if d:
@@ -179,6 +257,7 @@ def build_gemini_tools() -> List[Any]:
 
 # ── Tool executor ─────────────────────────────────────────────────────────────
 
+
 class ToolExecutor:
     """Executes tool calls from Gemini, routing to AURA registry or special handlers."""
 
@@ -196,6 +275,7 @@ class ToolExecutor:
     def _get_registry(self) -> Dict:
         if self._aura_registry is None:
             from src.actions.registry import registry
+
             self._aura_registry = registry()
         return self._aura_registry
 
@@ -243,6 +323,7 @@ class ToolExecutor:
         monitor = int(args.get("monitor", 1))
         try:
             from src.voice.screen_capture import capture_screen
+
             img_bytes, mime = await asyncio.to_thread(capture_screen, monitor)
         except Exception as e:
             return f"Screen capture failed: {e}"
@@ -270,6 +351,7 @@ class ToolExecutor:
         question = args.get("question", "What do you see?")
         try:
             from src.voice.screen_capture import capture_camera
+
             img_bytes, mime = await asyncio.to_thread(capture_camera, 0)
         except Exception as e:
             return f"Camera capture failed: {e}"
@@ -277,6 +359,7 @@ class ToolExecutor:
         try:
             from google import genai  # type: ignore[import]
             from google.genai import types as gtypes  # type: ignore[import]
+
             client = genai.Client(api_key=self._gemini_key)
             resp = client.models.generate_content(
                 model="gemini-2.5-flash-lite-preview-06-17",
@@ -291,11 +374,13 @@ class ToolExecutor:
 
     async def _screen_find_and_click(self, args: Dict) -> str:
         from src.voice.computer_control import screen_click
+
         desc = args.get("description", "")
         return await asyncio.to_thread(screen_click, desc, self._gemini_key)
 
     async def _computer_control(self, args: Dict) -> str:
         from src.voice.computer_control import computer_control
+
         action = args.pop("action", "")
         return await asyncio.to_thread(computer_control, action, args, self._gemini_key)
 
@@ -306,8 +391,12 @@ class ToolExecutor:
             return "No message provided"
         try:
             import subprocess
+
             proc = await asyncio.create_subprocess_exec(
-                "/opt/homebrew/bin/openclaw", "agent", "--json", message,
+                "/opt/homebrew/bin/openclaw",
+                "agent",
+                "--json",
+                message,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.DEVNULL,
             )
@@ -316,6 +405,7 @@ class ToolExecutor:
 
             # Parse JSON response from openclaw
             import json
+
             lines = [l for l in raw.splitlines() if l.strip().startswith("{")]
             for line in reversed(lines):
                 try:
@@ -325,7 +415,11 @@ class ToolExecutor:
                         if isinstance(data.get(key), str) and data[key].strip():
                             return f"[Hermes]: {data[key].strip()}"
                     payloads = data.get("result", {}).get("payloads", [])
-                    texts = [p.get("text", "") for p in payloads if isinstance(p, dict) and p.get("text")]
+                    texts = [
+                        p.get("text", "")
+                        for p in payloads
+                        if isinstance(p, dict) and p.get("text")
+                    ]
                     if texts:
                         return f"[Hermes]: {' '.join(texts)}"
                 except Exception:
@@ -347,7 +441,9 @@ class ToolExecutor:
             reg = self._get_registry()
             if "bash_run" in reg:
                 cmd = f'claude -p "{task.replace(chr(34), chr(39))}" --model claude-{model}'
-                return await self._call_aura_tool(reg["bash_run"], {"command": cmd, "timeout": 120})
+                return await self._call_aura_tool(
+                    reg["bash_run"], {"command": cmd, "timeout": 120}
+                )
             return "bash_run not available for Claude escalation"
         except Exception as e:
             return f"Claude escalation error: {e}"
@@ -359,6 +455,7 @@ class ToolExecutor:
             return "Telegram not configured or empty message"
         try:
             import aiohttp
+
             url = f"https://api.telegram.org/bot{self._bot_token}/sendMessage"
             payload = {
                 "chat_id": self._chat_id,
@@ -366,7 +463,13 @@ class ToolExecutor:
                 "parse_mode": args.get("parse_mode", "Markdown"),
             }
             async with aiohttp.ClientSession() as session:
-                async with session.post(url, json=payload, timeout=aiohttp.ClientTimeout(total=10)) as resp:
-                    return "Sent to Telegram" if resp.status == 200 else f"Telegram error: {resp.status}"
+                async with session.post(
+                    url, json=payload, timeout=aiohttp.ClientTimeout(total=10)
+                ) as resp:
+                    return (
+                        "Sent to Telegram"
+                        if resp.status == 200
+                        else f"Telegram error: {resp.status}"
+                    )
         except Exception as e:
             return f"Telegram send error: {e}"

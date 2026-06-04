@@ -2,6 +2,7 @@
 
 Set once at startup (in main.py run_application), read anywhere in api/.
 """
+
 from __future__ import annotations
 
 from typing import Any, Optional

@@ -6,6 +6,7 @@ Supports: Claude Desktop, Claude Code, OpenCode, Gemini CLI.
 When a new CLI adds MCP support, add a registration function here.
 No other files need to change.
 """
+
 from __future__ import annotations
 
 import json
@@ -19,6 +20,7 @@ import structlog
 logger = structlog.get_logger()
 
 import sys as _sys
+
 _AURA_MCP_COMMAND = _sys.executable
 _AURA_MCP_ARGS = ["-m", "src.mcp.aura_server"]
 _AURA_MCP_CWD = str(Path(__file__).parent.parent.parent)
@@ -28,7 +30,9 @@ _AURA_DESCRIPTION = "AURA personal tools: email, bash, files, git, memory, termi
 
 def _register_claude_desktop() -> str:
     """Register with Claude Desktop app."""
-    cfg_path = Path.home() / "Library/Application Support/Claude/claude_desktop_config.json"
+    cfg_path = (
+        Path.home() / "Library/Application Support/Claude/claude_desktop_config.json"
+    )
     if not cfg_path.exists():
         return "skip: Claude Desktop not installed"
 
@@ -99,14 +103,23 @@ def _register_gemini_cli() -> str:
     try:
         result = subprocess.run(
             [
-                gemini_bin, "mcp", "add", "aura",
-                _AURA_MCP_COMMAND, *_AURA_MCP_ARGS,
-                "--scope", "user",
+                gemini_bin,
+                "mcp",
+                "add",
+                "aura",
+                _AURA_MCP_COMMAND,
+                *_AURA_MCP_ARGS,
+                "--scope",
+                "user",
                 "--trust",
-                "--description", _AURA_DESCRIPTION,
-                "-e", f"PYTHONPATH={_AURA_MCP_CWD}",
+                "--description",
+                _AURA_DESCRIPTION,
+                "-e",
+                f"PYTHONPATH={_AURA_MCP_CWD}",
             ],
-            capture_output=True, text=True, timeout=15,
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         if result.returncode == 0:
             return "registered"
@@ -140,9 +153,9 @@ def _register_claude_code() -> str:
 # Add new CLIs here — no other file needs to change.
 _REGISTRARS = {
     "Claude Desktop": _register_claude_desktop,
-    "OpenCode":       _register_opencode,
-    "Gemini CLI":     _register_gemini_cli,
-    "Claude Code":    _register_claude_code,
+    "OpenCode": _register_opencode,
+    "Gemini CLI": _register_gemini_cli,
+    "Claude Code": _register_claude_code,
 }
 
 

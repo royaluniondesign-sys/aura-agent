@@ -25,6 +25,7 @@ Event types (broadcast via orch_bus):
   run_completed      — all steps done, final output ready
   run_failed         — fatal error, no output
 """
+
 from __future__ import annotations
 
 # Data models

@@ -80,8 +80,18 @@ async def test_telegram_burst_preserves_order_and_trace() -> None:
 
     user_data: dict = {}
     with patch.object(orchestrator, "_handle_alt_brain", side_effect=_fake_alt_brain):
-        with patch("src.infra.task_router.classify_task", new=AsyncMock(return_value=SimpleNamespace(route="simple", confidence=0.1, reason="test", source="unit"))):
-            with patch("src.infra.task_router.write_external_outcome", new=lambda **kwargs: None):
+        with patch(
+            "src.infra.task_router.classify_task",
+            new=AsyncMock(
+                return_value=SimpleNamespace(
+                    route="simple", confidence=0.1, reason="test", source="unit"
+                )
+            ),
+        ):
+            with patch(
+                "src.infra.task_router.write_external_outcome",
+                new=lambda **kwargs: None,
+            ):
                 for text in messages:
                     asyncio.create_task(_send_one(text, user_data))
                     await asyncio.sleep(0)

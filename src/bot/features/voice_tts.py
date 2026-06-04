@@ -28,9 +28,9 @@ logger = structlog.get_logger()
 
 PERSONALITY_VOICES: dict[str, str] = {
     "sarcastic": "es-ES-AlvaroNeural",
-    "neutral":   "es-ES-ElviraNeural",
-    "default":   "es-ES-ElviraNeural",
-    "en":        "en-US-AriaNeural",
+    "neutral": "es-ES-ElviraNeural",
+    "default": "es-ES-ElviraNeural",
+    "en": "en-US-AriaNeural",
 }
 
 # ── Persistence ───────────────────────────────────────────────────────────────
@@ -65,10 +65,48 @@ def save_voice_prefs(voice_users: set[int]) -> None:
 
 # ── Language detection ────────────────────────────────────────────────────────
 
-_SPANISH_WORDS = {"el", "la", "los", "las", "que", "de", "en", "por", "con", "para",
-                  "es", "un", "una", "no", "se", "su", "al", "del", "lo", "más"}
-_ENGLISH_WORDS = {"the", "is", "are", "was", "and", "for", "that", "with", "this",
-                  "it", "to", "you", "your", "have", "not", "but", "from", "they"}
+_SPANISH_WORDS = {
+    "el",
+    "la",
+    "los",
+    "las",
+    "que",
+    "de",
+    "en",
+    "por",
+    "con",
+    "para",
+    "es",
+    "un",
+    "una",
+    "no",
+    "se",
+    "su",
+    "al",
+    "del",
+    "lo",
+    "más",
+}
+_ENGLISH_WORDS = {
+    "the",
+    "is",
+    "are",
+    "was",
+    "and",
+    "for",
+    "that",
+    "with",
+    "this",
+    "it",
+    "to",
+    "you",
+    "your",
+    "have",
+    "not",
+    "but",
+    "from",
+    "they",
+}
 
 
 def _detect_language(text: str) -> str:
@@ -88,6 +126,7 @@ def _select_voice(text: str, voice_override: Optional[str] = None) -> str:
 
 
 # ── Core TTS ──────────────────────────────────────────────────────────────────
+
 
 async def generate_voice(
     text: str,
@@ -168,6 +207,7 @@ async def send_voice_response(
 
 
 # ── /voz command helper ───────────────────────────────────────────────────────
+
 
 async def handle_voz_command(
     update: "Update",

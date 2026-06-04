@@ -80,7 +80,9 @@ async def upload_image_public(png_bytes: bytes, filename: str = "post.png") -> s
         except Exception as e:
             logger.warning("transfer_sh_failed", error=str(e))
 
-    raise RuntimeError("No se pudo subir la imagen a un host público (0x0.st, transfer.sh)")
+    raise RuntimeError(
+        "No se pudo subir la imagen a un host público (0x0.st, transfer.sh)"
+    )
 
 
 async def create_media_container(image_url: str, caption: str) -> str:
@@ -97,7 +99,9 @@ async def create_media_container(image_url: str, caption: str) -> str:
         ) as resp:
             data = await resp.json()
             if "error" in data:
-                raise RuntimeError(f"Graph API media error: {data['error'].get('message', data['error'])}")
+                raise RuntimeError(
+                    f"Graph API media error: {data['error'].get('message', data['error'])}"
+                )
             creation_id = data.get("id", "")
             if not creation_id:
                 raise RuntimeError(f"No creation_id in response: {data}")
@@ -118,7 +122,9 @@ async def publish_container(creation_id: str) -> str:
         ) as resp:
             data = await resp.json()
             if "error" in data:
-                raise RuntimeError(f"Graph API publish error: {data['error'].get('message', data['error'])}")
+                raise RuntimeError(
+                    f"Graph API publish error: {data['error'].get('message', data['error'])}"
+                )
             post_id = data.get("id", "")
             if not post_id:
                 raise RuntimeError(f"No post_id in response: {data}")
@@ -180,12 +186,18 @@ def _save_draft_bytes(png_bytes: bytes, caption: str, error: str) -> Optional[Pa
         meta_path = _DRAFTS_DIR / f"ig_draft_{ts}.json"
 
         img_path.write_bytes(png_bytes)
-        meta_path.write_text(json.dumps({
-            "caption": caption,
-            "error": error,
-            "saved_at": ts,
-            "status": "draft",
-        }, ensure_ascii=False, indent=2))
+        meta_path.write_text(
+            json.dumps(
+                {
+                    "caption": caption,
+                    "error": error,
+                    "saved_at": ts,
+                    "status": "draft",
+                },
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
 
         logger.info("ig_draft_saved", path=str(img_path))
         return img_path

@@ -309,7 +309,9 @@ class FileHandler:
         try:
             import pdfplumber
         except ImportError:
-            raise ValueError("PDF support requires pdfplumber: uv pip install pdfplumber")
+            raise ValueError(
+                "PDF support requires pdfplumber: uv pip install pdfplumber"
+            )
 
         pages_text = []
         total_pages = 0
@@ -340,7 +342,9 @@ class FileHandler:
         if len(content) > 15000:
             content = content[:15000] + "\n\n... [truncated, too long]"
 
-        prompt = f"{context}\n\nFile: {file_path.name} ({total_pages} pages)\n\n{content}"
+        prompt = (
+            f"{context}\n\nFile: {file_path.name} ({total_pages} pages)\n\n{content}"
+        )
 
         return ProcessedFile(
             type="pdf",
@@ -348,7 +352,9 @@ class FileHandler:
             metadata={"pages": total_pages, "size": file_path.stat().st_size},
         )
 
-    async def _process_spreadsheet(self, file_path: Path, context: str) -> ProcessedFile:
+    async def _process_spreadsheet(
+        self, file_path: Path, context: str
+    ) -> ProcessedFile:
         """Process Excel/CSV spreadsheet"""
         ext = file_path.suffix.lower()
 
@@ -358,13 +364,19 @@ class FileHandler:
             total_rows = len(lines)
             # Limit to first 200 rows
             if total_rows > 200:
-                content = "\n".join(lines[:200]) + f"\n\n... [{total_rows - 200} more rows]"
+                content = (
+                    "\n".join(lines[:200]) + f"\n\n... [{total_rows - 200} more rows]"
+                )
 
             prompt = f"{context}\n\nFile: {file_path.name} (CSV, {total_rows} rows)\n\n{content}"
             return ProcessedFile(
                 type="spreadsheet",
                 prompt=prompt,
-                metadata={"rows": total_rows, "format": "csv", "size": file_path.stat().st_size},
+                metadata={
+                    "rows": total_rows,
+                    "format": "csv",
+                    "size": file_path.stat().st_size,
+                },
             )
 
         # Excel files
@@ -425,7 +437,9 @@ class FileHandler:
                     with z.open("word/document.xml") as f:
                         tree = ET.parse(f)
 
-                ns = {"w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"}
+                ns = {
+                    "w": "http://schemas.openxmlformats.org/wordprocessingml/2006/main"
+                }
                 paragraphs = []
                 for p in tree.iter(f"{{{ns['w']}}}p"):
                     texts = [t.text or "" for t in p.iter(f"{{{ns['w']}}}t")]
@@ -437,7 +451,9 @@ class FileHandler:
                 logger.error("Failed to parse docx: %s", e)
                 raise ValueError(f"Could not parse .docx: {e}")
         else:
-            raise ValueError(f"Unsupported document format: {ext}. Only .docx supported.")
+            raise ValueError(
+                f"Unsupported document format: {ext}. Only .docx supported."
+            )
 
         if len(content) > 15000:
             content = content[:15000] + "\n\n... [truncated]"

@@ -85,7 +85,8 @@ def deps():
 
 def test_agentic_registers_6_commands(agentic_settings, deps):
     """Agentic mode registers at least the core commands (start, new, status, verbose, repo, restart).
-    Total count may grow as new commands are added — we only assert core commands exist."""
+    Total count may grow as new commands are added — we only assert core commands exist.
+    """
     orchestrator = MessageOrchestrator(agentic_settings, deps)
     app = MagicMock()
     app.add_handler = MagicMock()
@@ -462,7 +463,11 @@ async def test_agentic_voice_no_handler_shows_unavailable_message(tmp_path, deps
     # Whisper fails in test env, API handler is None -> edit_text with unavailable msg
     progress_msg.edit_text.assert_awaited()
     last_call_text = progress_msg.edit_text.call_args_list[-1].args[0]
-    assert "no" in last_call_text.lower() or "unavailable" in last_call_text.lower() or "disponible" in last_call_text.lower()
+    assert (
+        "no" in last_call_text.lower()
+        or "unavailable" in last_call_text.lower()
+        or "disponible" in last_call_text.lower()
+    )
 
 
 async def test_agentic_voice_transcription_failure_surfaces_user_error(

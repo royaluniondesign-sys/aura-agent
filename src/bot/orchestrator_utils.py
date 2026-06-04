@@ -278,9 +278,7 @@ def make_stream_callback(
                     tc_input = tc.get("input", {})
                     file_path = tc_input.get("file_path", "")
                     caption = tc_input.get("caption", "")
-                    img = validate_image_path(
-                        file_path, approved_directory, caption
-                    )
+                    img = validate_image_path(file_path, approved_directory, caption)
                     if img:
                         mcp_images.append(img)
 
@@ -290,14 +288,10 @@ def make_stream_callback(
                 name = tc.get("name", "unknown")
                 detail = summarize_tool_input(name, tc.get("input", {}))
                 if verbose_level >= 1:
-                    tool_log.append(
-                        {"kind": "tool", "name": name, "detail": detail}
-                    )
+                    tool_log.append({"kind": "tool", "name": name, "detail": detail})
                 if draft_streamer:
                     icon = tool_icon(name)
-                    line = (
-                        f"{icon} {name}: {detail}" if detail else f"{icon} {name}"
-                    )
+                    line = f"{icon} {name}: {detail}" if detail else f"{icon} {name}"
                     await draft_streamer.append_tool(line)
 
         # Capture assistant text (reasoning / commentary)
@@ -307,9 +301,7 @@ def make_stream_callback(
                 first_line = text.split("\n", 1)[0].strip()
                 if first_line:
                     if verbose_level >= 1:
-                        tool_log.append(
-                            {"kind": "text", "detail": first_line[:120]}
-                        )
+                        tool_log.append({"kind": "text", "detail": first_line[:120]})
                     if draft_streamer:
                         await draft_streamer.append_tool(
                             f"\U0001f4ac {first_line[:120]}"
@@ -326,9 +318,7 @@ def make_stream_callback(
             now = time.time()
             if (now - last_edit_time[0]) >= 2.0 and tool_log:
                 last_edit_time[0] = now
-                new_text = format_verbose_progress(
-                    tool_log, verbose_level, start_time
-                )
+                new_text = format_verbose_progress(tool_log, verbose_level, start_time)
                 try:
                     await progress_msg.edit_text(new_text)
                 except Exception:
@@ -365,9 +355,7 @@ async def send_images(
             documents.append(img)
 
     # Telegram caption limit
-    use_caption = bool(
-        caption and len(caption) <= 1024 and photos and not documents
-    )
+    use_caption = bool(caption and len(caption) <= 1024 and photos and not documents)
     caption_sent = False
 
     # Send raster photos as a single album (Telegram groups 2-10 items)
@@ -393,9 +381,7 @@ async def send_images(
                             media=fh,
                             caption=caption if use_caption and idx == 0 else None,
                             parse_mode=(
-                                caption_parse_mode
-                                if use_caption and idx == 0
-                                else None
+                                caption_parse_mode if use_caption and idx == 0 else None
                             ),
                         )
                     )
@@ -476,17 +462,17 @@ _DELEGATE_RE = re.compile(r"<<DELEGATE:(\w+)>>\s*(.*)", re.DOTALL)
 
 _CLI_MAP: Dict[str, Dict[str, Any]] = {
     # shell — fastest, no LLM, deterministic
-    "sh":       {"cmd": "bash",     "mode": "sh",       "emoji": "⚡"},
-    "bash":     {"cmd": "bash",     "mode": "sh",       "emoji": "⚡"},
-    "shell":    {"cmd": "bash",     "mode": "sh",       "emoji": "⚡"},
+    "sh": {"cmd": "bash", "mode": "sh", "emoji": "⚡"},
+    "bash": {"cmd": "bash", "mode": "sh", "emoji": "⚡"},
+    "shell": {"cmd": "bash", "mode": "sh", "emoji": "⚡"},
     # cline — local Ollama, zero cost, code editing
-    "cline":    {"cmd": "cline",    "mode": "cline",    "emoji": "🟣"},
+    "cline": {"cmd": "cline", "mode": "cline", "emoji": "🟣"},
     # opencode — free tier via OpenRouter, code gen/analysis
     "opencode": {"cmd": "opencode", "mode": "opencode", "emoji": "🔶"},
     # codex — OpenAI subscription, fast single-file code gen
-    "codex":    {"cmd": "codex",    "mode": "codex",    "emoji": "🟢"},
+    "codex": {"cmd": "codex", "mode": "codex", "emoji": "🟢"},
     # claude — Anthropic subscription (escalation only)
-    "claude":   {"cmd": "claude",   "mode": "claude",   "emoji": "🟠"},
+    "claude": {"cmd": "claude", "mode": "claude", "emoji": "🟠"},
 }
 
 
@@ -502,9 +488,7 @@ def parse_delegation(content: str) -> Optional[tuple]:  # type: ignore[type-arg]
     return cli_name, cli_prompt
 
 
-async def execute_cli(
-    cli_name: str, prompt: str, cwd: str, timeout: int = 120
-) -> str:
+async def execute_cli(cli_name: str, prompt: str, cwd: str, timeout: int = 120) -> str:
     """Execute a CLI tool and return its output."""
     import os
     import shutil
@@ -571,6 +555,7 @@ async def execute_cli(
 def parse_opencode_json(raw: str) -> str:
     """Extract text parts from opencode --format json output."""
     import json as _json
+
     texts = []
     for line in raw.splitlines():
         line = line.strip()

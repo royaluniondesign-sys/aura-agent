@@ -5,6 +5,7 @@ without hardcoding the daemon port or dealing with CORS.
 
 Also provides /api/opendesign/status for health checks and port discovery.
 """
+
 from __future__ import annotations
 
 import logging
@@ -161,7 +162,8 @@ async def od_proxy(path: str, request: Request) -> Response:
         headers={
             k: v
             for k, v in resp.headers.items()
-            if k.lower() not in ("content-encoding", "transfer-encoding", "content-length")
+            if k.lower()
+            not in ("content-encoding", "transfer-encoding", "content-length")
         },
         media_type=resp.headers.get("content-type", "application/json"),
     )

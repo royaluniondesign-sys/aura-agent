@@ -1,4 +1,5 @@
 """Conductor logging utilities: session log, conductor log, learning write."""
+
 from __future__ import annotations
 
 import json
@@ -32,22 +33,22 @@ def log_session(
         details: Optional dict with additional context
     """
     try:
-        log_dir = Path.home() / '.aura' / 'memory'
+        log_dir = Path.home() / ".aura" / "memory"
         log_dir.mkdir(parents=True, exist_ok=True)
-        log_file = log_dir / 'session_log.txt'
+        log_file = log_dir / "session_log.txt"
 
         session_data = {
-            'timestamp': datetime.now().isoformat(),
-            'activity': activity,
-            'brain': brain,
-            'step': step,
-            'duration_ms': duration_ms,
-            'status': status,
-            'details': details or {},
+            "timestamp": datetime.now().isoformat(),
+            "activity": activity,
+            "brain": brain,
+            "step": step,
+            "duration_ms": duration_ms,
+            "status": status,
+            "details": details or {},
         }
 
-        with open(log_file, 'a') as f:
-            f.write(json.dumps(session_data) + '\n')
+        with open(log_file, "a") as f:
+            f.write(json.dumps(session_data) + "\n")
     except Exception as e:
         logger.error("session_log_write_failed", error=str(e))
 
@@ -55,6 +56,7 @@ def log_session(
 def _format_ts(ts: float) -> str:
     """Convert unix timestamp to ISO-8601."""
     from datetime import UTC, datetime
+
     return datetime.fromtimestamp(ts, tz=UTC).isoformat()
 
 
@@ -65,7 +67,7 @@ def log_conductor_run(tasks_executed: List[str], outcomes: List[str]) -> None:
         tasks_executed: List of task descriptions/identifiers
         outcomes: List of outcomes ("success" or "failure" for each task)
     """
-    log_path = Path.home() / '.aura' / 'memory' / 'conductor_log.md'
+    log_path = Path.home() / ".aura" / "memory" / "conductor_log.md"
 
     # Ensure the log directory exists
     log_path.parent.mkdir(parents=True, exist_ok=True)
@@ -75,7 +77,7 @@ def log_conductor_run(tasks_executed: List[str], outcomes: List[str]) -> None:
 
     # Log the run
     try:
-        with open(log_path, 'a') as log_file:
+        with open(log_path, "a") as log_file:
             log_file.write(f"Date: {timestamp}\n")
             log_file.write(f"Tasks Executed: {tasks_executed}\n")
             log_file.write(f"Outcomes: {outcomes}\n\n")
@@ -83,7 +85,9 @@ def log_conductor_run(tasks_executed: List[str], outcomes: List[str]) -> None:
         logger.error("conductor_log_write_failed", error=str(e))
 
 
-def write_learning(conductor_run_id: Any, success: bool, reason: str, actions_taken: Any) -> None:
+def write_learning(
+    conductor_run_id: Any, success: bool, reason: str, actions_taken: Any
+) -> None:
     """Log conductor run learning to file.
 
     Args:
@@ -97,11 +101,13 @@ def write_learning(conductor_run_id: Any, success: bool, reason: str, actions_ta
     _logger.setLevel(logging.DEBUG)
 
     # Create a file handler to log to a file
-    handler = logging.FileHandler('conductor_run.log')
+    handler = logging.FileHandler("conductor_run.log")
     handler.setLevel(logging.DEBUG)
 
     # Create a logging format
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     handler.setFormatter(formatter)
 
     # Add the handler to the logger

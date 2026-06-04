@@ -73,7 +73,9 @@ def _save_token(creds) -> None:
 
 def _parse_message(msg: dict) -> dict:
     """Extract clean fields from a Gmail message dict."""
-    headers = {h["name"].lower(): h["value"] for h in msg.get("payload", {}).get("headers", [])}
+    headers = {
+        h["name"].lower(): h["value"] for h in msg.get("payload", {}).get("headers", [])
+    }
     snippet = msg.get("snippet", "")
 
     # Extract plain text body
@@ -84,7 +86,9 @@ def _parse_message(msg: dict) -> dict:
         mime = part.get("mimeType", "")
         data = part.get("body", {}).get("data", "")
         if mime == "text/plain" and data:
-            return base64.urlsafe_b64decode(data + "==").decode("utf-8", errors="replace")
+            return base64.urlsafe_b64decode(data + "==").decode(
+                "utf-8", errors="replace"
+            )
         if "parts" in part:
             for subpart in part["parts"]:
                 result = _extract_body(subpart)
@@ -116,15 +120,21 @@ async def list_unread(max_results: int = 10, query: str = "") -> list[dict]:
         q = "is:unread"
         if query:
             q = f"{q} {query}"
-        result = service.users().messages().list(
-            userId="me", q=q, maxResults=max_results
-        ).execute()
+        result = (
+            service.users()
+            .messages()
+            .list(userId="me", q=q, maxResults=max_results)
+            .execute()
+        )
 
         messages = []
         for m in result.get("messages", []):
-            full = service.users().messages().get(
-                userId="me", id=m["id"], format="full"
-            ).execute()
+            full = (
+                service.users()
+                .messages()
+                .get(userId="me", id=m["id"], format="full")
+                .execute()
+            )
             messages.append(_parse_message(full))
         return messages
 
@@ -137,9 +147,12 @@ async def get_message(message_id: str) -> dict:
 
     def _run():
         service = _get_service()
-        msg = service.users().messages().get(
-            userId="me", id=message_id, format="full"
-        ).execute()
+        msg = (
+            service.users()
+            .messages()
+            .get(userId="me", id=message_id, format="full")
+            .execute()
+        )
         return _parse_message(msg)
 
     return await asyncio.get_event_loop().run_in_executor(None, _run)
@@ -151,15 +164,21 @@ async def search(query: str, max_results: int = 10) -> list[dict]:
 
     def _run():
         service = _get_service()
-        result = service.users().messages().list(
-            userId="me", q=query, maxResults=max_results
-        ).execute()
+        result = (
+            service.users()
+            .messages()
+            .list(userId="me", q=query, maxResults=max_results)
+            .execute()
+        )
 
         messages = []
         for m in result.get("messages", []):
-            full = service.users().messages().get(
-                userId="me", id=m["id"], format="full"
-            ).execute()
+            full = (
+                service.users()
+                .messages()
+                .get(userId="me", id=m["id"], format="full")
+                .execute()
+            )
             messages.append(_parse_message(full))
         return messages
 
@@ -204,9 +223,7 @@ async def send(
         if reply_to_thread_id:
             body_data["threadId"] = reply_to_thread_id
 
-        result = service.users().messages().send(
-            userId="me", body=body_data
-        ).execute()
+        result = service.users().messages().send(userId="me", body=body_data).execute()
         return {"ok": True, "id": result.get("id", "?")}
 
     try:

@@ -80,6 +80,7 @@ async def delete_task_endpoint(task_id: str) -> Dict[str, Any]:
 async def trigger_evaluation() -> Dict[str, Any]:
     """Force AURA to run self-evaluation now (create tasks from system state)."""
     from ...infra import auto_executor
+
     auto_executor._LAST_EVAL = 0.0  # reset timer so self_evaluate runs
     asyncio.ensure_future(auto_executor.self_evaluate())
     return {"ok": True, "message": "Self-evaluation triggered"}
@@ -108,7 +109,8 @@ async def publish_task(task_id: str, request: Request) -> Dict[str, Any]:
     _ts_update(
         task_id,
         status="completed",
-        result=(task.get("result") or "") + f"\n\n[Publicado: {', '.join(channels)} — {ts}]",
+        result=(task.get("result") or "")
+        + f"\n\n[Publicado: {', '.join(channels)} — {ts}]",
         published_channels=channels,
         published_at=ts,
         published_url=url,
@@ -142,7 +144,11 @@ async def run_task_now_v2(task_id: str) -> Dict[str, Any]:
         raise HTTPException(status_code=404, detail="Task not found")
 
     if task.get("status") == "in_progress":
-        return {"ok": False, "error": "already_running", "message": "Task is already running."}
+        return {
+            "ok": False,
+            "error": "already_running",
+            "message": "Task is already running.",
+        }
 
     cmd = (task.get("fix_command") or "").strip()
 
@@ -154,7 +160,9 @@ async def run_task_now_v2(task_id: str) -> Dict[str, Any]:
         if description:
             prompt = f"{title}\n\n{description}"
 
-        _ts_update(task_id, status="in_progress", attempts=(task.get("attempts", 0) + 1))
+        _ts_update(
+            task_id, status="in_progress", attempts=(task.get("attempts", 0) + 1)
+        )
 
         try:
             async with httpx.AsyncClient(timeout=10) as client:
@@ -165,11 +173,18 @@ async def run_task_now_v2(task_id: str) -> Dict[str, Any]:
         except Exception:
             pass  # Conductor dispatch is fire-and-forget; failures are non-fatal
 
-        return {"ok": True, "via": "conductor", "message": "Ejecutando via conductor..."}
+        return {
+            "ok": True,
+            "via": "conductor",
+            "message": "Ejecutando via conductor...",
+        }
 
     async def _execute() -> None:
         from ...infra.auto_executor import _run_bash
-        _ts_update(task_id, status="in_progress", attempts=(task.get("attempts", 0) + 1))
+
+        _ts_update(
+            task_id, status="in_progress", attempts=(task.get("attempts", 0) + 1)
+        )
         ok, output = await _run_bash(cmd, timeout=120)
         ts = _dt.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
         if ok:

@@ -1,4 +1,5 @@
 """Conductor data models: ConductorStep, ConductorPlan, ConductorResult."""
+
 from __future__ import annotations
 
 import time
@@ -9,6 +10,7 @@ from typing import List, Optional
 @dataclass
 class ConductorStep:
     """One step in the execution plan."""
+
     step: int
     layer: int
     brain: str
@@ -16,7 +18,7 @@ class ConductorStep:
     prompt: str
     depends_on: List[int] = field(default_factory=list)
     # Runtime fields
-    status: str = "pending"       # pending | running | done | failed
+    status: str = "pending"  # pending | running | done | failed
     output: str = ""
     duration_ms: int = 0
     error: str = ""
@@ -25,6 +27,7 @@ class ConductorStep:
 @dataclass
 class ConductorPlan:
     """Full execution plan returned by Claude."""
+
     task_summary: str
     strategy: str
     steps: List[ConductorStep]
@@ -43,6 +46,7 @@ class ConductorPlan:
 @dataclass
 class ConductorResult:
     """Final result of a conductor run."""
+
     run_id: str
     task: str
     plan: Optional[ConductorPlan]

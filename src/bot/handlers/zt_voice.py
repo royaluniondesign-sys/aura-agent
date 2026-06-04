@@ -22,6 +22,7 @@ class ZeroTokenVoiceMixin:
             return
         try:
             from ..features.voice_tts import send_voice_response
+
             sent = await send_voice_response(update, context, text)
             if not sent:
                 await update.message.reply_text(
@@ -32,9 +33,7 @@ class ZeroTokenVoiceMixin:
         except Exception as e:
             await update.message.reply_text(f"TTS error: {e}")
 
-    async def _zt_voz(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def _zt_voz(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """🎙 /voz [on|off] — toggle respuestas de voz automáticas (persistente)."""
         from ..features.voice_tts import save_voice_prefs
 
@@ -58,6 +57,4 @@ class ZeroTokenVoiceMixin:
             await update.message.reply_text("🔇 Voz desactivada.")
         else:
             estado = "🎙 ON" if user_id in voice_users else "🔇 OFF"
-            await update.message.reply_text(
-                f"Voz: {estado}\nUsa /voz on o /voz off"
-            )
+            await update.message.reply_text(f"Voz: {estado}\nUsa /voz on o /voz off")

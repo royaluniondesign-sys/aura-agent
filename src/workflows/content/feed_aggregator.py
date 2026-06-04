@@ -4,6 +4,7 @@ Returns a flat list of fresh items (title, url, summary, source, published)
 sorted by recency. Uses only RSS/Atom — no scraping, no JS rendering needed.
 Zero LLM tokens consumed here.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -19,46 +20,98 @@ log = logging.getLogger("content.feeds")
 # ── Feed catalog ─────────────────────────────────────────────────────────────
 FEEDS: list[dict] = [
     # Design & Branding
-    {"url": "https://www.underconsideration.com/brandnew/atom.xml",
-     "source": "Brand New", "pillar": "branding"},
-    {"url": "https://the-brandidentity.com/feed",
-     "source": "The Brand Identity", "pillar": "branding"},
-    {"url": "https://fontsinuse.com/feed",
-     "source": "Fonts In Use", "pillar": "typography"},
-    {"url": "https://www.creativebloq.com/feeds/all",
-     "source": "Creative Bloq", "pillar": "design"},
-    {"url": "https://uxdesign.cc/feed",
-     "source": "UX Collective", "pillar": "design"},
-    {"url": "https://adsoftheworld.com/rss",
-     "source": "Ads of the World", "pillar": "advertising"},
+    {
+        "url": "https://www.underconsideration.com/brandnew/atom.xml",
+        "source": "Brand New",
+        "pillar": "branding",
+    },
+    {
+        "url": "https://the-brandidentity.com/feed",
+        "source": "The Brand Identity",
+        "pillar": "branding",
+    },
+    {
+        "url": "https://fontsinuse.com/feed",
+        "source": "Fonts In Use",
+        "pillar": "typography",
+    },
+    {
+        "url": "https://www.creativebloq.com/feeds/all",
+        "source": "Creative Bloq",
+        "pillar": "design",
+    },
+    {"url": "https://uxdesign.cc/feed", "source": "UX Collective", "pillar": "design"},
+    {
+        "url": "https://adsoftheworld.com/rss",
+        "source": "Ads of the World",
+        "pillar": "advertising",
+    },
     # AI & Tech
-    {"url": "https://www.anthropic.com/rss.xml",
-     "source": "Anthropic Blog", "pillar": "ai"},
-    {"url": "https://news.ycombinator.com/rss",
-     "source": "Hacker News", "pillar": "tech"},
-    {"url": "https://techcrunch.com/category/artificial-intelligence/feed/",
-     "source": "TechCrunch AI", "pillar": "ai"},
-    {"url": "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
-     "source": "The Verge AI", "pillar": "ai"},
-    {"url": "https://venturebeat.com/ai/feed/",
-     "source": "VentureBeat AI", "pillar": "ai"},
+    {
+        "url": "https://www.anthropic.com/rss.xml",
+        "source": "Anthropic Blog",
+        "pillar": "ai",
+    },
+    {
+        "url": "https://news.ycombinator.com/rss",
+        "source": "Hacker News",
+        "pillar": "tech",
+    },
+    {
+        "url": "https://techcrunch.com/category/artificial-intelligence/feed/",
+        "source": "TechCrunch AI",
+        "pillar": "ai",
+    },
+    {
+        "url": "https://www.theverge.com/ai-artificial-intelligence/rss/index.xml",
+        "source": "The Verge AI",
+        "pillar": "ai",
+    },
+    {
+        "url": "https://venturebeat.com/ai/feed/",
+        "source": "VentureBeat AI",
+        "pillar": "ai",
+    },
     # Marketing & Digital
-    {"url": "https://digiday.com/feed/",
-     "source": "Digiday", "pillar": "marketing"},
-    {"url": "https://www.fastcompany.com/design/rss",
-     "source": "Fast Company Design", "pillar": "design"},
-    {"url": "https://www.marketingweek.com/feed/",
-     "source": "Marketing Week", "pillar": "marketing"},
+    {"url": "https://digiday.com/feed/", "source": "Digiday", "pillar": "marketing"},
+    {
+        "url": "https://www.fastcompany.com/design/rss",
+        "source": "Fast Company Design",
+        "pillar": "design",
+    },
+    {
+        "url": "https://www.marketingweek.com/feed/",
+        "source": "Marketing Week",
+        "pillar": "marketing",
+    },
     # Product launches
-    {"url": "https://www.producthunt.com/feed",
-     "source": "Product Hunt", "pillar": "tech"},
+    {
+        "url": "https://www.producthunt.com/feed",
+        "source": "Product Hunt",
+        "pillar": "tech",
+    },
 ]
 
 # Filter HN to only design/AI relevant items via keyword
 HN_KEYWORDS = {
-    "design", "ai", "llm", "brand", "typography", "visual", "figma",
-    "ux", "ui", "logo", "identity", "claude", "openai", "anthropic",
-    "marketing", "creative", "agency", "advertising",
+    "design",
+    "ai",
+    "llm",
+    "brand",
+    "typography",
+    "visual",
+    "figma",
+    "ux",
+    "ui",
+    "logo",
+    "identity",
+    "claude",
+    "openai",
+    "anthropic",
+    "marketing",
+    "creative",
+    "agency",
+    "advertising",
 }
 
 MAX_AGE_HOURS = 48  # Only items published in last 48h
@@ -102,9 +155,9 @@ def _fetch_feed(feed_cfg: dict, cutoff: datetime) -> list[FeedItem]:
                 continue
             title = (entry.get("title") or "").strip()
             url = entry.get("link") or entry.get("url") or ""
-            summary = (
-                entry.get("summary") or entry.get("description") or ""
-            )[:300].strip()
+            summary = (entry.get("summary") or entry.get("description") or "")[
+                :300
+            ].strip()
 
             if not title or not url:
                 continue
@@ -115,14 +168,16 @@ def _fetch_feed(feed_cfg: dict, cutoff: datetime) -> list[FeedItem]:
                 if not any(kw in title_lower for kw in HN_KEYWORDS):
                     continue
 
-            items.append(FeedItem(
-                title=title,
-                url=url,
-                summary=summary,
-                source=feed_cfg["source"],
-                pillar=feed_cfg["pillar"],
-                published=pub,
-            ))
+            items.append(
+                FeedItem(
+                    title=title,
+                    url=url,
+                    summary=summary,
+                    source=feed_cfg["source"],
+                    pillar=feed_cfg["pillar"],
+                    published=pub,
+                )
+            )
     except Exception as e:
         log.warning("feed_error source=%s: %s", feed_cfg["source"], e)
     return items
@@ -133,10 +188,7 @@ async def fetch_all(max_age_hours: int = MAX_AGE_HOURS) -> list[FeedItem]:
     cutoff = datetime.now(timezone.utc) - timedelta(hours=max_age_hours)
     loop = asyncio.get_event_loop()
 
-    tasks = [
-        loop.run_in_executor(None, _fetch_feed, cfg, cutoff)
-        for cfg in FEEDS
-    ]
+    tasks = [loop.run_in_executor(None, _fetch_feed, cfg, cutoff) for cfg in FEEDS]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     seen_titles: set[str] = set()

@@ -2,6 +2,7 @@
 
 All calls transparently use the working RAG/Ollama pipeline instead.
 """
+
 from __future__ import annotations
 
 import structlog
@@ -13,6 +14,7 @@ async def store_interaction(user_message: str, assistant_response: str) -> None:
     """Store conversation in RAG vector store."""
     try:
         from src.rag.indexer import RAGIndexer
+
         rag = RAGIndexer()
         text = f"[Usuario]: {user_message[:400]}\n[AURA]: {assistant_response[:600]}"
         await rag.index_text(text, "telegram_chat", "memory")
@@ -24,6 +26,7 @@ async def search_memory(query: str, top_k: int = 5) -> list:
     """Search conversation memory via RAG."""
     try:
         from src.rag.retriever import RAGRetriever
+
         retriever = RAGRetriever()
         return await retriever.search(query, top_k=top_k, source_types=["memory"])
     except Exception:
@@ -42,7 +45,9 @@ def format_memories_for_prompt(memories: list) -> str:
         return "No relevant memories found."
     lines = []
     for i, mem in enumerate(memories, 1):
-        text = mem.get("content", "")[:300]  # RAGRetriever returns "content", not "text"
+        text = mem.get("content", "")[
+            :300
+        ]  # RAGRetriever returns "content", not "text"
         score = mem.get("score", 0.0)
         lines.append(f"{i}. [{score:.2f}] {text}")
     return "\n".join(lines)
@@ -52,6 +57,7 @@ async def palace_count() -> int:
     """Return count of stored memories."""
     try:
         from src.rag.retriever import RAGRetriever
+
         retriever = RAGRetriever()
         status = await retriever.status()
         return status.get("total_chunks", 0)

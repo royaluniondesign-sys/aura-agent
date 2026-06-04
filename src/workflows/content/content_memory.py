@@ -3,6 +3,7 @@
 Tracks every piece of content planned or published so the brain
 never repeats a topic within the configured cooldown window.
 """
+
 from __future__ import annotations
 
 import json
@@ -58,8 +59,14 @@ def log_planned(
         cur = c.execute(
             "INSERT INTO content_log (topic_key, title, format, platform, status, meta) "
             "VALUES (?,?,?,?,?,?)",
-            (topic_key.lower()[:100], title[:200], fmt, platform, "planned",
-             json.dumps(meta or {})),
+            (
+                topic_key.lower()[:100],
+                title[:200],
+                fmt,
+                platform,
+                "planned",
+                json.dumps(meta or {}),
+            ),
         )
         return cur.lastrowid or 0
 
@@ -86,7 +93,14 @@ def recent_topics(limit: int = 30) -> list[dict]:
             (limit,),
         ).fetchall()
     return [
-        {"id": r[0], "topic": r[1], "title": r[2], "format": r[3],
-         "platform": r[4], "status": r[5], "created": r[6]}
+        {
+            "id": r[0],
+            "topic": r[1],
+            "title": r[2],
+            "format": r[3],
+            "platform": r[4],
+            "status": r[5],
+            "created": r[6],
+        }
         for r in rows
     ]

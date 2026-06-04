@@ -79,7 +79,7 @@ class ContentHandlerMixin:
                 raw = (resp.content if resp else "").strip()
 
             # Parse JSON from response (handles ```json ... ``` wrapping too)
-            json_match = _re_e.search(r'\{[^{}]+\}', raw, _re_e.DOTALL)
+            json_match = _re_e.search(r"\{[^{}]+\}", raw, _re_e.DOTALL)
             if json_match:
                 try:
                     composed = _json.loads(json_match.group())
@@ -100,6 +100,7 @@ class ContentHandlerMixin:
             )
 
             from src.actions import call_tool
+
             result = await call_tool(
                 "send_email",
                 to=composed["to"],
@@ -165,13 +166,15 @@ class ContentHandlerMixin:
 
             # F5: Detect scheduling intent and short-circuit to scheduler
             _SCHED_KEYWORDS = _re_sched.compile(
-                r'\b(program[ao]r?|schedule[d]?|a\s+las|mañana|manana|en\s+\d+\s*(?:h|m|hora|min))\b',
+                r"\b(program[ao]r?|schedule[d]?|a\s+las|mañana|manana|en\s+\d+\s*(?:h|m|hora|min))\b",
                 _re_sched.IGNORECASE,
             )
             if _SCHED_KEYWORDS.search(message_text):
                 # Parse platform from message (default instagram)
                 _plat = "instagram"
-                if _re_sched.search(r'\b(facebook|fb)\b', message_text, _re_sched.IGNORECASE):
+                if _re_sched.search(
+                    r"\b(facebook|fb)\b", message_text, _re_sched.IGNORECASE
+                ):
                     _plat = "facebook"
 
                 # Split time expression from topic using "sobre" as delimiter
@@ -179,7 +182,7 @@ class ContentHandlerMixin:
                 if "sobre" in _lower:
                     _idx = _lower.index("sobre")
                     _time_str = message_text[:_idx].strip()
-                    _topic = message_text[_idx + 5:].strip()
+                    _topic = message_text[_idx + 5 :].strip()
                 else:
                     # fallback: first 4 words = time expression, rest = topic
                     _words = message_text.split(maxsplit=4)
@@ -194,11 +197,16 @@ class ContentHandlerMixin:
                     return
 
             from src.social.image_gen import PostSpec, generate_post_image
-            from src.workflows.social_post import generate_post_content, parse_social_request
+            from src.workflows.social_post import (
+                generate_post_content,
+                parse_social_request,
+            )
 
             # Detect format from message
             lower = message_text.lower()
-            if _re_social.search(r"\b(reel|reels|story|stories|vertical|9.16)\b", lower):
+            if _re_social.search(
+                r"\b(reel|reels|story|stories|vertical|9.16)\b", lower
+            ):
                 fmt = "9:16"
             elif _re_social.search(r"\b(landscape|horizontal|wide|4.3|16.9)\b", lower):
                 fmt = "4:3"
@@ -253,6 +261,7 @@ class ContentHandlerMixin:
             async def _log_publication() -> None:
                 try:
                     from src.integrations.publication_db import get_publication_db
+
                     db = get_publication_db()
                     await db.log_publication(
                         platform=platform,
@@ -272,15 +281,22 @@ class ContentHandlerMixin:
 
             # Detect "publicar" / "post now" intent — post directly to Instagram
             import re as _re2
-            should_post = bool(_re2.search(
-                r"\b(publica|publish|post(?:ea)?|sube?|upload|publicar)\b",
-                message_text.lower(),
-            ))
+
+            should_post = bool(
+                _re2.search(
+                    r"\b(publica|publish|post(?:ea)?|sube?|upload|publicar)\b",
+                    message_text.lower(),
+                )
+            )
 
             if should_post and platform == "instagram":
+
                 async def _ig_post_background() -> None:
                     try:
-                        from src.workflows.instagram_direct import post_image as _ig_post
+                        from src.workflows.instagram_direct import (
+                            post_image as _ig_post,
+                        )
+
                         result = await _ig_post(png_bytes, content["caption"])
                         if result["ok"]:
                             await update.message.reply_text(

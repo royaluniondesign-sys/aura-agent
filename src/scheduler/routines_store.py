@@ -7,6 +7,7 @@ detects a recurring improvement opportunity.
 Different from `scheduled_jobs` (APScheduler internal) — routines are
 the user-facing concept with full CRUD, logs, and dashboard UI.
 """
+
 from __future__ import annotations
 
 import json
@@ -22,28 +23,31 @@ import structlog
 logger = structlog.get_logger()
 
 import os as _os
-_DB_PATH = _os.path.join(_os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))), "data", "bot.db")
+
+_DB_PATH = _os.path.join(
+    _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))),
+    "data",
+    "bot.db",
+)
 
 
 @dataclass
 class Routine:
     name: str
-    prompt: str                           # full prompt sent to brain
-    description: str = ""                 # short human label
-    brain: str = "codex"                  # which brain executes it
-    frequency: str = "daily"              # hourly | daily | weekly | cron:<expr>
-    schedule_time: str = "09:00"          # HH:MM (for daily/weekly)
+    prompt: str  # full prompt sent to brain
+    description: str = ""  # short human label
+    brain: str = "codex"  # which brain executes it
+    frequency: str = "daily"  # hourly | daily | weekly | cron:<expr>
+    schedule_time: str = "09:00"  # HH:MM (for daily/weekly)
     working_dir: str = str(Path(__file__).parent.parent.parent)
-    is_local: bool = True                 # local = only runs while Mac is on
+    is_local: bool = True  # local = only runs while Mac is on
     enabled: bool = True
-    auto_created: bool = False            # True if conductor created it
+    auto_created: bool = False  # True if conductor created it
     id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
-    created_at: str = field(
-        default_factory=lambda: datetime.now(UTC).isoformat()
-    )
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     last_run_at: Optional[str] = None
-    last_result: Optional[str] = None     # first 500 chars of output
-    last_status: str = "pending"          # pending | ok | error
+    last_result: Optional[str] = None  # first 500 chars of output
+    last_status: str = "pending"  # pending | ok | error
     run_count: int = 0
 
     def to_cron(self) -> str:
@@ -57,7 +61,7 @@ class Routine:
             return f"{m} {h} * * *"
         if self.frequency == "weekly":
             return f"{m} {h} * * 1"  # every Monday
-        return f"{m} {h} * * *"       # default daily
+        return f"{m} {h} * * *"  # default daily
 
     def as_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -107,9 +111,7 @@ async def list_routines() -> List[Routine]:
     async with aiosqlite.connect(_DB_PATH) as db:
         await _ensure_tables(db)
         db.row_factory = aiosqlite.Row
-        async with db.execute(
-            "SELECT * FROM routines ORDER BY created_at DESC"
-        ) as cur:
+        async with db.execute("SELECT * FROM routines ORDER BY created_at DESC") as cur:
             rows = await cur.fetchall()
     return [_row_to_routine(r) for r in rows]
 
@@ -135,11 +137,22 @@ async def create_routine(r: Routine) -> Routine:
                 last_run_at, last_result, last_status, run_count)
                VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
             (
-                r.id, r.name, r.description, r.prompt, r.brain,
-                r.frequency, r.schedule_time, r.working_dir,
-                int(r.is_local), int(r.enabled), int(r.auto_created),
-                r.created_at, r.last_run_at, r.last_result,
-                r.last_status, r.run_count,
+                r.id,
+                r.name,
+                r.description,
+                r.prompt,
+                r.brain,
+                r.frequency,
+                r.schedule_time,
+                r.working_dir,
+                int(r.is_local),
+                int(r.enabled),
+                int(r.auto_created),
+                r.created_at,
+                r.last_run_at,
+                r.last_result,
+                r.last_status,
+                r.run_count,
             ),
         )
         await db.commit()
@@ -149,9 +162,19 @@ async def create_routine(r: Routine) -> Routine:
 
 async def update_routine(routine_id: str, **fields: Any) -> Optional[Routine]:
     allowed = {
-        "name", "description", "prompt", "brain", "frequency",
-        "schedule_time", "working_dir", "is_local", "enabled",
-        "last_run_at", "last_result", "last_status", "run_count",
+        "name",
+        "description",
+        "prompt",
+        "brain",
+        "frequency",
+        "schedule_time",
+        "working_dir",
+        "is_local",
+        "enabled",
+        "last_run_at",
+        "last_result",
+        "last_status",
+        "run_count",
     }
     updates = {k: v for k, v in fields.items() if k in allowed}
     if not updates:
@@ -160,9 +183,7 @@ async def update_routine(routine_id: str, **fields: Any) -> Optional[Routine]:
     values = list(updates.values()) + [routine_id]
     async with aiosqlite.connect(_DB_PATH) as db:
         await _ensure_tables(db)
-        await db.execute(
-            f"UPDATE routines SET {set_clause} WHERE id = ?", values
-        )
+        await db.execute(f"UPDATE routines SET {set_clause} WHERE id = ?", values)
         await db.commit()
     return await get_routine(routine_id)
 
@@ -170,16 +191,17 @@ async def update_routine(routine_id: str, **fields: Any) -> Optional[Routine]:
 async def delete_routine(routine_id: str) -> bool:
     async with aiosqlite.connect(_DB_PATH) as db:
         await _ensure_tables(db)
-        cur = await db.execute(
-            "DELETE FROM routines WHERE id = ?", (routine_id,)
-        )
+        cur = await db.execute("DELETE FROM routines WHERE id = ?", (routine_id,))
         await db.commit()
         return cur.rowcount > 0
 
 
 async def append_log(
-    routine_id: str, status: str, output: str,
-    duration_ms: int = 0, brain_used: str = ""
+    routine_id: str,
+    status: str,
+    output: str,
+    duration_ms: int = 0,
+    brain_used: str = "",
 ) -> None:
     now = datetime.now(UTC).isoformat()
     async with aiosqlite.connect(_DB_PATH) as db:
@@ -210,9 +232,7 @@ async def get_logs(routine_id: str, limit: int = 20) -> List[Dict[str, Any]]:
 async def routine_exists(name: str) -> bool:
     async with aiosqlite.connect(_DB_PATH) as db:
         await _ensure_tables(db)
-        async with db.execute(
-            "SELECT 1 FROM routines WHERE name = ?", (name,)
-        ) as cur:
+        async with db.execute("SELECT 1 FROM routines WHERE name = ?", (name,)) as cur:
             return await cur.fetchone() is not None
 
 

@@ -15,6 +15,7 @@ API key: JSON2VIDEO_API_KEY env var
 
 If no API key is set, returns a mock/preview description instead of failing.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,14 +32,14 @@ logger = structlog.get_logger()
 
 # json2video API
 _API_BASE = "https://api.json2video.com/v2"
-_POLL_INTERVAL = 5      # seconds
-_MAX_POLL_TIME = 300    # 5 minutes
+_POLL_INTERVAL = 5  # seconds
+_MAX_POLL_TIME = 300  # 5 minutes
 
 # Anthropic brand colors
-_DEFAULT_BG = "#faf9f5"      # cream
-_DEFAULT_TEXT = "#141413"    # dark
-_DEFAULT_FONT = "Georgia"    # serif fallback (json2video has no Anthropic fonts)
-_ACCENT = "#d97757"          # orange
+_DEFAULT_BG = "#faf9f5"  # cream
+_DEFAULT_TEXT = "#141413"  # dark
+_DEFAULT_FONT = "Georgia"  # serif fallback (json2video has no Anthropic fonts)
+_ACCENT = "#d97757"  # orange
 _SPANISH_VOICE = "es-ES-AlvaroNeural"
 _ENGLISH_VOICE = "en-US-GuyNeural"
 
@@ -46,6 +47,7 @@ _ENGLISH_VOICE = "en-US-GuyNeural"
 # ---------------------------------------------------------------------------
 # Parsing
 # ---------------------------------------------------------------------------
+
 
 def parse_video_request(prompt: str) -> Dict[str, Any]:
     """Extract topic, slides count, style, language, and voice_enabled from prompt.
@@ -74,24 +76,24 @@ def parse_video_request(prompt: str) -> Dict[str, Any]:
     topic = re.sub(
         r"(?i)\b(?:crea?|genera?|haz?|make|create|generate|build)\b", "", text
     )
+    topic = re.sub(r"(?i)\b(?:un|una|el|la|los|las|a|an|the)\b", "", topic)
     topic = re.sub(
-        r"(?i)\b(?:un|una|el|la|los|las|a|an|the)\b", "", topic
-    )
-    topic = re.sub(
-        r"(?i)\b(?:video|animado?|presentaci[oó]n|explainer|slides?|diapositivas?)\b", "", topic
+        r"(?i)\b(?:video|animado?|presentaci[oó]n|explainer|slides?|diapositivas?)\b",
+        "",
+        topic,
     )
     topic = re.sub(
         r"(?i)\bde\s+(?:\d+\s+)?(?:slides?|diapositivas?|pantallas?)\b", "", topic
     )
-    topic = re.sub(
-        r"(?i)\b(?:sobre|acerca\s+de|about|on|of)\b", "", topic
-    )
+    topic = re.sub(r"(?i)\b(?:sobre|acerca\s+de|about|on|of)\b", "", topic)
     topic = re.sub(r"\s{2,}", " ", topic).strip(" ,.-")
     if not topic:
         topic = text[:80]
 
     # Language detection
-    spanish_words = re.search(r"(?i)\b(sobre|crea|haz|genera|el|la|un|una|de|para)\b", text)
+    spanish_words = re.search(
+        r"(?i)\b(sobre|crea|haz|genera|el|la|un|una|de|para)\b", text
+    )
     language = "es" if spanish_words else "en"
 
     # Style
@@ -117,6 +119,7 @@ def parse_video_request(prompt: str) -> Dict[str, Any]:
 # Script generation
 # ---------------------------------------------------------------------------
 
+
 async def generate_video_script(
     topic: str,
     slides: int,
@@ -129,20 +132,19 @@ async def generate_video_script(
     Falls back to template if brain unavailable.
     """
     style_configs: Dict[str, Dict[str, str]] = {
-        "tech":    {"bg": "#faf9f5", "text": "#141413", "accent": "#d97757"},
+        "tech": {"bg": "#faf9f5", "text": "#141413", "accent": "#d97757"},
         "minimal": {"bg": "#ffffff", "text": "#141413", "accent": "#d97757"},
         "vibrant": {"bg": "#faf9f5", "text": "#141413", "accent": "#d97757"},
     }
     colors = style_configs.get(style, style_configs["tech"])
 
     lang_instruction = (
-        "Responde en español." if language == "es"
-        else "Respond in English."
+        "Responde en español." if language == "es" else "Respond in English."
     )
 
     script_prompt = (
         f"Eres un diseñador de presentaciones. {lang_instruction}\n\n"
-        f"Crea {slides} slides para un video sobre: \"{topic}\"\n\n"
+        f'Crea {slides} slides para un video sobre: "{topic}"\n\n'
         f"Responde SOLO con JSON válido, sin markdown:\n"
         f'[{{"title": "Título corto", "body": "Texto de 1-2 líneas conciso"}}]\n\n'
         f"Reglas:\n"
@@ -156,6 +158,7 @@ async def generate_video_script(
     raw_slides: List[Dict[str, str]] = []
     try:
         from src.brains.gemini_brain import GeminiBrain
+
         brain = GeminiBrain(timeout=25)
         response = await brain.execute(prompt=script_prompt)
         if not response.is_error:
@@ -174,13 +177,15 @@ async def generate_video_script(
     # Attach colors to each slide
     result: List[Dict[str, str]] = []
     for i, slide in enumerate(raw_slides):
-        result.append({
-            "title": str(slide.get("title", f"Slide {i + 1}")),
-            "body": str(slide.get("body", topic)),
-            "bg_color": colors["bg"],
-            "text_color": colors["text"],
-            "accent_color": colors["accent"],
-        })
+        result.append(
+            {
+                "title": str(slide.get("title", f"Slide {i + 1}")),
+                "body": str(slide.get("body", topic)),
+                "bg_color": colors["bg"],
+                "text_color": colors["text"],
+                "accent_color": colors["accent"],
+            }
+        )
 
     return result
 
@@ -200,7 +205,10 @@ def _template_slides(
 
     middle_count = max(0, count - 2)
     middles = [
-        {"title": f"Punto {i + 1}" if language == "es" else f"Point {i + 1}", "body": topic}
+        {
+            "title": f"Punto {i + 1}" if language == "es" else f"Point {i + 1}",
+            "body": topic,
+        }
         for i in range(middle_count)
     ]
     slides = [intro] + middles + [outro]
@@ -210,6 +218,7 @@ def _template_slides(
 # ---------------------------------------------------------------------------
 # Payload builder
 # ---------------------------------------------------------------------------
+
 
 def build_json2video_payload(
     slides: List[Dict[str, str]],
@@ -229,7 +238,7 @@ def build_json2video_payload(
             {
                 "type": "html",
                 "html": (
-                    f"<div style=\""
+                    f'<div style="'
                     f"width:1920px;height:1080px;"
                     f"background:{slide['bg_color']};"
                     f"display:flex;flex-direction:column;"
@@ -237,15 +246,15 @@ def build_json2video_payload(
                     f"padding:80px;box-sizing:border-box;"
                     f"font-family:'{_DEFAULT_FONT}',serif;"
                     f"border-top:8px solid {_ACCENT};"
-                    f"\">"
-                    f"<h1 style=\""
+                    f'">'
+                    f'<h1 style="'
                     f"color:{slide['text_color']};"
                     f"font-size:72px;font-weight:700;"
                     f"margin:0 0 24px 0;text-align:center;"
                     f"line-height:1.2;"
                     f"\">{slide['title']}</h1>"
                     f"<div style=\"width:80px;height:4px;background:{slide['accent_color']};margin:0 0 28px 0;\"></div>"
-                    f"<p style=\""
+                    f'<p style="'
                     f"color:{slide['text_color']};"
                     f"font-size:38px;font-weight:400;"
                     f"margin:0;text-align:center;"
@@ -264,13 +273,15 @@ def build_json2video_payload(
 
         if voice_enabled:
             voice_text = f"{slide['title']}. {slide['body']}"
-            elements.append({
-                "type": "voice",
-                "voice": voice_id,
-                "text": voice_text,
-                "provider": "microsoft",
-                "duration": 4,
-            })
+            elements.append(
+                {
+                    "type": "voice",
+                    "voice": voice_id,
+                    "text": voice_text,
+                    "provider": "microsoft",
+                    "duration": 4,
+                }
+            )
 
         scene: Dict[str, Any] = {
             "comment": f"Slide {i + 1}: {slide['title'][:30]}",
@@ -290,6 +301,7 @@ def build_json2video_payload(
 # ---------------------------------------------------------------------------
 # API submission & polling
 # ---------------------------------------------------------------------------
+
 
 async def submit_and_poll(
     payload: Dict[str, Any],
@@ -377,6 +389,7 @@ async def submit_and_poll(
 # Mock preview (no API key)
 # ---------------------------------------------------------------------------
 
+
 def _generate_mock_preview(
     request: Dict[str, Any],
     slides: List[Dict[str, str]],
@@ -388,25 +401,35 @@ def _generate_mock_preview(
     lang = request["language"]
 
     header = (
-        f"📋 <b>Video Preview</b> — {slide_count} slides sobre \"{topic}\"\n"
-        f"Estilo: {style} | Resolución: 1920×1080 | Voz: {'Sí' if request['voice_enabled'] else 'No'}\n\n"
-    ) if lang == "es" else (
-        f"📋 <b>Video Preview</b> — {slide_count} slides about \"{topic}\"\n"
-        f"Style: {style} | Resolution: 1920×1080 | Voice: {'Yes' if request['voice_enabled'] else 'No'}\n\n"
+        (
+            f'📋 <b>Video Preview</b> — {slide_count} slides sobre "{topic}"\n'
+            f"Estilo: {style} | Resolución: 1920×1080 | Voz: {'Sí' if request['voice_enabled'] else 'No'}\n\n"
+        )
+        if lang == "es"
+        else (
+            f'📋 <b>Video Preview</b> — {slide_count} slides about "{topic}"\n'
+            f"Style: {style} | Resolution: 1920×1080 | Voice: {'Yes' if request['voice_enabled'] else 'No'}\n\n"
+        )
     )
 
     slide_lines = []
     for i, slide in enumerate(slides, 1):
-        slide_lines.append(f"<b>Slide {i}:</b> {slide['title']}\n  <i>{slide['body']}</i>")
+        slide_lines.append(
+            f"<b>Slide {i}:</b> {slide['title']}\n  <i>{slide['body']}</i>"
+        )
 
     footer = (
-        "\n\n💡 Para renderizar el video real, configura:\n"
-        "<code>JSON2VIDEO_API_KEY=tu_key</code>\n"
-        "Free tier: json2video.com (600 créditos gratis)"
-    ) if lang == "es" else (
-        "\n\n💡 To render the actual video, set:\n"
-        "<code>JSON2VIDEO_API_KEY=your_key</code>\n"
-        "Free tier: json2video.com (600 free credits)"
+        (
+            "\n\n💡 Para renderizar el video real, configura:\n"
+            "<code>JSON2VIDEO_API_KEY=tu_key</code>\n"
+            "Free tier: json2video.com (600 créditos gratis)"
+        )
+        if lang == "es"
+        else (
+            "\n\n💡 To render the actual video, set:\n"
+            "<code>JSON2VIDEO_API_KEY=your_key</code>\n"
+            "Free tier: json2video.com (600 free credits)"
+        )
     )
 
     return header + "\n".join(slide_lines) + footer
@@ -415,6 +438,7 @@ def _generate_mock_preview(
 # ---------------------------------------------------------------------------
 # Main pipeline entry point
 # ---------------------------------------------------------------------------
+
 
 async def run_video_pipeline(
     prompt: str,
@@ -433,7 +457,9 @@ async def run_video_pipeline(
 
     if notify_fn:
         try:
-            await notify_fn(f"📝 Generando script: {slides_count} slides sobre \"{topic}\"...")
+            await notify_fn(
+                f'📝 Generando script: {slides_count} slides sobre "{topic}"...'
+            )
         except Exception:
             pass
 

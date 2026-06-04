@@ -44,6 +44,7 @@ def _append_mesh_log(entry: str) -> None:
 
 # ── POST /api/agent-query ─────────────────────────────────────────────────────
 
+
 @router.post("/api/agent-query")
 async def agent_query(request: Request) -> Dict[str, Any]:
     """Hermes delegates a task to AURA. AURA runs it through brain router and returns result."""
@@ -68,7 +69,11 @@ async def agent_query(request: Request) -> Dict[str, Any]:
     brain_used = "unknown"
     result = ""
     try:
-        brain_router = request.app.state.brain_router if hasattr(request.app.state, "brain_router") else None
+        brain_router = (
+            request.app.state.brain_router
+            if hasattr(request.app.state, "brain_router")
+            else None
+        )
 
         if brain_router:
             # Map prefer_brain hint to actual brain
@@ -100,15 +105,21 @@ async def agent_query(request: Request) -> Dict[str, Any]:
         else:
             # Fallback: use claude CLI directly
             import asyncio
+
             proc = await asyncio.create_subprocess_exec(
-                "claude", "-p",
+                "claude",
+                "-p",
                 f"[Tarea delegada por Hermes]\n\n{task}",
-                "--model", "claude-haiku-4-5-20251001",
-                "--output-format", "text",
+                "--model",
+                "claude-haiku-4-5-20251001",
+                "--output-format",
+                "text",
                 "--no-session-persistence",
                 "--dangerously-skip-permissions",
-                "--setting-sources", "",
-                "--max-turns", "10",
+                "--setting-sources",
+                "",
+                "--max-turns",
+                "10",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
@@ -151,6 +162,7 @@ async def agent_query(request: Request) -> Dict[str, Any]:
 
 # ── GET /api/agent-status ─────────────────────────────────────────────────────
 
+
 @router.get("/api/agent-status")
 async def agent_status(request: Request) -> Dict[str, Any]:
     """Return full AURA state for Hermes context awareness."""
@@ -158,7 +170,11 @@ async def agent_status(request: Request) -> Dict[str, Any]:
     # Brain router status
     brain_info: Dict[str, Any] = {}
     try:
-        brain_router = request.app.state.brain_router if hasattr(request.app.state, "brain_router") else None
+        brain_router = (
+            request.app.state.brain_router
+            if hasattr(request.app.state, "brain_router")
+            else None
+        )
         if brain_router:
             brain_info = {
                 "active": brain_router.active_brain_name,
@@ -177,13 +193,19 @@ async def agent_status(request: Request) -> Dict[str, Any]:
             social_info = {
                 "total_posts": len(posts),
                 "last_posts": [
-                    {"text": p.get("text", "")[:60], "status": p.get("status"), "ts": p.get("ts")}
+                    {
+                        "text": p.get("text", "")[:60],
+                        "status": p.get("status"),
+                        "ts": p.get("ts"),
+                    }
                     for p in list(reversed(posts))[:5]
                 ],
             }
         drafts_dir = Path.home() / ".aura" / "social_drafts"
         if drafts_dir.exists():
-            social_info["drafts_count"] = len(list(drafts_dir.glob("*.jpg")) + list(drafts_dir.glob("*.png")))
+            social_info["drafts_count"] = len(
+                list(drafts_dir.glob("*.jpg")) + list(drafts_dir.glob("*.png"))
+            )
     except Exception:
         pass
 
@@ -194,12 +216,18 @@ async def agent_status(request: Request) -> Dict[str, Any]:
             files = []
             for f in _MEMORY_DIR.glob("*.md"):
                 stat = f.stat()
-                files.append({
-                    "file": f.name,
-                    "size_kb": round(stat.st_size / 1024, 1),
-                    "modified": datetime.fromtimestamp(stat.st_mtime, UTC).strftime("%Y-%m-%d %H:%M"),
-                })
-            memory_info["files"] = sorted(files, key=lambda x: x["modified"], reverse=True)
+                files.append(
+                    {
+                        "file": f.name,
+                        "size_kb": round(stat.st_size / 1024, 1),
+                        "modified": datetime.fromtimestamp(stat.st_mtime, UTC).strftime(
+                            "%Y-%m-%d %H:%M"
+                        ),
+                    }
+                )
+            memory_info["files"] = sorted(
+                files, key=lambda x: x["modified"], reverse=True
+            )
     except Exception:
         pass
 
@@ -221,9 +249,12 @@ async def agent_status(request: Request) -> Dict[str, Any]:
     termora_url = ""
     try:
         import subprocess
+
         info = subprocess.run(
             ["curl", "-sf", "http://localhost:4030/api/info"],
-            capture_output=True, text=True, timeout=2,
+            capture_output=True,
+            text=True,
+            timeout=2,
         )
         if info.returncode == 0:
             d = json.loads(info.stdout)
@@ -240,12 +271,14 @@ async def agent_status(request: Request) -> Dict[str, Any]:
                     plan = (p / "plan.md").exists()
                     aura_done = (p / "aura-progress.md").exists()
                     hermes_done = (p / "hermes-progress.md").exists()
-                    projects.append({
-                        "slug": p.name,
-                        "has_plan": plan,
-                        "aura_done": aura_done,
-                        "hermes_done": hermes_done,
-                    })
+                    projects.append(
+                        {
+                            "slug": p.name,
+                            "has_plan": plan,
+                            "aura_done": aura_done,
+                            "hermes_done": hermes_done,
+                        }
+                    )
     except Exception:
         pass
 
@@ -264,6 +297,7 @@ async def agent_status(request: Request) -> Dict[str, Any]:
 
 
 # ── POST /api/project/update ──────────────────────────────────────────────────
+
 
 @router.post("/api/project/update")
 async def project_update(request: Request) -> Dict[str, Any]:
@@ -284,9 +318,7 @@ async def project_update(request: Request) -> Dict[str, Any]:
         proj_dir = _PROJECTS_DIR / project_id
         proj_dir.mkdir(parents=True, exist_ok=True)
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
-        (proj_dir / filename).write_text(
-            f"# AURA Progress — {ts}\n\n{content}\n"
-        )
+        (proj_dir / filename).write_text(f"# AURA Progress — {ts}\n\n{content}\n")
         logger.info("project_update_ok", project=project_id, file=filename)
         return {"ok": True, "project_id": project_id, "file": filename}
     except Exception as e:
@@ -294,6 +326,7 @@ async def project_update(request: Request) -> Dict[str, Any]:
 
 
 # ── POST /api/mesh/notify ─────────────────────────────────────────────────────
+
 
 @router.post("/api/mesh/notify")
 async def mesh_notify(request: Request) -> Dict[str, Any]:
@@ -318,13 +351,20 @@ async def mesh_notify(request: Request) -> Dict[str, Any]:
 
     try:
         from src.infra.mesh_broadcaster import broadcast_alert, _queue_to_file
+
         await broadcast_alert(
             from_agent=from_agent,
             message=message,
-            hint="Puedes responder aquí o en el bot de Hermes" if from_agent.lower() == "hermes" else "",
+            hint=(
+                "Puedes responder aquí o en el bot de Hermes"
+                if from_agent.lower() == "hermes"
+                else ""
+            ),
         )
         ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
-        _append_mesh_log(f"[{ts}] {from_agent.upper()}→TELEGRAM{'⚠️' if important else ''}: {message[:80]}")
+        _append_mesh_log(
+            f"[{ts}] {from_agent.upper()}→TELEGRAM{'⚠️' if important else ''}: {message[:80]}"
+        )
         logger.info("mesh_notify_sent", from_agent=from_agent, important=important)
         return {"ok": True, "method": "telegram"}
     except Exception as e:
@@ -335,7 +375,9 @@ async def mesh_notify(request: Request) -> Dict[str, Any]:
 # ── GET /api/hermes ───────────────────────────────────────────────────────────
 
 _OPENCLAW_BIN = "/opt/homebrew/bin/openclaw"
-_OPENCLAW_SESSIONS = Path.home() / ".openclaw" / "agents" / "main" / "sessions" / "sessions.json"
+_OPENCLAW_SESSIONS = (
+    Path.home() / ".openclaw" / "agents" / "main" / "sessions" / "sessions.json"
+)
 _OPENCLAW_WORKSPACE = Path.home() / ".openclaw" / "workspace"
 
 
@@ -361,8 +403,15 @@ async def hermes_status() -> Dict[str, Any]:
     health_raw = await _run([_OPENCLAW_BIN, "health"])
     # online = gateway responded at all (non-empty, no timeout/failed keywords)
     _health_lower = health_raw.lower() if health_raw else ""
-    online = bool(health_raw and "timeout" not in _health_lower and "failed to start" not in _health_lower)
-    telegram_ok = bool(health_raw and ("telegram: ok" in _health_lower or "telegram: configured" in _health_lower))
+    online = bool(
+        health_raw
+        and "timeout" not in _health_lower
+        and "failed to start" not in _health_lower
+    )
+    telegram_ok = bool(
+        health_raw
+        and ("telegram: ok" in _health_lower or "telegram: configured" in _health_lower)
+    )
 
     # active_model: health output rarely has a Model line, read from config directly
     active_model = "?"
@@ -376,12 +425,15 @@ async def hermes_status() -> Dict[str, Any]:
             _cfg_path = Path.home() / ".openclaw" / "openclaw.json"
             if _cfg_path.exists():
                 _cfg = json.loads(_cfg_path.read_text())
-                active_model = _cfg.get("agents", {}).get("defaults", {}).get("model", "?") or "?"
+                active_model = (
+                    _cfg.get("agents", {}).get("defaults", {}).get("model", "?") or "?"
+                )
         except Exception:
             pass
 
     # ── Skills ─────────────────────────────────────────────────────────────
     import re as _re
+
     skills_raw = await _run([_OPENCLAW_BIN, "skills", "list"], timeout=6)
     skills_ready: List[str] = []
     skills_missing: List[str] = []
@@ -392,10 +444,15 @@ async def hermes_status() -> Dict[str, Any]:
         if len(cols) < 4:
             continue
         status_col = cols[1] if len(cols) > 1 else ""
-        name_col   = cols[2] if len(cols) > 2 else ""
+        name_col = cols[2] if len(cols) > 2 else ""
         # Strip emoji (non-ASCII) and whitespace
         name_clean = _re.sub(r"[^\x00-\x7F\s\-_]", "", name_col).strip()
-        if not name_clean or name_clean.lower() in ("skill", "status", "source", "description"):
+        if not name_clean or name_clean.lower() in (
+            "skill",
+            "status",
+            "source",
+            "description",
+        ):
             continue
         if "✓" in status_col:
             skills_ready.append(name_clean)
@@ -408,14 +465,24 @@ async def hermes_status() -> Dict[str, Any]:
         if _OPENCLAW_SESSIONS.exists():
             raw = json.loads(_OPENCLAW_SESSIONS.read_text())
             # sessions.json is a dict or list depending on version
-            items = raw if isinstance(raw, list) else list(raw.values()) if isinstance(raw, dict) else []
+            items = (
+                raw
+                if isinstance(raw, list)
+                else list(raw.values()) if isinstance(raw, dict) else []
+            )
             for s in items[:10]:
                 if isinstance(s, dict):
-                    sessions.append({
-                        "id": s.get("id") or s.get("sessionId", "?")[:16],
-                        "ts": s.get("updatedAt") or s.get("createdAt") or s.get("ts"),
-                        "preview": (s.get("lastMessage") or s.get("summary") or "")[:80],
-                    })
+                    sessions.append(
+                        {
+                            "id": s.get("id") or s.get("sessionId", "?")[:16],
+                            "ts": s.get("updatedAt")
+                            or s.get("createdAt")
+                            or s.get("ts"),
+                            "preview": (s.get("lastMessage") or s.get("summary") or "")[
+                                :80
+                            ],
+                        }
+                    )
     except Exception:
         pass
 
@@ -432,22 +499,29 @@ async def hermes_status() -> Dict[str, Any]:
     projects: List[Dict[str, Any]] = []
     try:
         if _PROJECTS_DIR.exists():
-            for p in sorted(_PROJECTS_DIR.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True)[:6]:
+            for p in sorted(
+                _PROJECTS_DIR.iterdir(), key=lambda x: x.stat().st_mtime, reverse=True
+            )[:6]:
                 if p.is_dir():
-                    projects.append({
-                        "slug": p.name,
-                        "has_plan": (p / "plan.md").exists(),
-                        "hermes_done": (p / "hermes-progress.md").exists(),
-                        "aura_done": (p / "aura-progress.md").exists(),
-                    })
+                    projects.append(
+                        {
+                            "slug": p.name,
+                            "has_plan": (p / "plan.md").exists(),
+                            "hermes_done": (p / "hermes-progress.md").exists(),
+                            "aura_done": (p / "aura-progress.md").exists(),
+                        }
+                    )
     except Exception:
         pass
 
     # ── Workspace files ────────────────────────────────────────────────────
     workspace_files: List[str] = []
     try:
-        workspace_files = [f.name for f in _OPENCLAW_WORKSPACE.iterdir()
-                           if f.is_file() and f.suffix in (".md", ".json", ".txt")]
+        workspace_files = [
+            f.name
+            for f in _OPENCLAW_WORKSPACE.iterdir()
+            if f.is_file() and f.suffix in (".md", ".json", ".txt")
+        ]
     except Exception:
         pass
 

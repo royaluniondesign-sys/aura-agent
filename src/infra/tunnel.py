@@ -5,6 +5,7 @@ captura la URL de trycloudflare.com y la escribe en ~/.aura/dashboard_url.txt.
 
 Este módulo lee ese archivo periódicamente y expone get_dashboard_url().
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -74,8 +75,10 @@ async def start_dashboard_tunnel(port: int = 8080) -> asyncio.Task:  # type: ign
     if url:
         _store_url(url)
     else:
-        logger.warning("tunnel_url_not_found_yet",
-                       hint="cloudflared wrapper should write to ~/.aura/dashboard_url.txt")
+        logger.warning(
+            "tunnel_url_not_found_yet",
+            hint="cloudflared wrapper should write to ~/.aura/dashboard_url.txt",
+        )
 
     task: asyncio.Task = asyncio.create_task(  # type: ignore[type-arg]
         _poll_file(), name="dashboard-tunnel"

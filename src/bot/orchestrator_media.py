@@ -107,11 +107,16 @@ class AgenticMediaMixin:
         router = context.bot_data.get("brain_router")
         if router:
             await self._handle_alt_brain(
-                update, context, router, prompt, user_id,
+                update,
+                context,
+                router,
+                prompt,
+                user_id,
                 brain_name=router.active_brain_name,
             )
         else:
             from src.brains.ollama_brain import OllamaBrain
+
             brain = OllamaBrain()
             response = await brain.execute(prompt=prompt)
             try:
@@ -158,12 +163,16 @@ class AgenticMediaMixin:
                 ext = ".gif"
 
             # Save to temp file so Claude can Read it visually
-            with tempfile.NamedTemporaryFile(suffix=ext, delete=False, dir="/tmp") as tf:
+            with tempfile.NamedTemporaryFile(
+                suffix=ext, delete=False, dir="/tmp"
+            ) as tf:
                 tf.write(image_bytes)
                 tmp_path = tf.name
 
             # Build vision prompt
-            user_request = caption.strip() if caption else "Describe qué ves en esta imagen."
+            user_request = (
+                caption.strip() if caption else "Describe qué ves en esta imagen."
+            )
             prompt = (
                 f"Lee la imagen en {tmp_path} y responde en el mismo idioma que esta instrucción.\n\n"
                 f"Instrucción del usuario: {user_request}\n\n"
@@ -242,7 +251,9 @@ class AgenticMediaMixin:
             from .handlers.message import _format_error_message
 
             try:
-                await progress_msg.edit_text(_format_error_message(e), parse_mode="HTML")
+                await progress_msg.edit_text(
+                    _format_error_message(e), parse_mode="HTML"
+                )
             except Exception:
                 pass
             logger.error("photo_processing_failed", error=str(e), user_id=user_id)
@@ -274,9 +285,7 @@ class AgenticMediaMixin:
 
             # Primary: Gemini multimodal transcription
             try:
-                gemini_api_key = os.environ.get(
-                    "GEMINI_API_KEY", ""
-                )
+                gemini_api_key = os.environ.get("GEMINI_API_KEY", "")
                 audio_b64 = base64.b64encode(voice_bytes).decode("ascii")
                 payload = {
                     "contents": [
@@ -311,9 +320,9 @@ class AgenticMediaMixin:
                 )
                 with urllib.request.urlopen(req, timeout=30) as resp:
                     result = json.loads(resp.read().decode("utf-8"))
-                transcription = (
-                    result["candidates"][0]["content"]["parts"][0]["text"].strip()
-                )
+                transcription = result["candidates"][0]["content"]["parts"][0][
+                    "text"
+                ].strip()
                 logger.info("gemini_stt_ok", length=len(transcription))
             except Exception as gemini_err:
                 logger.warning("gemini_stt_failed", error=str(gemini_err))
@@ -328,7 +337,9 @@ class AgenticMediaMixin:
                         )
                         transcription = processed.transcription
                     except Exception as vh_err:
-                        logger.warning("voice_handler_fallback_failed", error=str(vh_err))
+                        logger.warning(
+                            "voice_handler_fallback_failed", error=str(vh_err)
+                        )
 
                 if not transcription:
                     await progress_msg.edit_text(
@@ -363,9 +374,7 @@ class AgenticMediaMixin:
             from .handlers.message import _format_error_message
 
             await progress_msg.edit_text(_format_error_message(e), parse_mode="HTML")
-            logger.error(
-                "voice_processing_failed", error=str(e), user_id=user_id
-            )
+            logger.error("voice_processing_failed", error=str(e), user_id=user_id)
 
     async def _handle_agentic_media_message(
         self: "MessageOrchestrator",
@@ -386,11 +395,16 @@ class AgenticMediaMixin:
             except Exception:
                 pass
             await self._handle_alt_brain(
-                update, context, router, prompt, user_id,
+                update,
+                context,
+                router,
+                prompt,
+                user_id,
                 brain_name=router.active_brain_name,
             )
         else:
             from src.brains.ollama_brain import OllamaBrain
+
             brain = OllamaBrain()
             response = await brain.execute(prompt=prompt)
             try:

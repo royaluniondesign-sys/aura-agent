@@ -2,6 +2,7 @@
 
 Uses httpx (already installed) instead of aiohttp.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -91,9 +92,9 @@ def _iter_sub_batches(texts: Sequence[str]) -> Sequence[tuple[int, int]]:
 
     for idx, text in enumerate(texts):
         text_chars = len(text)
-        would_overflow = (
-            idx > start
-            and (idx - start >= _MAX_BATCH_TEXTS or batch_chars + text_chars > _MAX_BATCH_CHARS)
+        would_overflow = idx > start and (
+            idx - start >= _MAX_BATCH_TEXTS
+            or batch_chars + text_chars > _MAX_BATCH_CHARS
         )
         if would_overflow:
             ranges.append((start, idx))
@@ -142,7 +143,9 @@ async def _post_embeddings(
         return left + right
 
     if resp.status_code != 200:
-        logger.warning("ollama_embed_error", status=resp.status_code, body=resp.text[:200])
+        logger.warning(
+            "ollama_embed_error", status=resp.status_code, body=resp.text[:200]
+        )
         return None
 
     embeddings = resp.json().get("embeddings", [])
@@ -200,7 +203,9 @@ async def embed_batch(texts: List[str]) -> List[Optional[np.ndarray]]:
                         results[original_idx] = await _embed_single(client, text)
                     continue
 
-                for original_idx, text, vec in zip(batch_indices, batch_texts, batch_embeddings):
+                for original_idx, text, vec in zip(
+                    batch_indices, batch_texts, batch_embeddings
+                ):
                     if vec is None:
                         results[original_idx] = None
                         continue

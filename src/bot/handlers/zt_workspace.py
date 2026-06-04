@@ -20,7 +20,9 @@ class ZeroTokenWorkspaceMixin:
         try:
             result = subprocess.run(
                 ["npx", "google-workspace-mcp", "status"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(Path.home()),
             )
             if "NOT found" in result.stdout or "No accounts" in result.stdout:
@@ -56,7 +58,9 @@ class ZeroTokenWorkspaceMixin:
         try:
             result = subprocess.run(
                 ["npx", "google-workspace-mcp", "status"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(Path.home()),
             )
             if "NOT found" in result.stdout or "No accounts" in result.stdout:

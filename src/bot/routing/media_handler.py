@@ -43,6 +43,7 @@ class MediaHandlerMixin:
             brain = router.get_brain("image")
             if not brain:
                 from src.brains.image_brain import ImageBrain
+
                 brain = ImageBrain()
 
             response = await brain.execute(prompt=message_text)
@@ -52,7 +53,7 @@ class MediaHandlerMixin:
                 return
 
             if response.content.startswith("__IMAGE_B64__:"):
-                b64_data = response.content[len("__IMAGE_B64__:"):]
+                b64_data = response.content[len("__IMAGE_B64__:") :]
                 image_bytes = base64.b64decode(b64_data)
                 elapsed_s = response.duration_ms // 1000
 
@@ -100,7 +101,9 @@ class MediaHandlerMixin:
                 pass
 
         try:
-            _structured_kw = r"(?i)\b(slides?|diapositivas?|presentaci[oó]n|explainer|tutorial)\b"
+            _structured_kw = (
+                r"(?i)\b(slides?|diapositivas?|presentaci[oó]n|explainer|tutorial)\b"
+            )
             _cinematic_kw = r"(?i)\b(reel|clip|b-?roll|animaci[oó]n|animation|cinematic|cinemático)\b"
 
             is_structured = bool(_re_v.search(_structured_kw, message_text))
@@ -111,6 +114,7 @@ class MediaHandlerMixin:
 
             if use_slides:
                 from src.workflows.video_compose import run_video_pipeline
+
                 result = await run_video_pipeline(
                     prompt=message_text,
                     notify_fn=_notify,
@@ -122,6 +126,7 @@ class MediaHandlerMixin:
                     await _notify("📥 Descargando video...")
                     try:
                         import aiohttp
+
                         async with aiohttp.ClientSession() as session:
                             async with session.get(
                                 result, timeout=aiohttp.ClientTimeout(total=60)
@@ -149,6 +154,7 @@ class MediaHandlerMixin:
                 brain = router.get_brain("video") if router else None
                 if not brain:
                     from src.brains.video_brain import VideoBrain
+
                     brain = VideoBrain()
 
                 response = await brain.execute(prompt=message_text)
@@ -162,12 +168,13 @@ class MediaHandlerMixin:
 
                 video_url: str = response.content
                 if video_url.startswith("__VIDEO_URL__:"):
-                    video_url = video_url[len("__VIDEO_URL__:"):]
+                    video_url = video_url[len("__VIDEO_URL__:") :]
 
                 if video_url.startswith("http"):
                     await _notify("📥 Descargando video...")
                     try:
                         import aiohttp
+
                         async with aiohttp.ClientSession() as session:
                             async with session.get(
                                 video_url, timeout=aiohttp.ClientTimeout(total=60)

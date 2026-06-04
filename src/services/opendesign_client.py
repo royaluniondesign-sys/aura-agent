@@ -12,6 +12,7 @@ Usage:
     new_proj = await client.create_project("carousel", "social-carousel")
     status = await client.get_project_status(project_id)
 """
+
 from __future__ import annotations
 
 import asyncio

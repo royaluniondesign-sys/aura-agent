@@ -56,7 +56,9 @@ class ZeroTokenSocialMixin:
             await self._route_social_or_schedule(update, context, "facebook", rest)
         elif platform_hint in ("social", "ambas", "both", "all"):
             rest = parts[1] if len(parts) > 1 else raw_prompt
-            await self._handle_social_direct(update, context, rest, ["instagram", "facebook"])
+            await self._handle_social_direct(
+                update, context, rest, ["instagram", "facebook"]
+            )
         elif platform_hint in ("instagram", "ig"):
             rest = parts[1] if len(parts) > 1 else raw_prompt
             await self._route_social_or_schedule(update, context, "instagram", rest)
@@ -73,14 +75,24 @@ class ZeroTokenSocialMixin:
     ) -> None:
         """Detect 'schedule' keyword and route accordingly."""
         parts = rest.split(maxsplit=1)
-        if parts and parts[0].lower() in ("schedule", "programar", "programa", "alas", "en"):
+        if parts and parts[0].lower() in (
+            "schedule",
+            "programar",
+            "programa",
+            "alas",
+            "en",
+        ):
             # /post instagram schedule <time_and_topic>
             # Separate time tokens from topic using "sobre" as delimiter
-            payload = rest if parts[0].lower() not in ("schedule", "programar", "programa") else (parts[1] if len(parts) > 1 else "")
+            payload = (
+                rest
+                if parts[0].lower() not in ("schedule", "programar", "programa")
+                else (parts[1] if len(parts) > 1 else "")
+            )
             if "sobre" in payload.lower():
                 idx = payload.lower().index("sobre")
                 time_str = payload[:idx].strip()
-                topic = payload[idx + 5:].strip()
+                topic = payload[idx + 5 :].strip()
             else:
                 # fallback: first 3 words = time, rest = topic
                 words = payload.split(maxsplit=3)
@@ -110,6 +122,7 @@ class ZeroTokenSocialMixin:
                 parse_mode="HTML",
             )
             from src.workflows.blog_publisher import publish_blog_from_topic
+
             result = await publish_blog_from_topic(topic)
 
             if result.get("ok"):
@@ -152,16 +165,21 @@ class ZeroTokenSocialMixin:
         )
         try:
             from src.workflows.social_publisher import publish_social
+
             result = await publish_social(description=topic, platforms=platforms)
 
-            lines = [f"{'✅' if result.get('ok') else '⚠️'} <b>Resultado {platforms_str}</b>\n"]
+            lines = [
+                f"{'✅' if result.get('ok') else '⚠️'} <b>Resultado {platforms_str}</b>\n"
+            ]
 
             if result.get("caption"):
                 lines.append(f"📝 Caption: <i>{result['caption'][:120]}...</i>\n")
 
             for platform, pr in result.get("platforms", {}).items():
                 if pr.get("ok"):
-                    lines.append(f"✅ <b>{platform.capitalize()}</b>: <a href=\"{pr.get('url','#')}\">Ver post</a>")
+                    lines.append(
+                        f"✅ <b>{platform.capitalize()}</b>: <a href=\"{pr.get('url','#')}\">Ver post</a>"
+                    )
                 else:
                     err = pr.get("error", "error")
                     if pr.get("action_required") == "M3":
@@ -174,9 +192,13 @@ class ZeroTokenSocialMixin:
                         lines.append(f"❌ <b>{platform.capitalize()}</b>: {err[:80]}")
 
             if result.get("draft_saved"):
-                lines.append(f"\n💾 Borrador guardado: <code>{result['draft_saved']}</code>")
+                lines.append(
+                    f"\n💾 Borrador guardado: <code>{result['draft_saved']}</code>"
+                )
 
-            await progress.edit_text("\n".join(lines), parse_mode="HTML", disable_web_page_preview=True)
+            await progress.edit_text(
+                "\n".join(lines), parse_mode="HTML", disable_web_page_preview=True
+            )
 
         except Exception as e:
             logger.error("social_direct_handler_error", error=str(e))
@@ -238,7 +260,9 @@ class ZeroTokenSocialMixin:
                 return
             # Inject "slides" keyword so video_compose picks the right route
             synthetic_prompt = f"video de slides {rest}"
-            await self._handle_video_gen(update, context, router, synthetic_prompt, update.effective_user.id)
+            await self._handle_video_gen(
+                update, context, router, synthetic_prompt, update.effective_user.id
+            )
 
         elif subcommand == "cinematic":
             rest = args[2] if len(args) > 2 else ""
@@ -249,12 +273,16 @@ class ZeroTokenSocialMixin:
                     parse_mode="HTML",
                 )
                 return
-            await self._handle_video_gen(update, context, router, rest, update.effective_user.id)
+            await self._handle_video_gen(
+                update, context, router, rest, update.effective_user.id
+            )
 
         else:
             # Treat the whole thing as a cinematic prompt
             raw = " ".join(args[1:]).strip()
-            await self._handle_video_gen(update, context, router, raw, update.effective_user.id)
+            await self._handle_video_gen(
+                update, context, router, raw, update.effective_user.id
+            )
 
     # ── /imagen ────────────────────────────────────────────────────────────────
 
@@ -291,11 +319,14 @@ class ZeroTokenSocialMixin:
             img_bytes = await generate_image_bytes(prompt)
 
             if not img_bytes:
-                await status_msg.edit_text("❌ No se pudo generar la imagen. Prueba con otro prompt.")
+                await status_msg.edit_text(
+                    "❌ No se pudo generar la imagen. Prueba con otro prompt."
+                )
                 return
 
             # Save to drafts
             import time, re as _re, hashlib
+
             slug = _re.sub(r"[^a-z0-9]+", "_", prompt.lower())[:30].strip("_")
             ts = time.strftime("%Y%m%d_%H%M%S")
             filename = f"instagram_11_imagen_{ts}_{slug}.jpg"
@@ -311,24 +342,39 @@ class ZeroTokenSocialMixin:
 
             caption_text = f"<b>FLUX.1-dev</b> · {len(img_bytes)//1024}KB\n<code>{prompt[:100]}</code>"
             from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-            keyboard = InlineKeyboardMarkup([[
-                InlineKeyboardButton("📤 Publicar Instagram", callback_data=f"img_pub_ig:{filename}"),
-                InlineKeyboardButton("🔄 Regenerar", callback_data=f"img_regen:{prompt[:80]}"),
-            ]])
+
+            keyboard = InlineKeyboardMarkup(
+                [
+                    [
+                        InlineKeyboardButton(
+                            "📤 Publicar Instagram",
+                            callback_data=f"img_pub_ig:{filename}",
+                        ),
+                        InlineKeyboardButton(
+                            "🔄 Regenerar", callback_data=f"img_regen:{prompt[:80]}"
+                        ),
+                    ]
+                ]
+            )
 
             import io
+
             await update.message.reply_photo(
                 photo=io.BytesIO(img_bytes),
                 caption=caption_text,
                 parse_mode="HTML",
                 reply_markup=keyboard,
             )
-            logger.info("imagen_cmd_ok", filename=filename, size_kb=len(img_bytes)//1024)
+            logger.info(
+                "imagen_cmd_ok", filename=filename, size_kb=len(img_bytes) // 1024
+            )
 
         except Exception as e:
             logger.error("imagen_cmd_error", error=str(e))
             try:
-                await status_msg.edit_text(f"❌ Error: {str(e)[:200]}", parse_mode="HTML")
+                await status_msg.edit_text(
+                    f"❌ Error: {str(e)[:200]}", parse_mode="HTML"
+                )
             except Exception:
                 pass
 
@@ -355,11 +401,18 @@ class ZeroTokenSocialMixin:
 
         # List recent drafts
         if not _os.path.isdir(drafts_dir):
-            await update.message.reply_text("Sin imágenes aún — genera una con <code>/imagen</code>", parse_mode="HTML")
+            await update.message.reply_text(
+                "Sin imágenes aún — genera una con <code>/imagen</code>",
+                parse_mode="HTML",
+            )
             return
 
         images = sorted(
-            [f for f in _os.listdir(drafts_dir) if f.lower().endswith((".jpg", ".jpeg", ".png"))],
+            [
+                f
+                for f in _os.listdir(drafts_dir)
+                if f.lower().endswith((".jpg", ".jpeg", ".png"))
+            ],
             key=lambda f: _os.path.getmtime(_os.path.join(drafts_dir, f)),
             reverse=True,
         )[:10]
@@ -377,20 +430,27 @@ class ZeroTokenSocialMixin:
             size_kb = _os.path.getsize(_os.path.join(drafts_dir, fname)) // 1024
             ts_raw = _os.path.getmtime(_os.path.join(drafts_dir, fname))
             import datetime
+
             ts_str = datetime.datetime.fromtimestamp(ts_raw).strftime("%d/%m %H:%M")
-            lines.append(f"  <code>{i:2d}.</code> {fname[:40]} <i>({size_kb}KB · {ts_str})</i>")
+            lines.append(
+                f"  <code>{i:2d}.</code> {fname[:40]} <i>({size_kb}KB · {ts_str})</i>"
+            )
 
         lines.append(f"\n📤 Para publicar:\n<code>/galeria pub &lt;nombre&gt;</code>")
 
         # Get dashboard URL
         try:
             import subprocess
+
             info = subprocess.run(
                 ["curl", "-sf", "http://localhost:4030/api/info"],
-                capture_output=True, text=True, timeout=2,
+                capture_output=True,
+                text=True,
+                timeout=2,
             )
             if info.returncode == 0:
                 import json as _json
+
                 data = _json.loads(info.stdout)
                 url = data.get("authUrl") or data.get("tunnelUrl", "")
                 if url:
@@ -410,29 +470,38 @@ class ZeroTokenSocialMixin:
         """Publish a draft image directly to Instagram."""
         path = _os.path.join(drafts_dir, filename)
         if not _os.path.isfile(path):
-            await update.message.reply_text(f"❌ Archivo no encontrado: <code>{filename}</code>", parse_mode="HTML")
+            await update.message.reply_text(
+                f"❌ Archivo no encontrado: <code>{filename}</code>", parse_mode="HTML"
+            )
             return
 
-        caption_text = (update.message.text or "").partition("\n")[2].strip() or filename
+        caption_text = (update.message.text or "").partition("\n")[
+            2
+        ].strip() or filename
 
         status = await update.message.reply_text(
             f"📤 <b>Publicando en Instagram...</b>\n{filename[:60]}", parse_mode="HTML"
         )
         try:
             from src.workflows.social_publisher import post_to_instagram
+
             with open(path, "rb") as f:
                 img_bytes = f.read()
             from src.workflows.social_publisher import upload_image_to_host
+
             public_url = await upload_image_to_host(img_bytes)
             if not public_url:
-                await status.edit_text("❌ No se pudo obtener URL pública para la imagen.")
+                await status.edit_text(
+                    "❌ No se pudo obtener URL pública para la imagen."
+                )
                 return
             result = await post_to_instagram(public_url, caption_text)
             if result.get("ok"):
                 await status.edit_text(
                     f"✅ <b>Publicado en Instagram</b>\n"
                     f"🔗 <a href=\"{result.get('url', '#')}\">Ver post</a>",
-                    parse_mode="HTML", disable_web_page_preview=True,
+                    parse_mode="HTML",
+                    disable_web_page_preview=True,
                 )
             else:
                 await status.edit_text(
@@ -496,7 +565,9 @@ class ZeroTokenSocialMixin:
                     when = f"en {hours}h {mins}m" if hours > 0 else f"en {mins}m"
                     platforms = ", ".join(p.get("platforms", ["instagram"]))
                     caption_preview = p.get("caption", p.get("description", ""))[:50]
-                    lines.append(f"  • {when} → {platforms}: <i>{caption_preview}...</i>")
+                    lines.append(
+                        f"  • {when} → {platforms}: <i>{caption_preview}...</i>"
+                    )
                 except Exception:
                     lines.append(f"  • {p.get('caption', '')[:50]}...")
         else:
@@ -519,27 +590,38 @@ class ZeroTokenSocialMixin:
 
         # Drafts count
         if drafts_dir.exists():
-            n_drafts = len(list(drafts_dir.glob("*.jpg")) + list(drafts_dir.glob("*.png")))
+            n_drafts = len(
+                list(drafts_dir.glob("*.jpg")) + list(drafts_dir.glob("*.png"))
+            )
             if n_drafts:
-                lines.append(f"\n🖼 <b>Borradores</b>: {n_drafts} imágenes (<code>/galeria</code>)")
+                lines.append(
+                    f"\n🖼 <b>Borradores</b>: {n_drafts} imágenes (<code>/galeria</code>)"
+                )
 
         # Account connectivity
         lines.append("\n🔗 <b>Cuentas</b>:")
         try:
             from src.workflows.social_publisher import get_social_status
+
             acc = await get_social_status()
             ig = acc.get("instagram", {})
             fb = acc.get("facebook", {})
             img = acc.get("image_gen", {})
             lines.append(
                 f"  {'✅' if ig.get('ready') else '❌'} Instagram"
-                + (f" (@{ig.get('account_info', '')})" if ig.get("ready") else " — no conectada")
+                + (
+                    f" (@{ig.get('account_info', '')})"
+                    if ig.get("ready")
+                    else " — no conectada"
+                )
             )
             lines.append(
                 f"  {'✅' if fb.get('ready') else '⚠️'} Facebook"
                 + ("" if fb.get("ready") else " — FACEBOOK_PAGE_ID no configurado")
             )
-            lines.append(f"  ✅ Imagen: {img.get('provider', 'FLUX.1')} ({img.get('cost', 'FREE')})")
+            lines.append(
+                f"  ✅ Imagen: {img.get('provider', 'FLUX.1')} ({img.get('cost', 'FREE')})"
+            )
         except Exception as e:
             lines.append(f"  ⚠️ No se pudo verificar cuentas: {str(e)[:60]}")
 
@@ -594,6 +676,7 @@ class ZeroTokenSocialMixin:
 
         # Parse slides count from "carrusel N" or "N slides"
         import re as _re
+
         m = _re.search(r"\b(\d)\s*slides?\b", brief, _re.IGNORECASE)
         if not m:
             m = _re.search(r"carrusel\s+(\d)", brief, _re.IGNORECASE)
@@ -601,7 +684,9 @@ class ZeroTokenSocialMixin:
             slides = max(1, min(5, int(m.group(1))))
 
         if not brief:
-            await update.message.reply_text("Falta el brief del diseño.", parse_mode="HTML")
+            await update.message.reply_text(
+                "Falta el brief del diseño.", parse_mode="HTML"
+            )
             return
 
         api_port = _os.environ.get("API_SERVER_PORT", "8080")
@@ -625,12 +710,15 @@ class ZeroTokenSocialMixin:
                 ) as resp:
                     data = await resp.json()
         except Exception as e:
-            await update.message.reply_text(f"❌ Error generando diseño: {e}", parse_mode="HTML")
+            await update.message.reply_text(
+                f"❌ Error generando diseño: {e}", parse_mode="HTML"
+            )
             return
 
         if not data.get("ok"):
             await update.message.reply_text(
-                f"❌ <b>Error:</b> {data.get('error', 'Sin respuesta')}", parse_mode="HTML"
+                f"❌ <b>Error:</b> {data.get('error', 'Sin respuesta')}",
+                parse_mode="HTML",
             )
             return
 
@@ -690,30 +778,30 @@ class ZeroTokenSocialMixin:
         now = _dt.now(_tz.utc)
 
         # en Xh / en X horas
-        m = _re.search(r'en\s+(\d+)\s*(?:h|hora[s]?)', text)
+        m = _re.search(r"en\s+(\d+)\s*(?:h|hora[s]?)", text)
         if m:
             return now + _td(hours=int(m.group(1)))
 
         # en Xm / en X minutos
-        m = _re.search(r'en\s+(\d+)\s*(?:m|min(?:uto[s]?)?)', text)
+        m = _re.search(r"en\s+(\d+)\s*(?:m|min(?:uto[s]?)?)", text)
         if m:
             return now + _td(minutes=int(m.group(1)))
 
         # extract HH:MM if present
-        hm = _re.search(r'(\d{1,2}):(\d{2})', text)
+        hm = _re.search(r"(\d{1,2}):(\d{2})", text)
         if hm:
             hour, minute = int(hm.group(1)), int(hm.group(2))
             base = now.replace(hour=0, minute=0, second=0, microsecond=0)
-            if 'mañana' in text or 'manana' in text:
+            if "mañana" in text or "manana" in text:
                 base += _td(days=1)
             candidate = base.replace(hour=hour, minute=minute)
             # if "today" time is already past, auto-advance to tomorrow
-            if candidate <= now and 'mañana' not in text and 'manana' not in text:
+            if candidate <= now and "mañana" not in text and "manana" not in text:
                 candidate += _td(days=1)
             return candidate
 
         # solo "mañana" sin hora → 10:00 next day
-        if 'mañana' in text or 'manana' in text:
+        if "mañana" in text or "manana" in text:
             return now.replace(hour=10, minute=0, second=0, microsecond=0) + _td(days=1)
 
         return None
@@ -755,13 +843,16 @@ class ZeroTokenSocialMixin:
             "status": "pending",
             "created_at": due.strftime("%Y-%m-%dT%H:%M:%SZ").replace(
                 due.strftime("%Y-%m-%dT%H:%M:%SZ"),
-                __import__("datetime").datetime.now(__import__("datetime").timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+                __import__("datetime")
+                .datetime.now(__import__("datetime").timezone.utc)
+                .strftime("%Y-%m-%dT%H:%M:%SZ"),
             ),
         }
         filename.write_text(_json.dumps(data, ensure_ascii=False, indent=2))
 
         # Human-readable "when"
         from datetime import datetime as _dt, timezone as _tz
+
         now = _dt.now(_tz.utc)
         diff = due - now
         hours = int(diff.total_seconds() // 3600)

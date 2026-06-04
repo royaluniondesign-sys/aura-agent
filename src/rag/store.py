@@ -1,4 +1,5 @@
 """SQLite vector store for AURA RAG embeddings."""
+
 from __future__ import annotations
 
 import json
@@ -61,6 +62,7 @@ class RAGStore:
     ) -> None:
         """Insert or replace a chunk with its embedding."""
         import hashlib
+
         content_hash = hashlib.sha256(content.encode()).hexdigest()[:32]
         embedding_blob = embedding.astype(np.float32).tobytes()
         metadata_json = json.dumps(metadata, ensure_ascii=False)
@@ -73,14 +75,25 @@ class RAGStore:
                     (id, source, source_type, content, embedding, metadata, content_hash, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
-                (id, source, source_type, content, embedding_blob, metadata_json, content_hash, updated_at),
+                (
+                    id,
+                    source,
+                    source_type,
+                    content,
+                    embedding_blob,
+                    metadata_json,
+                    content_hash,
+                    updated_at,
+                ),
             )
             await db.commit()
 
     async def delete_by_source(self, source: str) -> int:
         """Remove all chunks for a given source. Returns number of rows deleted."""
         async with aiosqlite.connect(self._db_path) as db:
-            cursor = await db.execute("DELETE FROM rag_chunks WHERE source = ?", (source,))
+            cursor = await db.execute(
+                "DELETE FROM rag_chunks WHERE source = ?", (source,)
+            )
             await db.commit()
             return cursor.rowcount
 
@@ -118,6 +131,8 @@ class RAGStore:
     async def distinct_sources(self) -> int:
         """Return number of distinct sources."""
         async with aiosqlite.connect(self._db_path) as db:
-            async with db.execute("SELECT COUNT(DISTINCT source) FROM rag_chunks") as cursor:
+            async with db.execute(
+                "SELECT COUNT(DISTINCT source) FROM rag_chunks"
+            ) as cursor:
                 row = await cursor.fetchone()
                 return row[0] if row else 0

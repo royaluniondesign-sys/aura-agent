@@ -2,6 +2,7 @@
 
 Detects failures in AURA's brain modules and applies targeted fixes.
 """
+
 import asyncio
 import logging
 import os
@@ -18,6 +19,7 @@ logger = structlog.get_logger()
 
 class HealthCheck(NamedTuple):
     """Result of a brain health check."""
+
     brain_name: str
     is_healthy: bool
     error_msg: str | None = None
@@ -95,7 +97,9 @@ def diagnose_error(brain_name: str, error_msg: str) -> dict:
     return diagnosis
 
 
-def repair_error(brain_name: str, diagnosis: dict, error: Exception | None = None) -> bool:
+def repair_error(
+    brain_name: str, diagnosis: dict, error: Exception | None = None
+) -> bool:
     """Attempt to repair a brain error with improved error handling.
 
     Args:
@@ -123,7 +127,10 @@ def repair_error(brain_name: str, diagnosis: dict, error: Exception | None = Non
             if "CancelledError" in error_tb:
                 logger.error("repair_error_cancelled", **log_context)
                 return _handle_cancelled_error(brain_name)
-            elif "asyncio.exceptions.TimeoutError" in error_tb or "TimeoutError" in error_type:
+            elif (
+                "asyncio.exceptions.TimeoutError" in error_tb
+                or "TimeoutError" in error_type
+            ):
                 logger.error("repair_error_timeout", **log_context)
                 return _handle_timeout_error(brain_name)
 
@@ -251,7 +258,9 @@ def run_tests() -> dict:
         # Parse pytest output for summary
         output = result.stdout + result.stderr
         lines = output.split("\n")
-        summary_line = next((l for l in reversed(lines) if " passed" in l or " failed" in l), "")
+        summary_line = next(
+            (l for l in reversed(lines) if " passed" in l or " failed" in l), ""
+        )
 
         return {
             "success": result.returncode == 0,
@@ -312,7 +321,9 @@ def self_repair():
         )
 
 
-def log_self_repair_action(action: str, result: str, details: str | None = None) -> None:
+def log_self_repair_action(
+    action: str, result: str, details: str | None = None
+) -> None:
     """Log self-repair action with result and context.
 
     Args:
@@ -333,5 +344,3 @@ def log_self_repair_action(action: str, result: str, details: str | None = None)
         logger.error("repair_action_failed", **context)
     else:
         logger.warning("repair_action_" + result.lower(), **context)
-
-

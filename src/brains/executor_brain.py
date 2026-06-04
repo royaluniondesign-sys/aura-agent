@@ -41,7 +41,9 @@ def execute_command(command: str) -> Optional[str]:
         Command stdout on success, None on error.
     """
     try:
-        process = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(
+            command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE
+        )
         stdout, stderr = process.communicate()
         if process.returncode != 0:
             raise Exception(f"Command execution failed: {stderr.decode()}")
@@ -89,8 +91,6 @@ async def _run(
     return await run_sandboxed(args, cwd, timeout, env=_env_with_path(), config=cfg)
 
 
-
-
 class ClineBrain(Brain):
     """cline — local Ollama (qwen2.5:7b). Code edits, refactoring. Zero cost."""
 
@@ -103,11 +103,20 @@ class ClineBrain(Brain):
         self._timeout = timeout
         self._cli = shutil.which("cline", path=_EXTRA_PATH)
 
-    async def execute(self, prompt: str, working_directory: str = "",
-                      timeout_seconds: int = 0, **_: Any) -> BrainResponse:
+    async def execute(
+        self,
+        prompt: str,
+        working_directory: str = "",
+        timeout_seconds: int = 0,
+        **_: Any,
+    ) -> BrainResponse:
         if not self._cli:
-            return BrainResponse(content="cline not installed", brain_name=self.name,
-                                 is_error=True, error_type="not_installed")
+            return BrainResponse(
+                content="cline not installed",
+                brain_name=self.name,
+                is_error=True,
+                error_type="not_installed",
+            )
         timeout = timeout_seconds or self._timeout
         cwd = working_directory or str(Path.home())
 
@@ -115,8 +124,12 @@ class ClineBrain(Brain):
         if cwd and not Path(cwd).exists():
             error_msg = f"Working directory does not exist: {cwd}"
             logger.error(error_msg)
-            return BrainResponse(content=error_msg, brain_name=self.name,
-                                 is_error=True, error_type="file_not_found")
+            return BrainResponse(
+                content=error_msg,
+                brain_name=self.name,
+                is_error=True,
+                error_type="file_not_found",
+            )
 
         start = time.time()
         # Cline talks to Ollama on localhost:11434 — allow localhost network
@@ -150,8 +163,13 @@ class ClineBrain(Brain):
         else:
             is_error = rc != 0 and not out
 
-        return BrainResponse(content=content, brain_name=self.name,
-                             duration_ms=elapsed, is_error=is_error, error_type=error_type)
+        return BrainResponse(
+            content=content,
+            brain_name=self.name,
+            duration_ms=elapsed,
+            is_error=is_error,
+            error_type=error_type,
+        )
 
     async def health_check(self) -> BrainStatus:
         if not self._cli:
@@ -159,6 +177,7 @@ class ClineBrain(Brain):
         # Check Ollama is running
         try:
             import urllib.request
+
             req = urllib.request.Request("http://localhost:11434/api/tags")
             with urllib.request.urlopen(req, timeout=3):
                 return BrainStatus.READY
@@ -166,9 +185,13 @@ class ClineBrain(Brain):
             return BrainStatus.NOT_AUTHENTICATED  # cline present but Ollama down
 
     async def get_info(self) -> Dict[str, Any]:
-        return {"name": self.name, "display_name": self.display_name,
-                "cli": self._cli or "not found", "model": self._model,
-                "cost": "Free (local Ollama)"}
+        return {
+            "name": self.name,
+            "display_name": self.display_name,
+            "cli": self._cli or "not found",
+            "model": self._model,
+            "cost": "Free (local Ollama)",
+        }
 
 
 class CodexBrain(Brain):
@@ -225,23 +248,48 @@ class CodexBrain(Brain):
         result = "\n".join(result_lines).strip()
         # Fallback: if parse fails, return cleaned raw output
         if not result:
-            result = "\n".join(
-                l for l in raw.splitlines()
-                if l.strip() and not any(
-                    l.strip().startswith(p) for p in
-                    ("OpenAI Codex", "workdir:", "model:", "approval:", "sandbox:",
-                     "reasoning", "session id:", "provider:", "tokens used", "--------",
-                     "Shell cwd", "done", "user")
-                )
-            ).strip() or raw.strip()
+            result = (
+                "\n".join(
+                    l
+                    for l in raw.splitlines()
+                    if l.strip()
+                    and not any(
+                        l.strip().startswith(p)
+                        for p in (
+                            "OpenAI Codex",
+                            "workdir:",
+                            "model:",
+                            "approval:",
+                            "sandbox:",
+                            "reasoning",
+                            "session id:",
+                            "provider:",
+                            "tokens used",
+                            "--------",
+                            "Shell cwd",
+                            "done",
+                            "user",
+                        )
+                    )
+                ).strip()
+                or raw.strip()
+            )
         return result or "no output"
 
-    async def execute(self, prompt: str, working_directory: str = "",
-                      timeout_seconds: int = 0, **_: Any) -> BrainResponse:
+    async def execute(
+        self,
+        prompt: str,
+        working_directory: str = "",
+        timeout_seconds: int = 0,
+        **_: Any,
+    ) -> BrainResponse:
         if not self._cli:
-            return BrainResponse(content="codex not installed. Run: brew install codex",
-                                 brain_name=self.name, is_error=True,
-                                 error_type="not_installed")
+            return BrainResponse(
+                content="codex not installed. Run: brew install codex",
+                brain_name=self.name,
+                is_error=True,
+                error_type="not_installed",
+            )
         timeout = timeout_seconds or self._timeout
         cwd = working_directory or str(Path.home())
 
@@ -263,52 +311,76 @@ class CodexBrain(Brain):
                 config=codex_sandbox,
             )
         except Exception as exc:
-            return BrainResponse(content=str(exc), brain_name=self.name,
-                                 is_error=True, error_type="subprocess_error")
+            return BrainResponse(
+                content=str(exc),
+                brain_name=self.name,
+                is_error=True,
+                error_type="subprocess_error",
+            )
 
         if rc == -1 and "timeout" in raw_err:
             return BrainResponse(
                 content=f"codex timeout after {timeout}s",
                 brain_name=self.name,
                 duration_ms=int((time.time() - start) * 1000),
-                is_error=True, error_type="timeout",
+                is_error=True,
+                error_type="timeout",
             )
 
         elapsed = int((time.time() - start) * 1000)
 
         # Auth / rate-limit errors
         combined = (raw_out + raw_err).lower()
-        if any(k in combined for k in ("unauthorized", "401", "login", "not logged in")):
+        if any(
+            k in combined for k in ("unauthorized", "401", "login", "not logged in")
+        ):
             try:
                 from src.infra.rate_monitor import track_error as _track_err
+
                 _track_err(self.name, is_rate_limit=False)
             except Exception:
                 pass
-            return BrainResponse(content="Codex auth expired. Run: codex login",
-                                 brain_name=self.name, duration_ms=elapsed,
-                                 is_error=True, error_type="not_authenticated")
+            return BrainResponse(
+                content="Codex auth expired. Run: codex login",
+                brain_name=self.name,
+                duration_ms=elapsed,
+                is_error=True,
+                error_type="not_authenticated",
+            )
         if "429" in combined or "rate limit" in combined:
             try:
                 from src.infra.rate_monitor import track_error as _track_err
+
                 _track_err(self.name, is_rate_limit=True)
             except Exception:
                 pass
-            return BrainResponse(content="Codex rate limited — cascading to sonnet",
-                                 brain_name=self.name, duration_ms=elapsed,
-                                 is_error=True, error_type="rate_limited")
+            return BrainResponse(
+                content="Codex rate limited — cascading to sonnet",
+                brain_name=self.name,
+                duration_ms=elapsed,
+                is_error=True,
+                error_type="rate_limited",
+            )
 
-        content = self._parse_output(raw_out) if raw_out.strip() else (raw_err or "no output")
+        content = (
+            self._parse_output(raw_out) if raw_out.strip() else (raw_err or "no output")
+        )
         logger.info("codex_ok", duration_ms=elapsed, chars=len(content))
 
         # Track this request so /limits shows accurate Codex usage
         try:
             from src.infra.rate_monitor import track_request as _track
+
             _track(self.name)
         except Exception:
             pass
 
-        return BrainResponse(content=content, brain_name=self.name, duration_ms=elapsed,
-                             metadata={"model": "gpt-5.4", "auth": "chatgpt_team"})
+        return BrainResponse(
+            content=content,
+            brain_name=self.name,
+            duration_ms=elapsed,
+            metadata={"model": "gpt-5.4", "auth": "chatgpt_team"},
+        )
 
     async def health_check(self) -> BrainStatus:
         if not self._cli:

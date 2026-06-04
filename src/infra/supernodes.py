@@ -41,13 +41,13 @@ _NODES_FILE = Path.home() / ".aura" / "supernodes.json"
 class TaskType(str, Enum):
     """Task categories for routing."""
 
-    RENDER = "render"      # Video/image processing — needs GPU/RAM
-    CODE = "code"          # Development tasks — needs dev tools
-    BUILD = "build"        # Compilation — needs CPU cores
-    AI = "ai"             # AI inference — needs GPU/VRAM
-    DATA = "data"          # Data processing — needs RAM
-    NETWORK = "network"    # Downloads, scraping — needs bandwidth
-    GENERAL = "general"    # Anything
+    RENDER = "render"  # Video/image processing — needs GPU/RAM
+    CODE = "code"  # Development tasks — needs dev tools
+    BUILD = "build"  # Compilation — needs CPU cores
+    AI = "ai"  # AI inference — needs GPU/VRAM
+    DATA = "data"  # Data processing — needs RAM
+    NETWORK = "network"  # Downloads, scraping — needs bandwidth
+    GENERAL = "general"  # Anything
 
 
 @dataclass(frozen=True)
@@ -229,7 +229,9 @@ class SuperNodeManager:
         )
         self._profiles[machine_name] = profile
         self._save()
-        logger.info("supernode_registered", name=machine_name, score=profile.capability_score)
+        logger.info(
+            "supernode_registered", name=machine_name, score=profile.capability_score
+        )
         return profile
 
     async def auto_profile(self, machine_name: str) -> Optional[NodeProfile]:
@@ -249,7 +251,9 @@ class SuperNodeManager:
 
         result = await self._fleet.execute(machine_name, detect_script, timeout=15)
         if not result.success:
-            logger.warning("auto_profile_failed", node=machine_name, error=result.output)
+            logger.warning(
+                "auto_profile_failed", node=machine_name, error=result.output
+            )
             return None
 
         # Parse output
@@ -446,9 +450,9 @@ class SuperNodeManager:
         for p in self.list_profiles():
             machine = self._fleet.get_machine(p.machine_name)
             online = "🟢" if (machine and machine.is_reachable) else "⚪"
-            platform_icon = {
-                "darwin": "🍎", "linux": "🐧", "windows": "🪟"
-            }.get(p.platform, "💻")
+            platform_icon = {"darwin": "🍎", "linux": "🐧", "windows": "🪟"}.get(
+                p.platform, "💻"
+            )
 
             gpu_str = f"GPU {p.gpu_vram_gb}GB" if p.has_gpu else "no GPU"
             active = self._active_tasks.get(p.machine_name, 0)
@@ -457,19 +461,11 @@ class SuperNodeManager:
                 f"{online} {platform_icon} <b>{p.machine_name}</b> "
                 f"· score: {int(p.capability_score)}"
             )
-            lines.append(
-                f"   {p.ram_gb}GB RAM · {p.cpu_cores} cores · {gpu_str}"
-            )
-            lines.append(
-                f"   Tools: {', '.join(p.tools[:8]) or 'none detected'}"
-            )
+            lines.append(f"   {p.ram_gb}GB RAM · {p.cpu_cores} cores · {gpu_str}")
+            lines.append(f"   Tools: {', '.join(p.tools[:8]) or 'none detected'}")
             if p.specializations:
-                lines.append(
-                    f"   Specializations: {', '.join(p.specializations)}"
-                )
-            lines.append(
-                f"   Load: {active}/{p.max_concurrent} tasks"
-            )
+                lines.append(f"   Specializations: {', '.join(p.specializations)}")
+            lines.append(f"   Load: {active}/{p.max_concurrent} tasks")
             lines.append("")
 
         lines.append(

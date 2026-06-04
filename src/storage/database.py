@@ -196,13 +196,11 @@ class DatabaseManager:
 
     async def _get_schema_version(self, conn: aiosqlite.Connection) -> int:
         """Get current schema version."""
-        await conn.execute(
-            """
+        await conn.execute("""
             CREATE TABLE IF NOT EXISTS schema_version (
                 version INTEGER PRIMARY KEY
             )
-        """
-        )
+        """)
 
         cursor = await conn.execute("SELECT MAX(version) FROM schema_version")
         row = await cursor.fetchone()
@@ -400,15 +398,15 @@ class DatabaseManager:
 
         async with self._pool_lock:
             self._is_closing = True
-            
+
             # Close all known connections
             close_tasks = []
             for conn in list(self._all_connections):
                 close_tasks.append(conn.close())
-            
+
             if close_tasks:
                 await asyncio.gather(*close_tasks, return_exceptions=True)
-            
+
             self._connection_pool.clear()
             self._all_connections.clear()
 

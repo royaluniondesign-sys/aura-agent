@@ -3,6 +3,7 @@
 Credentials from env: IONOS_EMAIL_USER, IONOS_EMAIL_PASS
 SMTP: smtp.ionos.com:587 (STARTTLS)
 """
+
 from __future__ import annotations
 
 import asyncio

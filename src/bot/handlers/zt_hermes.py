@@ -4,6 +4,7 @@ Commands:
   /hermes <task>  — send a task to Hermes and get response back
   /mesh           — show both agents' health (AURA + Hermes)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -44,7 +45,9 @@ def _extract_text(data: Any) -> Optional[str]:
                 return val.strip()
         # Walk payloads
         payloads = data.get("result", {}).get("payloads", [])
-        texts = [p.get("text", "") for p in payloads if isinstance(p, dict) and p.get("text")]
+        texts = [
+            p.get("text", "") for p in payloads if isinstance(p, dict) and p.get("text")
+        ]
         if texts:
             return "\n".join(texts).strip()
         # Recurse into result
@@ -60,6 +63,7 @@ def _extract_text(data: Any) -> Optional[str]:
 def _safe_parse(text: str) -> Optional[Dict[str, Any]]:
     """Parse JSON or Python-style dict output from openclaw."""
     import ast
+
     try:
         return json.loads(text)
     except json.JSONDecodeError:
@@ -76,15 +80,22 @@ def _safe_parse(text: str) -> Optional[Dict[str, Any]]:
 async def _hermes_agent(task: str, timeout: int = 90) -> Dict[str, Any]:
     """Run a task through Hermes via `openclaw agent --json`."""
     proc = await asyncio.create_subprocess_exec(
-        _OPENCLAW_BIN, "agent", "--agent", "main",
-        "--message", task,
+        _OPENCLAW_BIN,
+        "agent",
+        "--agent",
+        "main",
+        "--message",
+        task,
         "--json",
-        "--timeout", str(timeout),
+        "--timeout",
+        str(timeout),
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
     try:
-        stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout + 10)
+        stdout, stderr = await asyncio.wait_for(
+            proc.communicate(), timeout=timeout + 10
+        )
         raw = stdout.decode("utf-8", errors="replace").strip()
         # Try full output first (handles pretty-printed multi-line JSON)
         data = _safe_parse(raw) if raw else None
@@ -98,7 +109,11 @@ async def _hermes_agent(task: str, timeout: int = 90) -> Dict[str, Any]:
         if data is not None:
             text = _extract_text(data)
             status = data.get("status", "?")
-            return {"ok": status == "ok", "result": text or "(sin texto)", "status": status}
+            return {
+                "ok": status == "ok",
+                "result": text or "(sin texto)",
+                "status": status,
+            }
         # No parseable JSON — treat plain text as the result
         if raw:
             return {"ok": True, "result": raw[:3000]}
@@ -111,7 +126,8 @@ async def _hermes_agent(task: str, timeout: int = 90) -> Dict[str, Any]:
 async def _hermes_health() -> Dict[str, Any]:
     """Check Hermes gateway health via `openclaw health`."""
     proc = await asyncio.create_subprocess_exec(
-        _OPENCLAW_BIN, "health",
+        _OPENCLAW_BIN,
+        "health",
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
@@ -173,9 +189,13 @@ class ZeroTokenHermesMixin:
             # Also broadcast to mesh broadcaster (no-op if same chat, useful for programmatic calls)
             try:
                 from src.infra.mesh_broadcaster import broadcast_exchange
+
                 await broadcast_exchange(
-                    sender="aura", receiver="hermes",
-                    message=task, reply=content, elapsed_s=elapsed_s,
+                    sender="aura",
+                    receiver="hermes",
+                    message=task,
+                    reply=content,
+                    elapsed_s=elapsed_s,
                 )
             except Exception:
                 pass
@@ -209,7 +229,7 @@ class ZeroTokenHermesMixin:
 
         # Forward to Hermes with context
         full_msg = (
-            f"Mensaje de the owner para los dos:\n\n\"{msg_text}\"\n\n"
+            f'Mensaje de the owner para los dos:\n\n"{msg_text}"\n\n'
             f"Respóndele directamente."
         )
         start = time.time()
@@ -228,7 +248,9 @@ class ZeroTokenHermesMixin:
                 await update.message.reply_text(reply_text, parse_mode="HTML")
         else:
             err = result.get("error", "?")
-            await progress.edit_text(f"❌ Hermes no responde: {err[:200]}", parse_mode="HTML")
+            await progress.edit_text(
+                f"❌ Hermes no responde: {err[:200]}", parse_mode="HTML"
+            )
 
     async def _zt_mesh(
         self,
@@ -262,6 +284,7 @@ class ZeroTokenHermesMixin:
         loop_info = ""
         try:
             from src.infra.mesh_loop import get_mesh_loop_status
+
             st = get_mesh_loop_status()
             last_del = st.get("last_delegated") or "ninguna"
             total = st.get("total_delegations", 0)
@@ -288,7 +311,9 @@ class ZeroTokenHermesMixin:
             f"{loop_info}"
         )
         if mesh_recent:
-            report += f"\n\n📋 <b>Últimas conversaciones:</b>\n<code>{mesh_recent}</code>"
+            report += (
+                f"\n\n📋 <b>Últimas conversaciones:</b>\n<code>{mesh_recent}</code>"
+            )
 
         report += (
             "\n\n💬 <code>/mesh chat ¿qué tal vais los dos?</code> — hablar con los dos\n"
