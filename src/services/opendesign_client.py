@@ -18,7 +18,6 @@ from __future__ import annotations
 import asyncio
 import logging
 import subprocess
-from functools import lru_cache
 from typing import Any, Optional
 
 import httpx

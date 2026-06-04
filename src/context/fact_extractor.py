@@ -13,14 +13,12 @@ import json
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import structlog
 
 from .aura_context import (
-    _SECTION_CLIENTS,
     _SECTION_NOTES,
-    _SECTION_TASKS,
     add_client,
     add_task,
     update_memory,

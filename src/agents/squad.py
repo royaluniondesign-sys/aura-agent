@@ -16,7 +16,7 @@ from typing import Any, Callable, Optional
 import structlog
 
 from .factory import AgentFactory, get_factory
-from .team import ROLES, AgentMessage, AgentRole
+from .team import ROLES, AgentMessage
 
 logger = structlog.get_logger()
 
@@ -95,7 +95,7 @@ class AgentSquad:
         """
         # Primary: meta_router complexity score (already wired in routing)
         try:
-            from src.claude.meta_router import ModelTier, route_request
+            from src.claude.meta_router import route_request
 
             decision = route_request(prompt)
             # Sonnet-level complexity (score ≥ 5) + multi-domain = squad territory
@@ -580,7 +580,7 @@ Sé conciso pero profundo. Esto guiará al resto del equipo.""",
         board = [r for r in ROLES.values() if r.tier.value == "board"]
         for r in board:
             lines.append(f"{r.emoji} <b>{r.title}</b> <code>{r.brain}</code>")
-            lines.append(f"   <i>Se activa para problemas de alta complejidad</i>")
+            lines.append("   <i>Se activa para problemas de alta complejidad</i>")
 
         lines.append("")
 

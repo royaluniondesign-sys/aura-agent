@@ -109,8 +109,6 @@ class ZeroTokenSocialMixin:
         topic: str,
     ) -> None:
         """Generate and publish a blog post to rud-web.vercel.app."""
-        from telegram import Update
-        from telegram.ext import ContextTypes
 
         progress = await update.message.reply_text(
             f"📝 <b>Generando artículo:</b> {topic[:60]}...",
@@ -325,7 +323,6 @@ class ZeroTokenSocialMixin:
                 return
 
             # Save to drafts
-            import hashlib
             import re as _re
             import time
 
@@ -337,7 +334,7 @@ class ZeroTokenSocialMixin:
             with open(draft_path, "wb") as f:
                 f.write(img_bytes)
 
-            draft_url = f"/api/social/drafts/{filename}"
+            f"/api/social/drafts/{filename}"
 
             # Delete status message and send photo
             await status_msg.delete()
@@ -438,7 +435,7 @@ class ZeroTokenSocialMixin:
                 f"  <code>{i:2d}.</code> {fname[:40]} <i>({size_kb}KB · {ts_str})</i>"
             )
 
-        lines.append(f"\n📤 Para publicar:\n<code>/galeria pub &lt;nombre&gt;</code>")
+        lines.append("\n📤 Para publicar:\n<code>/galeria pub &lt;nombre&gt;</code>")
 
         # Get dashboard URL
         try:
@@ -894,7 +891,6 @@ class ZeroTokenSocialMixin:
           /content next   — today's scheduled content
           /content feeds  — RSS feed health
         """
-        from telegram import Update as _Update
 
         from src.workflows.content.content_command import handle_content_command
 

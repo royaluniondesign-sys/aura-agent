@@ -56,7 +56,7 @@ def _load_rag_to_duckdb(con) -> int:
             col4 AS metadata,
             col5 AS updated_at
         FROM (VALUES """
-        + ",".join(f"(?,?,?,?,?,?)" for _ in rows)
+        + ",".join("(?,?,?,?,?,?)" for _ in rows)
         + ")",
         [val for row in rows for val in row],
     )

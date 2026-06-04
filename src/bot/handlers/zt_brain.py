@@ -199,7 +199,6 @@ class ZeroTokenBrainMixin:
             return
 
         # Run the task — reuse _handle_alt_brain via the orchestrator parent
-        from ...bot.orchestrator import MessageOrchestrator
 
         orchestrator = context.bot_data.get("orchestrator")
         if orchestrator and hasattr(orchestrator, "_handle_alt_brain"):
@@ -261,5 +260,5 @@ class ZeroTokenBrainMixin:
                 f"   {s_icon} {info['status']}"
             )
 
-        lines.append(f"\n/brain para ver estado detallado")
+        lines.append("\n/brain para ver estado detallado")
         await update.message.reply_text("\n".join(lines), parse_mode="HTML")

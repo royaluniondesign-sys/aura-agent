@@ -133,7 +133,7 @@ async def _voice_stop(update: "Update") -> None:
                 f"http://127.0.0.1:{_PORT}/stop",
                 json={},
                 timeout=aiohttp.ClientTimeout(total=10),
-            ) as resp:
+            ) as _resp:  # noqa: F841
                 await update.message.reply_text("⏹ Voice agent detenido.")
     except Exception:
         await update.message.reply_text("⚠️ Voice agent no estaba corriendo.")
@@ -167,7 +167,7 @@ async def _voice_sleep_wake(update: "Update", sleep: bool) -> None:
                 f"http://127.0.0.1:{_PORT}{endpoint}",
                 json={},
                 timeout=aiohttp.ClientTimeout(total=5),
-            ) as resp:
+            ) as _resp:  # noqa: F841
                 await update.message.reply_text(f"{emoji} AURA {label}.")
     except Exception:
         await update.message.reply_text("❌ Voice agent no disponible.")

@@ -297,9 +297,11 @@ class ZeroTokenHermesMixin:
         mesh_recent = ""
         try:
             if _MESH_LOG.exists():
-                lines = [l for l in _MESH_LOG.read_text().splitlines() if l.strip()]
+                lines = [
+                    line for line in _MESH_LOG.read_text().splitlines() if line.strip()
+                ]
                 last = lines[-5:] if len(lines) >= 5 else lines
-                mesh_recent = "\n".join(f"  {l}" for l in last)
+                mesh_recent = "\n".join(f"  {line}" for line in last)
         except Exception:
             pass
 

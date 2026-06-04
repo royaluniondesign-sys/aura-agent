@@ -1,12 +1,10 @@
 """Zero-token system commands — ls, pwd, git, health, terminal, context, sh, email."""
 
-import asyncio
 import json as _json
 from pathlib import Path
-from typing import Any
 
 import structlog
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram import Update
 from telegram.ext import ContextTypes
 
 logger = structlog.get_logger()
@@ -87,7 +85,7 @@ class ZeroTokenSystemMixin:
             await update.message.reply_text(
                 "🔄 Termora está caída, reiniciando…", parse_mode="HTML"
             )
-            proc = await _asyncio.create_subprocess_shell(
+            await _asyncio.create_subprocess_shell(
                 "launchctl kickstart -k gui/$(id -u)/com.termora.agent 2>/dev/null || "
                 f"(cd {__import__('pathlib').Path.home()}/Projects/termora && /opt/homebrew/bin/npm run dev &)",
             )

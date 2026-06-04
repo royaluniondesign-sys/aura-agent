@@ -89,7 +89,7 @@ def chunk_text(text: str, source: str) -> List[Dict[str, Any]]:
         para = para.strip()
         if not para:
             continue
-        candidate = (prev_tail + "\n" + para).strip() if prev_tail else para
+        (prev_tail + "\n" + para).strip() if prev_tail else para
         if len(window) + len(para) + 1 > 400 and window:
             chunks.append(_make_chunk(source, window.strip(), {"type": "text"}))
             # Keep last 50 chars as overlap
@@ -182,7 +182,7 @@ def chunk_code(text: str, source: str) -> List[Dict[str, Any]]:
     # Split by class or top-level function
     sections = re.split(r"(?m)^(class |def )", text)
 
-    current_section = ""
+    ""
     prefix = ""  # Imports, module-level vars at the top
 
     # The first element is everything before the first class/def

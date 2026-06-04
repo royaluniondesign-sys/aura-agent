@@ -16,11 +16,11 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from ..economy.intent import Intent, IntentResult, classify
+from ..economy.intent import Intent
 from ..economy.semantic_intent import classify_semantic
 from .api_brain import ApiBrain
 from .autonomous_brain import AutonomousBrain
-from .base import Brain, BrainResponse, BrainStatus
+from .base import Brain, BrainStatus
 from .claude_brain import ClaudeBrain
 from .executor_brain import ClineBrain, CodexBrain
 from .gemini_brain import GeminiBrain

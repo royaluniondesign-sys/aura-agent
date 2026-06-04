@@ -618,7 +618,7 @@ async def run_application(app: Dict[str, Any]) -> None:
                         err = str(e)
                         if "429" in err or "Too Many Requests" in err:
                             try:
-                                from src.bot.flood_guard import (
+                                from src.bot.flood_guard import (  # noqa: F811
                                     extract_retry_after,
                                     set_flood_wait,
                                 )
@@ -696,7 +696,9 @@ async def run_application(app: Dict[str, Any]) -> None:
                         logger.warning("dashboard_restart", error=str(e)[:120])
                         await asyncio.sleep(10)
 
-        dashboard_task = asyncio.create_task(_dashboard_loop(), name="dashboard")
+        _dashboard_task = asyncio.create_task(  # noqa: F841
+            _dashboard_loop(), name="dashboard"
+        )
         # Not in tasks list — dashboard failure should NOT kill the bot
         dash_port = config.api_server_port
         logger.info("AURA Dashboard started", url=f"http://localhost:{dash_port}")

@@ -6,10 +6,8 @@ to the owner in a readable format. All mesh-visible communication goes through h
 
 from __future__ import annotations
 
-import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
 
 import structlog
 

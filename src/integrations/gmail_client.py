@@ -7,7 +7,6 @@ Setup: run /gmail-auth in Telegram → click link → done.
 from __future__ import annotations
 
 import base64
-import email as email_lib
 import json
 import os
 from email.mime.multipart import MIMEMultipart

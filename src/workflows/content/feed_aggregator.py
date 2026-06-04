@@ -9,10 +9,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import urllib.request
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 import feedparser  # type: ignore[import-untyped]
 

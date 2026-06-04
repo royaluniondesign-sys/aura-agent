@@ -372,7 +372,6 @@ async def test_agentic_document_rejects_large_files(agentic_settings, deps):
 async def test_agentic_voice_calls_brain(agentic_settings, deps):
     """Agentic voice handler: local Whisper fails, falls back to API handler,
     then routes transcription to the active brain."""
-    from unittest.mock import patch
 
     orchestrator = MessageOrchestrator(agentic_settings, deps)
 

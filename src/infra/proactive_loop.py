@@ -131,7 +131,7 @@ def _trace_recent(n: int = 10) -> list[dict]:
         if not _TRACE_FILE.exists():
             return []
         lines = _TRACE_FILE.read_text().splitlines()
-        return [json.loads(l) for l in lines[-n:] if l.strip()]
+        return [json.loads(line) for line in lines[-n:] if line.strip()]
     except Exception:
         return []
 
@@ -174,7 +174,9 @@ def _recent_errors(n: int = 200) -> list[str]:
     if not log.exists():
         return []
     lines = log.read_text(errors="replace").splitlines()[-n:]
-    return [l for l in lines if "error" in l.lower() and "warn" not in l.lower()][:10]
+    return [
+        line for line in lines if "error" in line.lower() and "warn" not in line.lower()
+    ][:10]
 
 
 def _run_tests() -> tuple[bool, str]:
@@ -512,7 +514,6 @@ async def run_self_improvement(
     source: str = "proactive",
 ) -> Optional[str]:
     """Un ciclo completo del agente. Retorna resumen o None (silencioso)."""
-    global _proactive_status
 
     if is_external_task_active():
         logger.info("proactive_skip_external_task_active")
@@ -532,7 +533,7 @@ async def run_self_improvement(
         # ── 1. Disco ──────────────────────────────────────────────────────────
         free_gb = _free_disk_gb()
         if free_gb < _DISK_WARN_GB:
-            msg = _auto_cleanup_disk()
+            _auto_cleanup_disk()
             logger.warning("disk_low_cleaned", free_gb=round(free_gb, 1))
             notify_parts.append(f"💾 Disco bajo ({free_gb:.1f}GB) — limpiado")
 

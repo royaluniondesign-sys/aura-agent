@@ -11,7 +11,6 @@ Falls back gracefully if sandbox-exec is unavailable (Linux, sandboxed macOS CI)
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
 import resource
 import tempfile

@@ -10,7 +10,6 @@ download (~50MB). Subsequent calls are fast (~5ms).
 
 from __future__ import annotations
 
-import logging
 from typing import Optional
 
 import structlog
@@ -311,7 +310,6 @@ def _build_router() -> object:
 
 def _get_router() -> Optional[object]:
     """Return initialized router, or None if not ready."""
-    global _router, _router_ready
     if _router_ready:
         return _router
     return None

@@ -336,7 +336,7 @@ class ToolExecutor:
             from google.genai import types as gtypes  # type: ignore[import]
 
             client = genai.Client(api_key=self._gemini_key)
-            b64 = base64.b64encode(img_bytes).decode()
+            base64.b64encode(img_bytes).decode()
             resp = client.models.generate_content(
                 model="gemini-2.5-flash-lite-preview-06-17",
                 contents=[
@@ -391,7 +391,7 @@ class ToolExecutor:
         if not message:
             return "No message provided"
         try:
-            import subprocess
+            pass
 
             proc = await asyncio.create_subprocess_exec(
                 "/opt/homebrew/bin/openclaw",
@@ -407,7 +407,7 @@ class ToolExecutor:
             # Parse JSON response from openclaw
             import json
 
-            lines = [l for l in raw.splitlines() if l.strip().startswith("{")]
+            lines = [line for line in raw.splitlines() if line.strip().startswith("{")]
             for line in reversed(lines):
                 try:
                     data = json.loads(line)

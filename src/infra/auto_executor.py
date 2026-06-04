@@ -44,7 +44,6 @@ from .task_store import (
     fail_task,
     list_tasks,
     pending_auto_fix_tasks,
-    stats,
     update_task,
 )
 
@@ -289,7 +288,9 @@ async def self_evaluate(notify: _NotifyFn = None) -> None:
         if log.exists():
             lines = log.read_text(errors="replace").splitlines()[-500:]
             error_lines = [
-                l for l in lines if "error" in l.lower() and "warn" not in l.lower()
+                line
+                for line in lines
+                if "error" in line.lower() and "warn" not in line.lower()
             ]
             # Find patterns
             patterns: dict[str, int] = {}
@@ -375,7 +376,6 @@ async def self_evaluate(notify: _NotifyFn = None) -> None:
         logger.debug("auto_executor_ram_check_fail", error=str(e))
 
     # 5. Resend domain check — DISABLED (not blocking any active workflow)
-    pass
 
     if tasks_created:
         logger.info("auto_executor_eval_done", tasks_created=tasks_created)
@@ -417,6 +417,3 @@ async def auto_executor_loop(notify: _NotifyFn = None) -> None:
             logger.error("auto_executor_loop_error", error=str(e))
 
         await asyncio.sleep(_EXEC_INTERVAL)
-
-
-import subprocess  # noqa: E402 — needed for RAM check above

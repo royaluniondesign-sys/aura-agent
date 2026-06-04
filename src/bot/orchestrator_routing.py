@@ -292,7 +292,6 @@ class AgenticRoutingMixin(
         # Auto-capture group chat_id when AURA first receives a group message
         _chat = update.effective_chat
         if _chat and getattr(_chat, "type", "") in ("group", "supergroup"):
-            import os as _os
             import pathlib as _pl
 
             _group_file = _pl.Path.home() / ".aura" / "context" / "known_groups.txt"

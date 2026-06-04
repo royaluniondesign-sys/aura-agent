@@ -13,7 +13,7 @@ To activate:
 
 import asyncio
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import structlog
 
@@ -81,7 +81,7 @@ async def generate_triage() -> str:
 
     for email in emails:
         subject = (email.get("subject") or "").lower()
-        sender = (email.get("from") or "").lower()
+        (email.get("from") or "").lower()
 
         if any(kw in subject for kw in promo_keywords):
             promo.append(email)

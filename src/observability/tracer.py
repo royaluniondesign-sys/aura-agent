@@ -9,7 +9,7 @@ Wraps the Langfuse SDK with graceful degradation:
 import os
 import time
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Generator, Optional
 
 import structlog

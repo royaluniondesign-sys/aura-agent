@@ -78,4 +78,3 @@ async def delete_all_memories() -> bool:
 
 async def prewarm() -> None:
     """No-op — RAG initializes on first use."""
-    pass

@@ -7,10 +7,8 @@ Called by self_healer to surface actionable recurring issues.
 from __future__ import annotations
 
 import json
-import re
 from collections import Counter
 from pathlib import Path
-from typing import Optional
 
 import structlog
 

@@ -2,7 +2,6 @@
 
 import json as _json
 import os as _os
-from pathlib import Path
 
 import structlog
 from telegram import Update
@@ -140,7 +139,6 @@ class ZeroTokenIntegrationsMixin:
         from src.integrations.google_auth import (
             get_credentials_info,
             get_setup_instructions,
-            is_configured,
             save_service_account_credentials,
             start_oauth_flow,
         )
@@ -167,7 +165,7 @@ class ZeroTokenIntegrationsMixin:
                     if _DRIVE_ROOT_ID_PATH.exists()
                     else None
                 )
-                pubs = get_recent_publications(1)
+                get_recent_publications(1)
                 total = len(get_recent_publications(1000))
 
                 sheet_url = (

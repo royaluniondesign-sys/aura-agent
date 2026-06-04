@@ -11,7 +11,6 @@ from telegram.ext import ContextTypes
 from ...config.settings import Settings
 from ...security.audit import AuditLogger
 from ...storage.models import SessionModel
-from ..utils.html_format import escape_html
 
 logger = structlog.get_logger()
 

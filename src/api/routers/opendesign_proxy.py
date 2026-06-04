@@ -9,11 +9,10 @@ Also provides /api/opendesign/status for health checks and port discovery.
 from __future__ import annotations
 
 import logging
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 from fastapi import APIRouter, HTTPException, Request, Response
-from fastapi.responses import JSONResponse, StreamingResponse
 
 from src.services.opendesign_client import OpenDesignClient, discover_daemon_port
 

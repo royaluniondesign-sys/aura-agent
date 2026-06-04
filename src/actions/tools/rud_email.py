@@ -39,7 +39,7 @@ async def rud_email_send(
     from src.integrations.ionos_client import send_email
 
     try:
-        result = await send_email(
+        await send_email(
             to=to,
             subject=subject,
             body=body,

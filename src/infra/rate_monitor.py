@@ -530,7 +530,7 @@ def monitor_rate() -> None:
     try:
         monitor = get_global_monitor()
         current_rate = monitor.get_all_usage()
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         # Log rate status for each brain
         for usage in current_rate:

@@ -38,8 +38,6 @@ class ZeroTokenWebMixin:
         # Build prompt with URL explicit
         prompt = f"Analiza esta URL: {url_and_rest}"
 
-        from ...bot.orchestrator import MessageOrchestrator
-
         if hasattr(self, "_handle_alt_brain"):
             await self._handle_alt_brain(
                 update,
@@ -98,7 +96,6 @@ class ZeroTokenWebMixin:
           /queue urgent revisa si hay errores en los últimos logs
           /queue fix el daemon de Termora no reinicia automáticamente
         """
-        import asyncio as _asyncio
 
         from ...claude.meta_router import route_request as _route
         from ...infra.task_store import create_task as _create_task

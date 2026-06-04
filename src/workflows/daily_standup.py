@@ -95,7 +95,6 @@ async def _pending_from_memory() -> List[str]:
 
 async def _system_health_brief() -> Dict[str, Any]:
     """Minimal system health snapshot."""
-    import os
     import shutil
 
     info: Dict[str, Any] = {}

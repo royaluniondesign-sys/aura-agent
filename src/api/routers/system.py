@@ -101,7 +101,6 @@ async def get_system_metrics() -> Dict[str, Any]:
 async def get_status() -> Dict[str, Any]:
     """AURA live status — system, brains, logs."""
     import asyncio
-    import os
     import re as _re
     import shutil
     import subprocess as _sp

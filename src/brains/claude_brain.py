@@ -21,9 +21,8 @@ import json
 import os
 import shutil
 import time
-from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncGenerator, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional
 
 import structlog
 
@@ -163,7 +162,7 @@ class ClaudeBrain(Brain):
         cwd = working_directory or str(Path.home())
         start = time.time()
 
-        existing_session = self._sessions.get(session_key)
+        self._sessions.get(session_key)
 
         # ══ REGLA INVIOLABLE ══════════════════════════════════════════════
         # Claude SIEMPRE usa suscripción CLI — NUNCA API key con cargos.

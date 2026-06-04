@@ -6,7 +6,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import os
 import shutil
@@ -250,11 +249,11 @@ class CodexBrain(Brain):
         if not result:
             result = (
                 "\n".join(
-                    l
-                    for l in raw.splitlines()
-                    if l.strip()
+                    line
+                    for line in raw.splitlines()
+                    if line.strip()
                     and not any(
-                        l.strip().startswith(p)
+                        line.strip().startswith(p)
                         for p in (
                             "OpenAI Codex",
                             "workdir:",

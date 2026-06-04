@@ -10,12 +10,11 @@ Commands:
 
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Awaitable, Callable, Optional
+from typing import Awaitable, Callable
 
 log = logging.getLogger("content.command")
 

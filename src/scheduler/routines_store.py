@@ -10,7 +10,6 @@ the user-facing concept with full CRUD, logs, and dashboard UI.
 
 from __future__ import annotations
 
-import json
 import uuid
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
@@ -22,7 +21,7 @@ import structlog
 
 logger = structlog.get_logger()
 
-import os as _os
+import os as _os  # noqa: E402
 
 _DB_PATH = _os.path.join(
     _os.path.dirname(_os.path.dirname(_os.path.dirname(_os.path.abspath(__file__)))),
@@ -56,7 +55,7 @@ class Routine:
             return self.frequency[5:]  # raw cron expression
         h, m = (self.schedule_time or "09:00").split(":")
         if self.frequency == "hourly":
-            return f"0 * * * *"
+            return "0 * * * *"
         if self.frequency == "daily":
             return f"{m} {h} * * *"
         if self.frequency == "weekly":

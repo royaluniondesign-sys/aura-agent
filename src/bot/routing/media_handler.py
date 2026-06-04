@@ -5,7 +5,6 @@ Contains:
   _handle_video_gen  — cinematic AI video or structured slides
 """
 
-import asyncio
 from typing import TYPE_CHECKING, Any
 
 import structlog

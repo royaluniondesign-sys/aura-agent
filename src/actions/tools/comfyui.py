@@ -122,7 +122,7 @@ async def comfyui_estimate(
     steps: int = 20, width: int = 1024, height: int = 1024
 ) -> str:
     est = comfy.estimate_time(steps, width, height)
-    pixels = width * height
+    width * height
     quality = "rápida" if steps <= 20 else "calidad" if steps <= 30 else "alta calidad"
     return (
         f"⏱️ Estimación para {width}×{height}px, {steps} steps ({quality}):\n"

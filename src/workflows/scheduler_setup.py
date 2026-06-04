@@ -4,8 +4,7 @@ Called once during bot startup to ensure all workflows are scheduled.
 Uses direct Telegram sends (not Claude) — zero tokens.
 """
 
-import asyncio
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 import structlog
 from telegram import Bot

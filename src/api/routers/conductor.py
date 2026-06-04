@@ -1,10 +1,9 @@
 """Conductor router: /api/conductor/*, /api/proactive/*, /api/stream/orchestration."""
 
-import asyncio
 from typing import Any, Dict
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 logger = structlog.get_logger()

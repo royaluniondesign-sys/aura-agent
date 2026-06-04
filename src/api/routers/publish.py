@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 _SCHEDULED_DIR = Path.home() / ".aura" / "social_scheduled"

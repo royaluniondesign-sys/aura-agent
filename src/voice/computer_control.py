@@ -203,7 +203,7 @@ def screen_find(description: str, api_key: str) -> Optional[Tuple[int, int]]:
     Free model (gemini-2.5-flash-lite) — minimal cost.
     """
     try:
-        import io as _io
+        pass
 
         from google import genai  # type: ignore[import]
         from google.genai import types as gtypes  # type: ignore[import]

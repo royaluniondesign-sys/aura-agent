@@ -21,7 +21,6 @@ from typing import Any, Callable, Dict, List, Optional
 
 import structlog
 from telegram import InputMediaPhoto, Update
-from telegram.ext import ContextTypes
 
 from ..claude.sdk_integration import StreamUpdate
 from .utils.draft_streamer import DraftStreamer

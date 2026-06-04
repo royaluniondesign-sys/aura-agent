@@ -15,7 +15,6 @@ from __future__ import annotations
 
 import asyncio
 import json
-import os
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -238,8 +237,12 @@ async def agent_status(request: Request) -> Dict[str, Any]:
         if roadmap_file.exists():
             content = roadmap_file.read_text()
             # Extract pending items (lines with [ ] checkbox)
-            pending = [l.strip() for l in content.splitlines() if "[ ]" in l][:5]
-            done = [l.strip() for l in content.splitlines() if "[x]" in l.lower()][:3]
+            pending = [line.strip() for line in content.splitlines() if "[ ]" in line][
+                :5
+            ]
+            done = [
+                line.strip() for line in content.splitlines() if "[x]" in line.lower()
+            ][:3]
             roadmap = {"pending": pending, "done_recent": done}
     except Exception:
         pass
@@ -350,7 +353,7 @@ async def mesh_notify(request: Request) -> Dict[str, Any]:
         return {"ok": False, "error": "message is required"}
 
     try:
-        from src.infra.mesh_broadcaster import _queue_to_file, broadcast_alert
+        from src.infra.mesh_broadcaster import broadcast_alert
 
         await broadcast_alert(
             from_agent=from_agent,
@@ -490,7 +493,11 @@ async def hermes_status() -> Dict[str, Any]:
     mesh_entries: List[str] = []
     try:
         if _MESH_LOG.exists():
-            lines = [l.strip() for l in _MESH_LOG.read_text().splitlines() if l.strip()]
+            lines = [
+                line.strip()
+                for line in _MESH_LOG.read_text().splitlines()
+                if line.strip()
+            ]
             mesh_entries = lines[-10:]
     except Exception:
         pass

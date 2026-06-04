@@ -11,7 +11,6 @@ Returns __IMAGE_B64__:<base64> so orchestrator can send as Telegram photo.
 
 from __future__ import annotations
 
-import asyncio
 import base64
 import os
 import time

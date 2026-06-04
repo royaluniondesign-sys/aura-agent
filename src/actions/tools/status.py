@@ -3,8 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import os
-import time
 from pathlib import Path
 
 from src.actions.registry import aura_tool
@@ -75,7 +73,7 @@ async def get_aura_status() -> str:
             used_pct = ((total_gb - free_gb) / total_gb) * 100
             lines.append(f"RAM: {used_pct:.0f}% used · {free_gb:.1f}GB free")
         else:
-            lines.append(f"RAM: parse error")
+            lines.append("RAM: parse error")
     except Exception:
         pass
 

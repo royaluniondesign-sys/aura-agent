@@ -1,8 +1,5 @@
 """Handle inline keyboard callbacks."""
 
-from pathlib import Path
-from typing import Optional
-
 import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
@@ -32,8 +29,6 @@ from .callback_actions import (
 
 # Re-export special handlers so external callers can still import from this module
 from .callback_special import (
-    _escape_markdown,
-    _format_file_size,
     handle_conversation_callback,
     handle_export_callback,
     handle_followup_callback,

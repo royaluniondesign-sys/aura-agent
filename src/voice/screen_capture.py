@@ -7,7 +7,7 @@ No Gemini dependency here — pure capture/compress utilities.
 from __future__ import annotations
 
 import io
-from typing import Optional, Tuple
+from typing import Tuple
 
 _MSS_OK = False
 _PIL_OK = False
@@ -30,7 +30,7 @@ except ImportError:
 
 try:
     import cv2  # type: ignore[import]
-    import numpy as np  # type: ignore[import]
+    import numpy as np  # type: ignore[import]  # noqa: F401
 
     _CV2_OK = True
 except ImportError:

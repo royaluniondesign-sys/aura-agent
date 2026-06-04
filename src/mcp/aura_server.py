@@ -32,20 +32,19 @@ except Exception:
     pass
 # ────────────────────────────────────────────────────────────────────────────
 
-import inspect
-import sys
-from pathlib import Path
+import sys  # noqa: E402
+from pathlib import Path  # noqa: E402
 
 # Add project root to path
 ROOT = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(ROOT))
 
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa: E402
 
 load_dotenv(ROOT / ".env")
 
-from mcp.server.fastmcp import FastMCP
-from src.actions.registry import registry
+from mcp.server.fastmcp import FastMCP  # noqa: E402
+from src.actions.registry import registry  # noqa: E402
 
 mcp = FastMCP(
     name="AURA",

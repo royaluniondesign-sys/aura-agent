@@ -117,7 +117,7 @@ def _make_receive_webhook(event_bus: Any, settings: Any, db_manager: Any):
             payload = {"raw_body": body.decode("utf-8", errors="replace")[:5000]}
 
         if db_manager and delivery_id:
-            from ...storage.database import DatabaseManager
+            pass
 
             is_new = await _try_record_webhook(
                 db_manager,
@@ -1344,8 +1344,6 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         import uuid as _uuid
-        from datetime import datetime as _dt
-        from datetime import timezone as _tz
 
         import aiohttp as _aiohttp
 
@@ -1475,7 +1473,6 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         if not html_content:
             import asyncio as _asyncio
             import shutil as _shutil
-            import subprocess as _sp2
 
             gemini_bin = _shutil.which("gemini") or "/opt/homebrew/bin/gemini"
             if _shutil.which("gemini"):
@@ -1687,7 +1684,6 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="text or topic required")
         try:
             from src.workflows.social_post import (
-                build_n8n_payload,
                 generate_captions,
                 generate_images_for_post,
                 post_to_social,

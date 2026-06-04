@@ -206,7 +206,7 @@ def generate_post_image(spec: PostSpec) -> bytes:
     h_lines = _wrap(spec.headline, h_font, max_text)
     if len(h_lines) > 3:
         headline_size = max(48, int(headline_size * 0.82))
-        h_font = _font_grotesk(headline_size)
+        h_font = _font_headline(headline_size)
         h_lh = int(headline_size * 1.15)
         h_lines = _wrap(spec.headline, h_font, max_text)[:3]
     else:

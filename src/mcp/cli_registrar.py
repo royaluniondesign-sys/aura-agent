@@ -10,16 +10,14 @@ No other files need to change.
 from __future__ import annotations
 
 import json
-import os
 import subprocess
 from pathlib import Path
-from typing import List
 
 import structlog
 
 logger = structlog.get_logger()
 
-import sys as _sys
+import sys as _sys  # noqa: E402
 
 _AURA_MCP_COMMAND = _sys.executable
 _AURA_MCP_ARGS = ["-m", "src.mcp.aura_server"]

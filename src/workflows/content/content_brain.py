@@ -18,7 +18,6 @@ import logging
 import os
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 import anthropic  # type: ignore[import-untyped]
 

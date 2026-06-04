@@ -45,7 +45,7 @@ async def polling_with_self_repair(
     while retry_count < MAX_RETRIES:
         try:
             logger.info("telegram_polling_start", attempt=retry_count + 1)
-            start_time = time.time()
+            time.time()
             await polling_fn()
             # If polling completes normally, reset and exit
             logger.info("telegram_polling_completed")

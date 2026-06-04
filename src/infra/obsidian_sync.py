@@ -7,8 +7,6 @@ Corre automáticamente cada hora + en startup.
 from __future__ import annotations
 
 import asyncio
-import json
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -105,7 +103,7 @@ def _write_dashboard() -> None:
     mesh_lines = []
     mesh_log = _MEMORY / "mesh-log.md"
     if mesh_log.exists():
-        lines = [l for l in mesh_log.read_text().splitlines() if l.strip()]
+        lines = [line for line in mesh_log.read_text().splitlines() if line.strip()]
         mesh_lines = lines[-3:] if len(lines) >= 3 else lines
 
     content = f"""# AURA Dashboard

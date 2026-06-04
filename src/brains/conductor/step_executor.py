@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import asyncio
 import time
-from datetime import datetime
 from typing import Any, Dict
 
 import structlog
 
-from .events import _broadcast, orch_unsubscribe
+from .events import _broadcast
 from .logging_utils import log_session
 from .models import ConductorStep
 

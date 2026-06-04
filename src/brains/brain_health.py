@@ -4,12 +4,10 @@ Detects failures in AURA's brain modules and applies targeted fixes.
 """
 
 import asyncio
-import logging
 import os
 import subprocess
 import sys
 import traceback
-from pathlib import Path
 from typing import NamedTuple
 
 import structlog
@@ -36,7 +34,7 @@ def check_brain_health(brain_name: str) -> HealthCheck:
         HealthCheck result with health status and any error details.
     """
     try:
-        module = __import__(f"src.brains.{brain_name}", fromlist=[brain_name])
+        __import__(f"src.brains.{brain_name}", fromlist=[brain_name])
         return HealthCheck(brain_name=brain_name, is_healthy=True)
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)[:100]}"
@@ -259,7 +257,12 @@ def run_tests() -> dict:
         output = result.stdout + result.stderr
         lines = output.split("\n")
         summary_line = next(
-            (l for l in reversed(lines) if " passed" in l or " failed" in l), ""
+            (
+                line
+                for line in reversed(lines)
+                if " passed" in line or " failed" in line
+            ),
+            "",
         )
 
         return {

@@ -20,10 +20,10 @@ from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-from telegram import Document
+from telegram import Document  # noqa: E402
 
-from src.config import Settings
-from src.security.validators import SecurityValidator
+from src.config import Settings  # noqa: E402
+from src.security.validators import SecurityValidator  # noqa: E402
 
 
 @dataclass

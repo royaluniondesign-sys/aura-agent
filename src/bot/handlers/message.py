@@ -7,19 +7,9 @@ import structlog
 from telegram import InputMediaPhoto, Update
 from telegram.ext import ContextTypes
 
-from ...claude.exceptions import (
-    ClaudeError,
-    ClaudeMCPError,
-    ClaudeParsingError,
-    ClaudeProcessError,
-    ClaudeSessionError,
-    ClaudeTimeoutError,
-)
 from ...config.settings import Settings
 from ...security.audit import AuditLogger
 from ...security.rate_limiter import RateLimiter
-from ...security.validators import SecurityValidator
-from ..utils.html_format import escape_html
 from ..utils.image_extractor import (
     ImageAttachment,
     should_send_as_photo,
@@ -29,20 +19,17 @@ from ..utils.image_extractor import (
 # Re-export formatter functions so external callers still resolve from this module
 from .msg_formatters import (
     _format_error_message,
-    _format_process_error,
     _format_progress_update,
 )
 
-# Re-export media handlers so external callers still resolve from this module
-from .msg_media import handle_document, handle_photo, handle_voice
-
 # Re-export utility functions so external callers still resolve from this module
 from .msg_utils import (
-    _estimate_file_processing_cost,
     _estimate_text_processing_cost,
-    _generate_placeholder_response,
     _update_working_directory_from_claude_response,
 )
+
+# Re-export media handlers so external callers still resolve from this module
+
 
 logger = structlog.get_logger()
 

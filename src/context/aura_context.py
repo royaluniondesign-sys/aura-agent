@@ -10,12 +10,9 @@ Memory is updated via update_memory() after each learning extraction.
 from __future__ import annotations
 
 import os
-import re
 import socket
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # ── Service ports ────────────────────────────────────────────────────────────
 _OPENDESIGN_PORT = 59826
@@ -264,7 +261,7 @@ def add_task(description: str) -> None:
 
 def format_for_display() -> str:
     """Format memory for Telegram display."""
-    identity = get_identity()
+    get_identity()
     memory = get_memory()
 
     lines = ["<b>🧠 AURA — Cerebro</b>\n"]

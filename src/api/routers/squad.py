@@ -30,7 +30,9 @@ async def _after_squad_complete(original_task: str, result: str) -> None:
             "Sé específico. Sin explicaciones extra."
         )
         suggestions_raw = await _router.call("haiku", suggestion_prompt, max_tokens=400)
-        lines = [l.strip() for l in suggestions_raw.split("\n") if "TAREA:" in l]
+        lines = [
+            line.strip() for line in suggestions_raw.split("\n") if "TAREA:" in line
+        ]
         for line in lines[:3]:
             try:
                 title = line.split("TAREA:")[1].split("|")[0].strip()[:120]

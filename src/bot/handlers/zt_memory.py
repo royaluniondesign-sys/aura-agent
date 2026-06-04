@@ -59,7 +59,7 @@ class ZeroTokenMemoryMixin:
         elif sub == "task" and len(parts) > 2:
             add_task(parts[2].strip())
             await update.message.reply_text(
-                f"✅ Tarea guardada en memoria.", parse_mode="HTML"
+                "✅ Tarea guardada en memoria.", parse_mode="HTML"
             )
 
         elif sub == "clear":

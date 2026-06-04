@@ -5,8 +5,7 @@ Contains handlers registered as Telegram commands in agentic mode:
   _zt_team, _zt_conductor, _voz_command, agentic_repo, _agentic_callback
 """
 
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, List
 
 import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -525,7 +524,7 @@ class AgenticCommandsMixin:
             except PermissionError as exc:
                 failed.append((pid, str(exc)))
 
-        lines = [f"🛑 <b>Stop ejecutado</b>"]
+        lines = ["🛑 <b>Stop ejecutado</b>"]
         if killed:
             lines.append(f"Matados: {', '.join(str(p) for p in killed)}")
         if failed:

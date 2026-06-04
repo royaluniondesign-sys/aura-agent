@@ -291,7 +291,6 @@ def process_commits() -> None:
     Analyzes recent git commits to gather context for strategic task generation.
     """
     # Code to process recent commits
-    pass
 
 
 def manage_mission_priorities() -> None:
@@ -300,4 +299,3 @@ def manage_mission_priorities() -> None:
     Adjusts mission priorities based on AURA's operational state and goals.
     """
     # Code to manage mission priorities
-    pass

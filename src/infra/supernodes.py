@@ -31,7 +31,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import structlog
 
-from .fleet import FleetManager, Machine, SSHResult
+from .fleet import FleetManager, SSHResult
 
 logger = structlog.get_logger()
 
