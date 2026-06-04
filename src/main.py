@@ -685,7 +685,7 @@ async def run_application(app: Dict[str, Any]) -> None:
 
         # Mesh loop — AURA↔Hermes autonomous conversation (30min interval)
         from src.infra.mesh_loop import start_mesh_loop
-        asyncio.create_task(start_mesh_loop(), name="mesh_loop")
+        asyncio.create_task(start_mesh_loop(notify_fn=_notify_proactive), name="mesh_loop")
         logger.info("mesh_loop_task_started")
 
         # Obsidian sync — keep vault current (hourly + startup)

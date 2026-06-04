@@ -78,6 +78,34 @@ def get_proactive_status() -> dict:
     return {**_proactive_status}
 
 
+# ── Recovery Knowledge Base ───────────────────────────────────────────────────
+# Persists successful fix patterns to ~/.aura/memory/recovery_kb.md so that
+# RAG can surface them when a similar error occurs in the future.
+
+_RECOVERY_KB = Path.home() / ".aura" / "memory" / "recovery_kb.md"
+
+
+def _write_recovery_learning(task: dict, fix_summary: str) -> None:
+    """Append a successful fix to the recovery knowledge base (RAG-indexed)."""
+    try:
+        _RECOVERY_KB.parent.mkdir(parents=True, exist_ok=True)
+        title = task.get("title", "unknown")
+        desc  = task.get("description", "")
+        tags  = ", ".join(task.get("tags", []))
+        ts    = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
+
+        entry = (
+            f"\n## [{ts}] FIXED: {title}\n"
+            f"**Tags**: {tags or 'none'}  \n"
+            f"**Problem**: {desc[:300]}  \n"
+            f"**Fix applied**: {fix_summary[:500]}  \n"
+        )
+        with open(_RECOVERY_KB, "a") as f:
+            f.write(entry)
+    except Exception as exc:
+        logger.debug("recovery_kb_write_error", error=str(exc))
+
+
 # ── Memoria unificada — append-only trace ────────────────────────────────────
 
 def _trace_append(event: str, data: dict) -> None:
@@ -366,9 +394,9 @@ REGLAS:
 Raíz del proyecto: {_AURA_ROOT}
 """
 
-    brain = brain_router.get_brain("haiku") if brain_router else None
-    if not brain:
-        brain = brain_router.get_brain("sonnet") if brain_router else None
+    haiku_brain  = brain_router.get_brain("haiku")  if brain_router else None
+    sonnet_brain = brain_router.get_brain("sonnet") if brain_router else None
+    brain = haiku_brain or sonnet_brain
     if not brain:
         return False, "no brain available"
 
@@ -382,8 +410,34 @@ Raíz del proyecto: {_AURA_ROOT}
             timeout_seconds=180,
             allowed_tools=_REACT_TOOLS,
         )
-        success = not resp.is_error and "BLOCKED:" not in (resp.content or "")
-        result = (resp.content or "")[:300]
+        is_blocked = "BLOCKED:" in (resp.content or "")
+        success    = not resp.is_error and not is_blocked
+        result     = (resp.content or "")[:300]
+
+        # When Haiku is BLOCKED, escalate once to Sonnet before giving up.
+        if is_blocked and sonnet_brain and sonnet_brain is not brain:
+            logger.info(
+                "react_task_blocked_escalating",
+                title=title[:60], blocked_reason=result[:120],
+            )
+            escalation_prompt = (
+                f"{prompt}\n\n"
+                f"NOTA: Un modelo anterior intentó resolver esta tarea y se bloqueó con:\n"
+                f"{result}\n\n"
+                f"Eres Sonnet, con mayor capacidad. Intenta resolverlo directamente."
+            )
+            try:
+                resp2 = await sonnet_brain.execute(
+                    escalation_prompt,
+                    working_directory=str(_AURA_ROOT),
+                    timeout_seconds=240,
+                    allowed_tools=_REACT_TOOLS,
+                )
+                is_blocked = "BLOCKED:" in (resp2.content or "")
+                success    = not resp2.is_error and not is_blocked
+                result     = (resp2.content or "")[:300]
+            except Exception as exc2:
+                logger.warning("react_sonnet_escalation_error", error=str(exc2))
 
         _trace_append("react_task", {
             "task_id": tid[:8], "title": title[:60],
@@ -481,13 +535,21 @@ async def run_self_improvement(
                         complete_task(task["id"], result)
                         steps_ok += 1
                         notify_parts.append(f"✅ {task['title'][:60]}")
+                        # Persist fix to recovery KB so RAG surfaces it next time
+                        _write_recovery_learning(task, result)
                     else:
                         attempts = (task.get("attempts") or 0) + 1
+                        is_blocked = "BLOCKED:" in result
                         if attempts >= 3:
                             fail_task(task["id"], result)
-                            notify_parts.append(f"❌ Abandonado (3×): {task['title'][:50]}")
+                            label = "BLOCKED" if is_blocked else "Abandonado (3×)"
+                            notify_parts.append(f"❌ {label}: {task['title'][:50]}")
                         else:
                             update_task(task["id"], status="pending", result=result)
+                            if is_blocked:
+                                notify_parts.append(
+                                    f"⚠️ BLOCKED (intento {attempts}/3): {task['title'][:50]}"
+                                )
                         steps_fail += 1
                     task_executed = True
             except (asyncio.CancelledError, asyncio.TimeoutError) as exc:
@@ -575,6 +637,14 @@ async def start_proactive_loop(
             except asyncio.TimeoutError:
                 logger.error("proactive_loop_timeout", timeout_s=300)
                 _proactive_status["last_result"] = "timeout"
+                if notify_fn:
+                    try:
+                        await notify_fn(
+                            "⏱ Proactive loop timeout (>5min). "
+                            "Ciclo cancelado — revisa logs para ver qué tarea se colgó."
+                        )
+                    except Exception:
+                        pass
             except asyncio.CancelledError:
                 logger.info("proactive_loop_cancelled")
                 raise
