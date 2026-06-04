@@ -76,9 +76,9 @@ voice = ["mistralai", "openai"]
 aura-voice = ["edge-tts", "faster-whisper"]
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^8.4.0"
-pytest-asyncio = "^1.0.0"
-pytest-cov = "^6.1.1"
+pytest = ">=9.0.3"
+pytest-asyncio = ">=1.3.0"
+pytest-cov = ">=7.1.0"
 pytest-mock = "^3.14.1"
 black = "^25.1.0"
 isort = "^6.0.1"
