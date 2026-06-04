@@ -2391,10 +2391,9 @@ files = [
 name = "numpy"
 version = "2.4.6"
 description = "Fundamental package for array computing in Python"
-optional = true
+optional = false
 python-versions = ">=3.11"
 groups = ["main"]
-markers = "extra == \"aura-voice\""
 files = [
     {file = "numpy-2.4.6-cp311-cp311-macosx_10_9_x86_64.whl", hash = "sha256:0280e0356c0829a18d9de1cb7eee50ec22ca639878d7240307ca0943d73cd2c4"},
     {file = "numpy-2.4.6-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:110f8b71aacb688ec69062bb7f6938a0f8acb01b7c1c4beb453c65b6d234584d"},
@@ -4563,4 +4562,4 @@ voice = ["mistralai", "openai"]
 [metadata]
 lock-version = "2.1"
 python-versions = "^3.11"
-content-hash = "b7e09d96a29b8bf70c5952906cd58015fac985bfbc6743fc544f8b13cebf2876"
+content-hash = "cac428a7f95d196759874d54c7f5551265a1d642afaad3e0cfd56d9e504f482f"

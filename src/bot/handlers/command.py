@@ -14,8 +14,10 @@ from ._handler_utils import (
 )
 
 # Re-export admin commands so external callers still resolve from this module
+from .cmd_admin import end_session, restart_command  # noqa: F401
 
 # Re-export navigation commands so external callers still resolve from this module
+from .cmd_navigation import change_directory  # noqa: F401
 
 # Re-export project commands so external callers still resolve from this module
 

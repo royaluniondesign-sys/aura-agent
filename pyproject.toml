@@ -33,6 +33,7 @@ dependencies = [
     "duckdb>=1.5.2",
     "fastapi>=0.115.0",
     "firecrawl-py>=4.25.2",
+    "numpy>=1.24.0",
     "httpx>=0.28.1",
     "playwright>=1.59.0",
     "pydantic>=2.11.5",
