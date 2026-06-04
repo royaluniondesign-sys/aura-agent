@@ -16,7 +16,12 @@ from ._handler_utils import (
 )
 
 # Re-export admin commands so external callers still resolve from this module
-from .cmd_admin import end_session, restart_command  # noqa: F401
+from .cmd_admin import (  # noqa: F401
+    end_session,
+    git_command,
+    quick_actions,
+    restart_command,
+)
 
 # Re-export navigation commands so external callers still resolve from this module
 from .cmd_navigation import (  # noqa: F401
@@ -26,6 +31,7 @@ from .cmd_navigation import (  # noqa: F401
 )
 
 # Re-export project commands so external callers still resolve from this module
+from .cmd_project import export_session, session_status, show_projects  # noqa: F401
 
 logger = structlog.get_logger()
 
