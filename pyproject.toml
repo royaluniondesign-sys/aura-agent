@@ -23,14 +23,34 @@ classifiers = [
 requires-python = ">=3.11"
 dependencies = [
     "aiohttp>=3.13.3",
+    "aiofiles>=24.1.0",
+    "aiosqlite>=0.21.0",
+    "anthropic>=0.40.0",
+    "apscheduler>=3.10",
+    "backoff>=2.2.1",
+    "claude-agent-sdk>=0.1.39",
     "delta-spark>=4.2.0",
     "duckdb>=1.5.2",
+    "fastapi>=0.115.0",
     "firecrawl-py>=4.25.2",
     "httpx>=0.28.1",
     "playwright>=1.59.0",
+    "pydantic>=2.11.5",
+    "pydantic-settings>=2.9.1",
     "pyspark>=4.1.1",
+    "python-dotenv>=1.0.0",
+    "python-telegram-bot[rate-limiter]>=22.6",
+    "PyYAML>=6.0.2",
+    "requests>=2.32.0",
     "rumps>=0.4.0; sys_platform == 'darwin'",
+    "structlog>=25.4.0",
+    "uvicorn[standard]>=0.34.0",
 ]
+
+[project.optional-dependencies]
+observability = ["langfuse>=2.0.0"]
+voice = ["mistralai>=1.0.0", "openai>=1.0.0"]
+aura-voice = ["edge-tts>=7.0.0", "faster-whisper>=1.0.0"]
 
 [project.urls]
 Homepage = "https://github.com/royaluniondesign-sys/aura"
