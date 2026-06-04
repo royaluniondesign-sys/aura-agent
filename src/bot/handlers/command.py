@@ -1,5 +1,7 @@
 """Command handlers for bot operations."""
 
+import os  # noqa: F401 — tests patch src.bot.handlers.command.os.kill
+
 import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
@@ -17,7 +19,7 @@ from ._handler_utils import (
 from .cmd_admin import end_session, restart_command  # noqa: F401
 
 # Re-export navigation commands so external callers still resolve from this module
-from .cmd_navigation import change_directory  # noqa: F401
+from .cmd_navigation import change_directory, list_files  # noqa: F401
 
 # Re-export project commands so external callers still resolve from this module
 
