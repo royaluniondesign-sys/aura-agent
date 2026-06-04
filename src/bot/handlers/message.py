@@ -22,14 +22,14 @@ from .msg_formatters import (
     _format_progress_update,
 )
 
+# Re-export media handlers so external callers still resolve from this module
+from .msg_media import handle_voice  # noqa: F401
+
 # Re-export utility functions so external callers still resolve from this module
 from .msg_utils import (
     _estimate_text_processing_cost,
     _update_working_directory_from_claude_response,
 )
-
-# Re-export media handlers so external callers still resolve from this module
-
 
 logger = structlog.get_logger()
 
