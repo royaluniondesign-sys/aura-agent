@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import os
 import time
 from typing import Any, Callable, Dict, List, Optional
 
@@ -248,30 +247,25 @@ def _run_tests() -> None:
 def self_repair_launch_agent() -> None:
     """Repair LaunchAgent configuration if missing or invalid.
 
-    Checks if the AURA LaunchAgent plist file exists at the expected
-    location. If missing, attempts to reload it via launchctl.
+    Regenerates the plist with current interpreter/project paths and reloads
+    it via launchctl. This handles post-restart failures caused by stale plist
+    content (wrong Python path, moved project directory, etc.).
 
     Raises:
-        Exception: If repair attempt fails
+        Exception: If repair attempt fails.
     """
-    launch_agent_path = "/Library/LaunchAgents/aura.launchagent.plist"
+    from src.infra.launch_agent import _PLIST_DEST, ensure_launch_agent_is_running
 
-    # Check if the LaunchAgent exists
-    if not os.path.exists(launch_agent_path):
-        logger.warning("launch_agent_missing", path=launch_agent_path)
-        try:
-            # Attempt to repair by loading the LaunchAgent
-            cmd = f"sudo launchctl load -w {launch_agent_path}"
-            logger.info("launch_agent_repair_attempt", command=cmd)
-            os.system(cmd)
-            logger.info("launch_agent_repaired", path=launch_agent_path)
-        except Exception as e:
-            logger.error(
-                "launch_agent_repair_failed", error=str(e), path=launch_agent_path
-            )
-            raise
-    else:
-        logger.debug("launch_agent_present", path=launch_agent_path)
+    logger.info("launch_agent_repair_started", plist=str(_PLIST_DEST))
+    try:
+        ok = ensure_launch_agent_is_running()
+        if ok:
+            logger.info("launch_agent_repaired", plist=str(_PLIST_DEST))
+        else:
+            raise RuntimeError("ensure_launch_agent_is_running returned False")
+    except Exception as e:
+        logger.error("launch_agent_repair_failed", error=str(e))
+        raise
 
 
 def self_repair() -> None:
