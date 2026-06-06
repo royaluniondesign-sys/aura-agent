@@ -116,6 +116,17 @@ def ensure_launch_agent_is_running() -> bool:
         logs_dir = _PROJECT_ROOT / "logs"
         logs_dir.mkdir(parents=True, exist_ok=True)
 
+        # Remove stale plist from old entrypoint name (com.aura.telegram-bot)
+        old_plist = _PLIST_DEST.parent / "com.aura.telegram-bot.plist"
+        if old_plist.exists():
+            subprocess.run(
+                ["launchctl", "unload", str(old_plist)],
+                check=False,
+                capture_output=True,
+            )
+            old_plist.unlink()
+            logger.info("Removed stale LaunchAgent plist: %s", old_plist)
+
         # Write freshly-generated plist
         _PLIST_DEST.parent.mkdir(parents=True, exist_ok=True)
         _PLIST_DEST.write_text(_build_plist_content())
