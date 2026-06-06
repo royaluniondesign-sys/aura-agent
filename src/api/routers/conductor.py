@@ -1,10 +1,9 @@
 """Conductor router: /api/conductor/*, /api/proactive/*, /api/stream/orchestration."""
 
-import asyncio
 from typing import Any, Dict
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
 
 logger = structlog.get_logger()
@@ -22,6 +21,7 @@ async def stream_orchestration() -> StreamingResponse:
     import asyncio as _aio
     import json as _j
     import time as _t
+
     from ...brains.conductor import orch_subscribe, orch_unsubscribe
 
     async def _gen():
@@ -37,6 +37,7 @@ async def stream_orchestration() -> StreamingResponse:
             }
             try:
                 from ...infra.proactive_loop import get_proactive_status
+
                 ps = get_proactive_status()
                 connected_event["proactive"] = {
                     "running": ps.get("running", False),
@@ -84,7 +85,8 @@ async def stream_orchestration() -> StreamingResponse:
 @router.get("/api/conductor/status")
 async def conductor_status() -> Dict[str, Any]:
     """Return whether a conductor is initialized and available."""
-    from ...brains.conductor import get_conductor, _subscribers
+    from ...brains.conductor import _subscribers, get_conductor
+
     c = get_conductor()
     return {
         "available": c is not None,
@@ -98,6 +100,7 @@ async def conductor_history_endpoint() -> Dict[str, Any]:
     """Return recent conductor run history for the Sessions panel."""
     try:
         from ...infra.conductor_history import get_history, history_stats
+
         runs = get_history(limit=50)
         return {"ok": True, "runs": runs, "stats": history_stats()}
     except Exception as e:
@@ -109,6 +112,7 @@ async def conductor_metrics_endpoint() -> Dict[str, Any]:
     """Return conductor metrics: success rates by layer and brain, best brain, avg durations."""
     try:
         from ...infra.conductor_history import conductor_metrics
+
         return {"ok": True, "metrics": conductor_metrics()}
     except Exception as e:
         return {"ok": False, "metrics": {}, "error": str(e)}
@@ -119,6 +123,7 @@ async def proactive_status_endpoint() -> Dict[str, Any]:
     """Return proactive loop status: running, last/next run, stats."""
     try:
         from ...infra.proactive_loop import get_proactive_status
+
         return {"ok": True, **get_proactive_status()}
     except Exception as e:
         return {"ok": False, "error": str(e)}

@@ -5,15 +5,14 @@ Contains handlers registered as Telegram commands in agentic mode:
   _zt_team, _zt_conductor, _voz_command, agentic_repo, _agentic_callback
 """
 
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, List
+from typing import TYPE_CHECKING, List
 
 import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
-from .utils.html_format import escape_html
 from ..projects import PrivateTopicsUnavailableError
+from .utils.html_format import escape_html
 
 if TYPE_CHECKING:
     from .orchestrator import MessageOrchestrator
@@ -74,8 +73,7 @@ class AgenticCommandsMixin:
         # Clear conversation history on /start
         context.user_data["ollama_history"] = []
         await update.message.reply_text(
-            f"Hola {safe_name} 👋 AURA lista."
-            f"{sync_line}",
+            f"Hola {safe_name} 👋 AURA lista." f"{sync_line}",
         )
 
     async def agentic_new(
@@ -220,7 +218,7 @@ class AgenticCommandsMixin:
           /conductor research latest AI trends and write a summary
           /c analyze this Python file and suggest optimizations
         """
-        from ..brains.conductor import get_conductor, Conductor, set_conductor
+        from ..brains.conductor import Conductor, get_conductor, set_conductor
 
         router = context.bot_data.get("brain_router")
         if not router:
@@ -290,7 +288,9 @@ class AgenticCommandsMixin:
                 # Telegram limit is 4096 chars
                 if len(full) > 4000:
                     await update.message.reply_text(
-                        header + self._escape_html(output[:3600]) + "\n\n<i>…truncado</i>",
+                        header
+                        + self._escape_html(output[:3600])
+                        + "\n\n<i>…truncado</i>",
                         parse_mode="HTML",
                     )
                 else:
@@ -318,6 +318,7 @@ class AgenticCommandsMixin:
     ) -> None:
         """/voice [start|stop|status|send|transcript] — control Gemini Live voice agent."""
         from .handlers.voice_agent import voice_command
+
         await voice_command(update, context)
 
     async def _voz_command(
@@ -327,6 +328,7 @@ class AgenticCommandsMixin:
     ) -> None:
         """/voz [on|off] — toggle voice responses for this user."""
         from .features.voice_tts import handle_voz_command
+
         await handle_voz_command(update, context)
 
     async def agentic_repo(
@@ -522,7 +524,7 @@ class AgenticCommandsMixin:
             except PermissionError as exc:
                 failed.append((pid, str(exc)))
 
-        lines = [f"🛑 <b>Stop ejecutado</b>"]
+        lines = ["🛑 <b>Stop ejecutado</b>"]
         if killed:
             lines.append(f"Matados: {', '.join(str(p) for p in killed)}")
         if failed:

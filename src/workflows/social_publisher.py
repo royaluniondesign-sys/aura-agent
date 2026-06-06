@@ -96,17 +96,24 @@ def _get_tunnel_url() -> str:
 def _save_draft_meta(caption: str, image_url: str, error: str, platform: str) -> str:
     """Save draft metadata (URL + caption) when publishing fails."""
     import json as _json
+
     _DRAFTS_DIR.mkdir(parents=True, exist_ok=True)
     ts = int(time.time())
     meta_path = _DRAFTS_DIR / f"{platform}_draft_{ts}.json"
-    meta_path.write_text(_json.dumps({
-        "caption": caption,
-        "image_url": image_url,
-        "error": error,
-        "platform": platform,
-        "saved_at": ts,
-        "status": "draft",
-    }, ensure_ascii=False, indent=2))
+    meta_path.write_text(
+        _json.dumps(
+            {
+                "caption": caption,
+                "image_url": image_url,
+                "error": error,
+                "platform": platform,
+                "saved_at": ts,
+                "status": "draft",
+            },
+            ensure_ascii=False,
+            indent=2,
+        )
+    )
     return str(meta_path)
 
 
@@ -133,14 +140,20 @@ async def publish_social(
     results: dict = {"ok": True, "platforms": {}, "caption": "", "image_url": ""}
 
     primary = platforms[0]
-    logger.info("social_publish_start", description=description[:60], platforms=platforms)
+    logger.info(
+        "social_publish_start", description=description[:60], platforms=platforms
+    )
 
     if custom_caption:
         caption = custom_caption
         image_prompt = f"Professional editorial photo for: {description}"
     else:
         caption, flux_prompts = await generate_social_content(description, primary)
-        image_prompt = flux_prompts[0] if flux_prompts else f"Professional photo for: {description}"
+        image_prompt = (
+            flux_prompts[0]
+            if flux_prompts
+            else f"Professional photo for: {description}"
+        )
 
     results["caption"] = caption
     results["image_prompt"] = image_prompt
@@ -150,13 +163,19 @@ async def publish_social(
         public_urls: list[str] = []
         for local_url in image_urls:
             try:
-                img_bytes = await generate_image_bytes(image_prompt, local_url=local_url)
+                img_bytes = await generate_image_bytes(
+                    image_prompt, local_url=local_url
+                )
                 pub_url = await upload_image_to_host(img_bytes)
                 public_urls.append(pub_url)
             except Exception as e:
                 logger.warning("carousel_upload_failed", url=local_url, error=str(e))
         if not public_urls:
-            return {"ok": False, "error": "No se pudieron subir las imágenes a CDN público", "platforms": {}}
+            return {
+                "ok": False,
+                "error": "No se pudieron subir las imágenes a CDN público",
+                "platforms": {},
+            }
         display_url = image_urls[0]
         results["image_url"] = display_url
         results["public_urls"] = public_urls

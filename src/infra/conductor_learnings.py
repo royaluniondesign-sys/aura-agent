@@ -4,10 +4,10 @@ After each conductor run, extract key insights and append to conductor_log.md
 in the AURA memory directory. This helps AURA learn from patterns and improve
 future orchestration decisions.
 """
+
 from __future__ import annotations
 
 import logging
-import os
 import time
 from pathlib import Path
 from threading import Lock
@@ -59,7 +59,7 @@ def save_learnings(result: ConductorResult) -> None:
 
         # Layers used
         layers_used = (
-            ", ".join(f"Layer {l}" for l in result.plan.layers_used)
+            ", ".join(f"Layer {line}" for line in result.plan.layers_used)
             if result.plan.layers_used
             else "N/A"
         )

@@ -1,4 +1,5 @@
 """Voice agent Telegram handlers — /voice command to control GeminiLiveAgent daemon."""
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING
@@ -62,11 +63,14 @@ async def voice_command(update: "Update", context: "ContextTypes.DEFAULT_TYPE") 
         await _voice_sleep_wake(update, sleep=False)
         return
 
-    await update.message.reply_text(f"Subcomando desconocido: `{sub}`\nUsa `/voice help`", parse_mode="Markdown")
+    await update.message.reply_text(
+        f"Subcomando desconocido: `{sub}`\nUsa `/voice help`", parse_mode="Markdown"
+    )
 
 
 async def _voice_status(update: "Update") -> None:
     from src.voice.voice_daemon import get_daemon_status
+
     status = await get_daemon_status()
     if status:
         state = status.get("status", "unknown")
@@ -80,12 +84,17 @@ async def _voice_status(update: "Update") -> None:
             parse_mode="Markdown",
         )
     else:
-        await update.message.reply_text("🔴 Voice agent: *detenido*\nUsa `/voice start` para iniciar.", parse_mode="Markdown")
+        await update.message.reply_text(
+            "🔴 Voice agent: *detenido*\nUsa `/voice start` para iniciar.",
+            parse_mode="Markdown",
+        )
 
 
 async def _voice_start(update: "Update") -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
@@ -101,7 +110,9 @@ async def _voice_start(update: "Update") -> None:
                         parse_mode="MarkdownV2",
                     )
                 else:
-                    await update.message.reply_text(f"❌ {data.get('error', 'Unknown error')}")
+                    await update.message.reply_text(
+                        f"❌ {data.get('error', 'Unknown error')}"
+                    )
     except Exception as e:
         await update.message.reply_text(
             f"❌ No se pudo conectar al voice daemon\\.\n"
@@ -113,14 +124,16 @@ async def _voice_start(update: "Update") -> None:
 
 async def _voice_stop(update: "Update") -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.post(
                 f"http://127.0.0.1:{_PORT}/stop",
                 json={},
                 timeout=aiohttp.ClientTimeout(total=10),
-            ) as resp:
+            ) as _resp:  # noqa: F841
                 await update.message.reply_text("⏹ Voice agent detenido.")
     except Exception:
         await update.message.reply_text("⚠️ Voice agent no estaba corriendo.")
@@ -128,16 +141,23 @@ async def _voice_stop(update: "Update") -> None:
 
 async def _voice_send(update: "Update", text: str) -> None:
     from src.voice.voice_daemon import send_text_to_voice
+
     ok = await send_text_to_voice(text)
     if ok:
-        await update.message.reply_text(f"✉️ Enviado al voice agent: _{text}_", parse_mode="Markdown")
+        await update.message.reply_text(
+            f"✉️ Enviado al voice agent: _{text}_", parse_mode="Markdown"
+        )
     else:
-        await update.message.reply_text("❌ Voice agent no disponible. Usa `/voice start`.")
+        await update.message.reply_text(
+            "❌ Voice agent no disponible. Usa `/voice start`."
+        )
 
 
 async def _voice_sleep_wake(update: "Update", sleep: bool) -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
+
     endpoint = "/sleep" if sleep else "/wake"
     emoji = "😴" if sleep else "👂"
     label = "durmiendo — mic apagado" if sleep else "despierta — escuchando"
@@ -147,7 +167,7 @@ async def _voice_sleep_wake(update: "Update", sleep: bool) -> None:
                 f"http://127.0.0.1:{_PORT}{endpoint}",
                 json={},
                 timeout=aiohttp.ClientTimeout(total=5),
-            ) as resp:
+            ) as _resp:  # noqa: F841
                 await update.message.reply_text(f"{emoji} AURA {label}.")
     except Exception:
         await update.message.reply_text("❌ Voice agent no disponible.")
@@ -155,7 +175,9 @@ async def _voice_sleep_wake(update: "Update", sleep: bool) -> None:
 
 async def _voice_transcript(update: "Update") -> None:
     import aiohttp
+
     from src.voice.voice_daemon import _PORT
+
     try:
         async with aiohttp.ClientSession() as session:
             async with session.get(

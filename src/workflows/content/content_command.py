@@ -7,14 +7,14 @@ Commands:
   /content next   — Show what's scheduled next
   /content feeds  — Show feed health (how many items fetched)
 """
+
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional, Callable, Awaitable
+from typing import Awaitable, Callable
 
 log = logging.getLogger("content.command")
 
@@ -69,6 +69,7 @@ async def cmd_plan(send: Callable) -> None:
     await send("🧠 Content Brain arrancando… analizo fuentes y genero plan del día.")
     try:
         from .content_brain import run_daily_brain
+
         result = await run_daily_brain()
 
         if not result.get("ok"):
@@ -82,7 +83,9 @@ async def cmd_plan(send: Callable) -> None:
         ]
         for i, p in enumerate(plans, 1):
             fmt = FORMAT_EMOJI.get(p.get("format", ""), "📄")
-            plats = " ".join(PLATFORM_EMOJI.get(pl, "?") for pl in p.get("platforms", []))
+            plats = " ".join(
+                PLATFORM_EMOJI.get(pl, "?") for pl in p.get("platforms", [])
+            )
             lines.append(
                 f"{i}. {fmt} **{p.get('headline', '?')}**\n"
                 f"   {plats} · {p.get('format')} · {p.get('pillar', '')}\n"
@@ -101,6 +104,7 @@ async def cmd_run(send: Callable) -> None:
     await send("🚀 Ejecutando plan de hoy… generando contenido y publicando.")
     try:
         from .content_executor import execute_todays_plans
+
         results = await execute_todays_plans(notify_fn=send)
 
         if not results:
@@ -120,6 +124,7 @@ async def cmd_status(send: Callable) -> None:
     """Show recent content history."""
     try:
         from .content_memory import recent_topics
+
         topics = recent_topics(15)
         if not topics:
             await send("📋 Sin historial aún. Corre `/content plan` para empezar.")
@@ -127,7 +132,9 @@ async def cmd_status(send: Callable) -> None:
 
         lines = ["**Historial de contenido** (últimas 15 piezas)\n"]
         for t in topics:
-            status_icon = {"published": "✅", "planned": "🕐", "failed": "❌"}.get(t["status"], "?")
+            status_icon = {"published": "✅", "planned": "🕐", "failed": "❌"}.get(
+                t["status"], "?"
+            )
             fmt = FORMAT_EMOJI.get(t.get("format", ""), "📄")
             date = t["created"][:10]
             lines.append(f"{status_icon} {fmt} {t['title'][:45]} · {date}")
@@ -152,11 +159,19 @@ async def cmd_next(send: Callable) -> None:
         lines = [f"**Plan del día** — {today}\n"]
         for p in plans:
             fmt = FORMAT_EMOJI.get(p.get("format", ""), "📄")
-            plats = " ".join(PLATFORM_EMOJI.get(pl, "?") for pl in p.get("platforms", []))
-            status = {"published": "✅ publicado", "planned": "🕐 pendiente", "failed": "❌ falló"}.get(
-                p.get("status", "planned"), "?"
+            plats = " ".join(
+                PLATFORM_EMOJI.get(pl, "?") for pl in p.get("platforms", [])
             )
-            scheduled = p.get("scheduled_at", "")[:16].replace("T", " ") if p.get("scheduled_at") else ""
+            status = {
+                "published": "✅ publicado",
+                "planned": "🕐 pendiente",
+                "failed": "❌ falló",
+            }.get(p.get("status", "planned"), "?")
+            scheduled = (
+                p.get("scheduled_at", "")[:16].replace("T", " ")
+                if p.get("scheduled_at")
+                else ""
+            )
             lines.append(
                 f"{fmt} **{p.get('headline', '?')}**\n"
                 f"   {plats} · {status}" + (f" · {scheduled}" if scheduled else "")
@@ -170,7 +185,8 @@ async def cmd_feeds(send: Callable) -> None:
     """Show feed health."""
     await send("📡 Comprobando fuentes…")
     try:
-        from .feed_aggregator import fetch_all, FEEDS
+        from .feed_aggregator import FEEDS, fetch_all
+
         items = await fetch_all(max_age_hours=72)
 
         # Group by source

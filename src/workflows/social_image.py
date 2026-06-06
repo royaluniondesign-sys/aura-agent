@@ -1,4 +1,5 @@
 """Image generation backends for social posts — NVIDIA, BFL, ComfyUI, Pollinations."""
+
 from __future__ import annotations
 
 import asyncio
@@ -17,15 +18,15 @@ _FLUX_MAX_CHARS = 500
 
 # Literal SD/LoRA/meta syntax that breaks FLUX
 _SD_GARBAGE = re.compile(
-    r'\b(LORA|LOCON|EMBEDDING|HYPERNETWORK|<[^>]+>|__[^_]+__)\b'
-    r'|[.!;,]?\s*(PROHIBIDO|PROHIBIT|ANATOMÍA|ANATOMIA|REGLA|NOTA|IMPORTANTE)'
-    r'|(?:^|\n)\s*[#→·].*',
+    r"\b(LORA|LOCON|EMBEDDING|HYPERNETWORK|<[^>]+>|__[^_]+__)\b"
+    r"|[.!;,]?\s*(PROHIBIDO|PROHIBIT|ANATOMÍA|ANATOMIA|REGLA|NOTA|IMPORTANTE)"
+    r"|(?:^|\n)\s*[#→·].*",
     re.IGNORECASE | re.MULTILINE,
 )
 # Actual 3D/render artifacts — not style words, literally wrong medium
 _RENDER_ARTIFACTS = re.compile(
-    r'\b(3[dD] render|CGI render|photorealistic render|hyperrealistic render'
-    r'|text overlay|glowing overlay|promotional poster)\b',
+    r"\b(3[dD] render|CGI render|photorealistic render|hyperrealistic render"
+    r"|text overlay|glowing overlay|promotional poster)\b",
     re.IGNORECASE,
 )
 
@@ -34,7 +35,9 @@ _RENDER_ARTIFACTS = re.compile(
 # - schnell: 4s, faster (fallback)
 _NV_API_KEY_DEFAULT = os.environ.get("NVIDIA_API_KEY", "")
 _NV_FLUX_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev"
-_NV_FLUX_SCHNELL_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"
+_NV_FLUX_SCHNELL_URL = (
+    "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"
+)
 _NV_IMG_SIZE = 1024
 
 _BFL_SUBMIT_URL = "https://api.bfl.ai/v1/flux-pro-1.1-ultra"
@@ -43,9 +46,9 @@ _BFL_POLL_URL = "https://api.bfl.ai/v1/get_result"
 _COMFYUI_URL = "http://127.0.0.1:8188"
 # Aspect ratio → (width, height) for ComfyUI FLUX — must be multiples of 16
 _COMFY_DIMS: dict[str, tuple[int, int]] = {
-    "1:1":  (1024, 1024),
-    "4:5":  (1024, 1280),
-    "9:16": (768,  1344),
+    "1:1": (1024, 1024),
+    "4:5": (1024, 1280),
+    "9:16": (768, 1344),
     "16:9": (1344, 768),
 }
 
@@ -61,18 +64,22 @@ def _sanitize_flux_prompt(prompt: str) -> str:
     artifacts. Does NOT enforce film style, quality suffixes, or strip
     legitimate descriptive words.
     """
-    m = re.search(r'[.!;,]?\s*(PROHIBIDO|PROHIBIT|ANATOMÍA|ANATOMIA|REGLA|NOTA|IMPORTANTE|→|·)', prompt, re.IGNORECASE)
-    text = prompt[:m.start()] if m else prompt
-    text = re.sub(r'\([^)]{20,}\)', '', text)
-    text = _SD_GARBAGE.sub(' ', text)
-    text = _RENDER_ARTIFACTS.sub('', text)
-    text = re.sub(r'\s{2,}', ' ', text)
-    text = re.sub(r'(,\s*){2,}', ', ', text)
-    text = text.strip().strip(',').strip()
+    m = re.search(
+        r"[.!;,]?\s*(PROHIBIDO|PROHIBIT|ANATOMÍA|ANATOMIA|REGLA|NOTA|IMPORTANTE|→|·)",
+        prompt,
+        re.IGNORECASE,
+    )
+    text = prompt[: m.start()] if m else prompt
+    text = re.sub(r"\([^)]{20,}\)", "", text)
+    text = _SD_GARBAGE.sub(" ", text)
+    text = _RENDER_ARTIFACTS.sub("", text)
+    text = re.sub(r"\s{2,}", " ", text)
+    text = re.sub(r"(,\s*){2,}", ", ", text)
+    text = text.strip().strip(",").strip()
     if len(text) > _FLUX_MAX_CHARS:
         cut = text[:_FLUX_MAX_CHARS]
-        last_sep = max(cut.rfind(','), cut.rfind(' '))
-        text = cut[:last_sep].rstrip(' ,') if last_sep > 200 else cut
+        last_sep = max(cut.rfind(","), cut.rfind(" "))
+        text = cut[:last_sep].rstrip(" ,") if last_sep > 200 else cut
     return text
 
 
@@ -124,7 +131,12 @@ async def generate_image_nvidia(
         raise RuntimeError("NVIDIA API artifact has no base64 data")
 
     img_bytes = _b64.b64decode(b64_str)
-    logger.info("image_generated_nvidia", model="flux.1-dev", size=len(img_bytes), prompt_chars=len(image_prompt))
+    logger.info(
+        "image_generated_nvidia",
+        model="flux.1-dev",
+        size=len(img_bytes),
+        prompt_chars=len(image_prompt),
+    )
     return img_bytes
 
 
@@ -183,9 +195,15 @@ async def generate_image_bfl(
             status = result.get("status")
             if status == "Ready":
                 img_url = result["result"]["sample"]
-                async with session.get(img_url, timeout=aiohttp.ClientTimeout(total=30)) as dl:
+                async with session.get(
+                    img_url, timeout=aiohttp.ClientTimeout(total=30)
+                ) as dl:
                     img_bytes = await dl.read()
-                logger.info("image_generated_bfl", kb=len(img_bytes) // 1024, prompt_chars=len(image_prompt))
+                logger.info(
+                    "image_generated_bfl",
+                    kb=len(img_bytes) // 1024,
+                    prompt_chars=len(image_prompt),
+                )
                 return img_bytes
             if status in ("Error", "Failed", "Content Moderated", "Request Moderated"):
                 raise RuntimeError(f"BFL task {status}: {result}")
@@ -276,6 +294,7 @@ async def generate_image_comfyui(
 def generate_image_public_url(image_prompt: str) -> str:
     """Return a public Pollinations.ai URL (fallback when NVIDIA fails)."""
     import urllib.parse
+
     encoded_prompt = urllib.parse.quote(image_prompt)
     seed = int(time.time())
     return (
@@ -287,6 +306,7 @@ def generate_image_public_url(image_prompt: str) -> str:
 def _is_comfyui_running() -> bool:
     """Quick check if local ComfyUI is reachable on port 8188."""
     import urllib.request as _urllib
+
     try:
         _urllib.urlopen(f"{_COMFYUI_URL}/system_stats", timeout=2)
         return True
@@ -294,7 +314,9 @@ def _is_comfyui_running() -> bool:
         return False
 
 
-async def generate_image_bytes(image_prompt: str, local_url: str | None = None) -> bytes:
+async def generate_image_bytes(
+    image_prompt: str, local_url: str | None = None
+) -> bytes:
     """Get image bytes — ComfyUI local (primary when running), NVIDIA NIM, Pollinations fallback.
 
     Priority:
@@ -320,7 +342,9 @@ async def generate_image_bytes(image_prompt: str, local_url: str | None = None) 
 
     try:
         clean_prompt = _sanitize_flux_prompt(image_prompt)
-        logger.debug("nvidia_prompt_chars", original=len(image_prompt), cleaned=len(clean_prompt))
+        logger.debug(
+            "nvidia_prompt_chars", original=len(image_prompt), cleaned=len(clean_prompt)
+        )
         return await generate_image_nvidia(clean_prompt)
     except Exception as e:
         logger.warning("nvidia_image_failed", error=str(e)[:100])

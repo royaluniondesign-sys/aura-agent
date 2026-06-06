@@ -46,10 +46,14 @@ def _ensure_fast_gemini_home() -> None:
     config_dir.mkdir(parents=True, exist_ok=True)
     settings_path = config_dir / "settings.json"
     if not settings_path.exists():
-        settings_path.write_text(json.dumps({
-            "general": {"sessionRetention": {"enabled": False}},
-            "security": {"auth": {"selectedType": "oauth-personal"}},
-        }))
+        settings_path.write_text(
+            json.dumps(
+                {
+                    "general": {"sessionRetention": {"enabled": False}},
+                    "security": {"auth": {"selectedType": "oauth-personal"}},
+                }
+            )
+        )
     # Copy OAuth credentials so gemini can authenticate
     real_gemini = Path.home() / ".gemini"
     for cred_file in ("oauth_creds.json", "google_accounts.json"):
@@ -103,13 +107,16 @@ class GeminiBrain(Brain):
 
         # Hard-cap: Gemini CLI is an agentic tool that can run for minutes.
         # Never let it exceed _DEFAULT_TIMEOUT regardless of what the caller wants.
-        timeout = min(timeout_seconds, self._timeout) if timeout_seconds else self._timeout
+        timeout = (
+            min(timeout_seconds, self._timeout) if timeout_seconds else self._timeout
+        )
         cwd = working_directory or str(Path.home())
         start = time.time()
 
         # Prepend AURA identity + memory as context prefix (CLI has no system channel)
         try:
             from src.context.aura_context import build_system_prompt
+
             context_prefix = build_system_prompt()
             full_prompt = f"[CONTEXTO DE AURA]\n{context_prefix}\n\n[TAREA]\n{prompt}"
         except Exception:
@@ -117,9 +124,12 @@ class GeminiBrain(Brain):
 
         cmd = [
             self._cli_path,
-            "-p", full_prompt,
-            "--approval-mode", "yolo",
-            "-o", "text",
+            "-p",
+            full_prompt,
+            "--approval-mode",
+            "yolo",
+            "-o",
+            "text",
         ]
 
         try:

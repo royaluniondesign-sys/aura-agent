@@ -12,9 +12,7 @@ logger = structlog.get_logger()
 class ZeroTokenWebMixin:
     """Mixin: web, search, and task queue zero-token commands."""
 
-    async def _zt_web(
-        self, update: Update, context: ContextTypes.DEFAULT_TYPE
-    ) -> None:
+    async def _zt_web(self, update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         """⚡ Fetch and analyze a URL via Gemini (has web access).
 
         /web https://example.com
@@ -40,11 +38,14 @@ class ZeroTokenWebMixin:
         # Build prompt with URL explicit
         prompt = f"Analiza esta URL: {url_and_rest}"
 
-        from ...bot.orchestrator import MessageOrchestrator
         if hasattr(self, "_handle_alt_brain"):
             await self._handle_alt_brain(
-                update, context, router, prompt,
-                update.effective_user.id, brain_name="gemini",
+                update,
+                context,
+                router,
+                prompt,
+                update.effective_user.id,
+                brain_name="gemini",
             )
 
     async def _zt_search(
@@ -73,8 +74,12 @@ class ZeroTokenWebMixin:
 
         if hasattr(self, "_handle_alt_brain"):
             await self._handle_alt_brain(
-                update, context, router, query,
-                update.effective_user.id, brain_name="gemini",
+                update,
+                context,
+                router,
+                query,
+                update.effective_user.id,
+                brain_name="gemini",
             )
 
     async def _zt_queue(
@@ -91,9 +96,9 @@ class ZeroTokenWebMixin:
           /queue urgent revisa si hay errores en los últimos logs
           /queue fix el daemon de Termora no reinicia automáticamente
         """
-        import asyncio as _asyncio
-        from ...infra.task_store import create_task as _create_task
+
         from ...claude.meta_router import route_request as _route
+        from ...infra.task_store import create_task as _create_task
 
         text = (update.message.text or "").strip()
         parts = text.split(maxsplit=1)

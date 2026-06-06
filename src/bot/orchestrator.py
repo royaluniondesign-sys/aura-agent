@@ -27,7 +27,6 @@ from telegram.ext import (
 )
 
 from ..config.settings import Settings
-
 from .handlers.fleet_commands import FleetCommandsMixin
 from .handlers.zero_token import ZeroTokenMixin
 from .orchestrator_commands import AgenticCommandsMixin
@@ -73,12 +72,14 @@ class MessageOrchestrator(
         if router is not None:
             try:
                 from ..brains.cortex import AuraCortex
+
                 self._cortex = AuraCortex(router)
                 logger.info("cortex_attached", status="ok")
             except Exception as _ce:
                 logger.warning("cortex_init_failed", error=str(_ce))
             try:
                 from ..agents.squad import get_squad
+
                 self._squad = get_squad(router)
                 logger.info("agent_squad_attached", status="ok")
             except Exception as _se:
@@ -95,9 +96,7 @@ class MessageOrchestrator(
         return escape_html(text)
 
     @staticmethod
-    def _start_typing_heartbeat(
-        chat: Any, interval: float = 2.0
-    ) -> "Any":
+    def _start_typing_heartbeat(chat: Any, interval: float = 2.0) -> "Any":
         """Start a background typing indicator task."""
         return start_typing_heartbeat(chat, interval)
 
@@ -348,74 +347,77 @@ class MessageOrchestrator(
         # Commands
         handlers = [
             # ── Core ──────────────────────────────────────────────────────
-            ("start",     self.agentic_start),      # greeting / session init
-            ("new",       self.agentic_new),         # reset conversation
-            ("help",      self._zt_help),            # command reference
-            ("status",    self._zt_status_full),     # compact dashboard
-            ("restart",   command.restart_command),  # restart bot process
+            ("start", self.agentic_start),  # greeting / session init
+            ("new", self.agentic_new),  # reset conversation
+            ("help", self._zt_help),  # command reference
+            ("status", self._zt_status_full),  # compact dashboard
+            ("restart", command.restart_command),  # restart bot process
             # ── Shell & files ─────────────────────────────────────────────
-            ("sh",        self._zt_sh),              # /sh <cmd> — direct shell
-            ("git",       self._zt_git),             # /git [subcmd]
-            ("repo",      self.agentic_repo),        # /repo [name] — switch project
+            ("sh", self._zt_sh),  # /sh <cmd> — direct shell
+            ("git", self._zt_git),  # /git [subcmd]
+            ("repo", self.agentic_repo),  # /repo [name] — switch project
             # ── Brains & routing ──────────────────────────────────────────
-            ("brain",     self._zt_brain),           # /brain [name|auto]
-            ("task",      self._zt_task),            # /task <brain> <prompt>
-            ("queue",     self._zt_queue),            # /queue [urgent] <desc>
-            ("limits",    self._zt_limits),          # rate limits + usage
-            ("costs",     self._zt_costs),           # token economy stats
+            ("brain", self._zt_brain),  # /brain [name|auto]
+            ("task", self._zt_task),  # /task <brain> <prompt>
+            ("queue", self._zt_queue),  # /queue [urgent] <desc>
+            ("limits", self._zt_limits),  # rate limits + usage
+            ("costs", self._zt_costs),  # token economy stats
             # ── Memory ────────────────────────────────────────────────────
-            ("memory",    self._zt_memory),          # /memory [add|client|clear|...]
+            ("memory", self._zt_memory),  # /memory [add|client|clear|...]
             # ── Web & search ──────────────────────────────────────────────
-            ("web",       self._zt_web),             # /web <url> — analyze via gemini
-            ("search",    self._zt_search),          # /search <query> — force web search
+            ("web", self._zt_web),  # /web <url> — analyze via gemini
+            ("search", self._zt_search),  # /search <query> — force web search
             # ── Communication ─────────────────────────────────────────────
-            ("email",     self._zt_email),           # /email to | subject | body
+            ("email", self._zt_email),  # /email to | subject | body
             # ── System & services ─────────────────────────────────────────
-            ("health",    self._zt_health),          # watchdog full health check
-            ("terminal",  self._zt_terminal),        # Termora one-tap link
-            ("dashboard", self._zt_dashboard),       # dashboard URL
+            ("health", self._zt_health),  # watchdog full health check
+            ("terminal", self._zt_terminal),  # Termora one-tap link
+            ("dashboard", self._zt_dashboard),  # dashboard URL
             # ── Workflows ─────────────────────────────────────────────────
-            ("standup",   self._zt_standup),         # daily standup report
-            ("report",    self._zt_report),          # weekly report
-            ("triage",    self._zt_triage),          # email triage
-            ("followup",  self._zt_followup),        # client followup
+            ("standup", self._zt_standup),  # daily standup report
+            ("report", self._zt_report),  # weekly report
+            ("triage", self._zt_triage),  # email triage
+            ("followup", self._zt_followup),  # client followup
             # ── Fleet & SuperNodes (registered but not in menu) ──────────
-            ("machines",  self._zt_machines),
-            ("ssh",       self._zt_ssh),
-            ("fleet",     self._zt_fleet),
-            ("nodes",     self._zt_nodes),
-            ("dispatch",  self._zt_dispatch),
+            ("machines", self._zt_machines),
+            ("ssh", self._zt_ssh),
+            ("fleet", self._zt_fleet),
+            ("nodes", self._zt_nodes),
+            ("dispatch", self._zt_dispatch),
             # ── Social media ──────────────────────────────────────────────
-            ("post",      self._zt_post),            # /post <platform> [schedule] <topic>
-            ("posts",     self._zt_posts),           # /posts — recent publications list
-            ("social",    self._zt_social),          # /social [status|queue] — F1 status
-            ("imagen",    self._zt_imagen),          # /imagen <prompt> — FLUX.1 directo
-            ("design",    self._zt_design),          # /design <brief> — HTML editorial → PNG draft
-            ("galeria",   self._zt_galeria),         # /galeria — listar / publicar drafts
-            ("ig_auth",   self._zt_ig_auth),         # /ig-auth <app_secret>
-            ("content",   self._zt_content),         # /content [plan|run|status|next|feeds]
+            ("post", self._zt_post),  # /post <platform> [schedule] <topic>
+            ("posts", self._zt_posts),  # /posts — recent publications list
+            ("social", self._zt_social),  # /social [status|queue] — F1 status
+            ("imagen", self._zt_imagen),  # /imagen <prompt> — FLUX.1 directo
+            ("design", self._zt_design),  # /design <brief> — HTML editorial → PNG draft
+            ("galeria", self._zt_galeria),  # /galeria — listar / publicar drafts
+            ("ig_auth", self._zt_ig_auth),  # /ig-auth <app_secret>
+            ("content", self._zt_content),  # /content [plan|run|status|next|feeds]
             # ── Agent Mesh ────────────────────────────────────────────────
-            ("hermes",    self._zt_hermes),          # /hermes <task> — delegate to Hermes
-            ("mesh",      self._zt_mesh),            # /mesh — both agents health
+            ("hermes", self._zt_hermes),  # /hermes <task> — delegate to Hermes
+            ("mesh", self._zt_mesh),  # /mesh — both agents health
             # ── Google Drive / Sheets ─────────────────────────────────────
-            ("drive",     self._zt_drive),           # /drive [setup|status|auth]
+            ("drive", self._zt_drive),  # /drive [setup|status|auth]
             # ── Video generation ──────────────────────────────────────────
-            ("video",     self._zt_video),           # /video [cinematic|slides] <prompt>
+            ("video", self._zt_video),  # /video [cinematic|slides] <prompt>
             # ── Power user ────────────────────────────────────────────────
-            ("verbose",   self.agentic_verbose),     # output verbosity 0|1|2
-            ("speak",     self._zt_speak),           # TTS voice output
-            ("voz",       self._voz_command),        # /voz [on|off] — voice toggle per user
+            ("verbose", self.agentic_verbose),  # output verbosity 0|1|2
+            ("speak", self._zt_speak),  # TTS voice output
+            ("voz", self._voz_command),  # /voz [on|off] — voice toggle per user
             # ── Diagnostics ───────────────────────────────────────────────
-            ("diagnose",  self._zt_diagnose),        # full self-healer diagnostic
+            ("diagnose", self._zt_diagnose),  # full self-healer diagnostic
             # ── Agent Squad ───────────────────────────────────────────────
-            ("team",      self._zt_team),            # /team [task] — multi-agent squad
+            ("team", self._zt_team),  # /team [task] — multi-agent squad
             # ── 3-Layer Conductor ─────────────────────────────────────────
-            ("c",         self._zt_conductor),       # /c <task> — conductor shortcut
-            ("conductor", self._zt_conductor),       # /conductor <task>
+            ("c", self._zt_conductor),  # /c <task> — conductor shortcut
+            ("conductor", self._zt_conductor),  # /conductor <task>
             # ── Voice Agent ───────────────────────────────────────────────
-            ("voice",     self._voice_command),      # /voice [start|stop|status|send|transcript]
+            (
+                "voice",
+                self._voice_command,
+            ),  # /voice [start|stop|status|send|transcript]
             # ── Emergency ─────────────────────────────────────────────────
-            ("stop",      self.agentic_stop),        # kill all Claude subprocesses
+            ("stop", self.agentic_stop),  # kill all Claude subprocesses
         ]
         if self.settings.enable_project_threads:
             handlers.append(("sync_threads", command.sync_threads))
@@ -479,20 +481,20 @@ class MessageOrchestrator(
         from .handlers import callback, command, message
 
         handlers = [
-            ("start",    command.start_command),
-            ("help",     command.help_command),
-            ("new",      command.new_session),
+            ("start", command.start_command),
+            ("help", command.help_command),
+            ("new", command.new_session),
             ("continue", command.continue_session),
-            ("end",      command.end_session),
-            ("ls",       command.list_files),
-            ("cd",       command.change_directory),
-            ("pwd",      command.print_working_directory),
+            ("end", command.end_session),
+            ("ls", command.list_files),
+            ("cd", command.change_directory),
+            ("pwd", command.print_working_directory),
             ("projects", command.show_projects),
-            ("status",   command.session_status),
-            ("export",   command.export_session),
-            ("actions",  command.quick_actions),
-            ("git",      command.git_command),
-            ("restart",  command.restart_command),
+            ("status", command.session_status),
+            ("export", command.export_session),
+            ("actions", command.quick_actions),
+            ("git", command.git_command),
+            ("restart", command.restart_command),
         ]
         if self.settings.enable_project_threads:
             handlers.append(("sync_threads", command.sync_threads))
@@ -532,51 +534,53 @@ class MessageOrchestrator(
         if self.settings.agentic_mode:
             commands = [
                 # Core
-                BotCommand("start",     "Iniciar AURA"),
-                BotCommand("new",       "Nueva conversación"),
-                BotCommand("status",    "Brains · rate limits · sistema"),
-                BotCommand("stop",      "Matar tareas colgadas"),
-                BotCommand("restart",   "Reiniciar el bot"),
+                BotCommand("start", "Iniciar AURA"),
+                BotCommand("new", "Nueva conversación"),
+                BotCommand("status", "Brains · rate limits · sistema"),
+                BotCommand("stop", "Matar tareas colgadas"),
+                BotCommand("restart", "Reiniciar el bot"),
                 # Voice
-                BotCommand("voz",       "Voz on/off — respuestas de audio"),
+                BotCommand("voz", "Voz on/off — respuestas de audio"),
                 # Dev
-                BotCommand("git",       "Git status / log / diff"),
-                BotCommand("sh",        "Shell rápido — /sh <comando>"),
-                BotCommand("repo",      "Cambiar proyecto — /repo [nombre]"),
+                BotCommand("git", "Git status / log / diff"),
+                BotCommand("sh", "Shell rápido — /sh <comando>"),
+                BotCommand("repo", "Cambiar proyecto — /repo [nombre]"),
                 # Comms
-                BotCommand("email",     "Enviar email"),
-                BotCommand("post",      "Publicar en redes — /post instagram <tema>"),
-                BotCommand("imagen",   "Generar imagen FLUX — /imagen <prompt>"),
-                BotCommand("galeria",  "Galería de drafts — listar / publicar"),
-                BotCommand("hermes",   "Delegar tarea a Hermes — /hermes <tarea>"),
-                BotCommand("mesh",     "Estado de ambos agentes AURA + Hermes"),
-                BotCommand("voice",    "Agente de voz Gemini — /voice [start|stop|status]"),
+                BotCommand("email", "Enviar email"),
+                BotCommand("post", "Publicar en redes — /post instagram <tema>"),
+                BotCommand("imagen", "Generar imagen FLUX — /imagen <prompt>"),
+                BotCommand("galeria", "Galería de drafts — listar / publicar"),
+                BotCommand("hermes", "Delegar tarea a Hermes — /hermes <tarea>"),
+                BotCommand("mesh", "Estado de ambos agentes AURA + Hermes"),
+                BotCommand(
+                    "voice", "Agente de voz Gemini — /voice [start|stop|status]"
+                ),
                 # Access
-                BotCommand("terminal",  "Terminal remota (Termora)"),
+                BotCommand("terminal", "Terminal remota (Termora)"),
                 BotCommand("dashboard", "Dashboard AURA"),
                 # Power
-                BotCommand("c",         "Conductor — tarea compleja con 3 capas"),
-                BotCommand("memory",    "Memoria aprendida"),
+                BotCommand("c", "Conductor — tarea compleja con 3 capas"),
+                BotCommand("memory", "Memoria aprendida"),
             ]
             if self.settings.enable_project_threads:
                 commands.append(BotCommand("sync_threads", "Sync project topics"))
             return commands
         else:
             commands = [
-                BotCommand("start",    "Start bot and show help"),
-                BotCommand("help",     "Show available commands"),
-                BotCommand("new",      "Clear context and start fresh session"),
+                BotCommand("start", "Start bot and show help"),
+                BotCommand("help", "Show available commands"),
+                BotCommand("new", "Clear context and start fresh session"),
                 BotCommand("continue", "Explicitly continue last session"),
-                BotCommand("end",      "End current session and clear context"),
-                BotCommand("ls",       "List files in current directory"),
-                BotCommand("cd",       "Change directory (resumes project session)"),
-                BotCommand("pwd",      "Show current directory"),
+                BotCommand("end", "End current session and clear context"),
+                BotCommand("ls", "List files in current directory"),
+                BotCommand("cd", "Change directory (resumes project session)"),
+                BotCommand("pwd", "Show current directory"),
                 BotCommand("projects", "Show all projects"),
-                BotCommand("status",   "Show session status"),
-                BotCommand("export",   "Export current session"),
-                BotCommand("actions",  "Show quick actions"),
-                BotCommand("git",      "Git repository commands"),
-                BotCommand("restart",  "Restart the bot"),
+                BotCommand("status", "Show session status"),
+                BotCommand("export", "Export current session"),
+                BotCommand("actions", "Show quick actions"),
+                BotCommand("git", "Git repository commands"),
+                BotCommand("restart", "Restart the bot"),
             ]
             if self.settings.enable_project_threads:
                 commands.append(BotCommand("sync_threads", "Sync project topics"))
@@ -593,7 +597,7 @@ def read_file(file_path: str) -> Optional[str]:
         File contents as string, or None if read fails
     """
     try:
-        with open(file_path, 'r') as file:
+        with open(file_path, "r") as file:
             return file.read()
     except FileNotFoundError as e:
         log_error(f"File not found: {e}")
@@ -612,7 +616,7 @@ def write_file(file_path: str, content: str) -> None:
         content: Content to write to the file
     """
     try:
-        with open(file_path, 'w') as file:
+        with open(file_path, "w") as file:
             file.write(content)
     except FileNotFoundError as e:
         log_error(f"File not found: {e}")
@@ -628,9 +632,9 @@ def log_error(message: str) -> None:
     Args:
         message: Error message to log
     """
-    log_path = os.path.expanduser('~/.aura/memory/error.log')
+    log_path = os.path.expanduser("~/.aura/memory/error.log")
     try:
-        with open(log_path, 'a') as log_file:
+        with open(log_path, "a") as log_file:
             log_file.write(f"{message}\n")
     except Exception as e:
         logger.error("failed_to_write_error_log", error=str(e))

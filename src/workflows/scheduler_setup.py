@@ -4,8 +4,7 @@ Called once during bot startup to ensure all workflows are scheduled.
 Uses direct Telegram sends (not Claude) — zero tokens.
 """
 
-import asyncio
-from typing import Any, Callable, List, Optional
+from typing import Any, Callable, List
 
 import structlog
 from telegram import Bot
@@ -64,6 +63,7 @@ _WORKFLOW_DEFS = [
 def _import_generator(module_path: str, func_name: str) -> Callable:
     """Dynamically import a workflow generator function."""
     import importlib
+
     mod = importlib.import_module(module_path)
     return getattr(mod, func_name)
 
@@ -109,15 +109,21 @@ async def _run_workflow_and_send(
 async def _run_content_brain(bot: Bot, chat_id: int) -> None:
     """Run daily Content Brain and notify via Telegram with plan summary."""
     FORMAT_EMOJI = {
-        "post_4_5": "🖼", "carousel": "📑",
-        "reel": "🎬", "story": "⭕", "text_post": "📝",
+        "post_4_5": "🖼",
+        "carousel": "📑",
+        "reel": "🎬",
+        "story": "⭕",
+        "text_post": "📝",
     }
     PLATFORM_EMOJI = {
-        "instagram": "📸", "tiktok": "🎵",
-        "youtube_shorts": "▶️", "linkedin": "💼",
+        "instagram": "📸",
+        "tiktok": "🎵",
+        "youtube_shorts": "▶️",
+        "linkedin": "💼",
     }
     try:
         from src.workflows.content.content_brain import run_daily_brain
+
         result = await run_daily_brain()
 
         if not result.get("ok"):
@@ -134,7 +140,9 @@ async def _run_content_brain(bot: Bot, chat_id: int) -> None:
         ]
         for i, p in enumerate(plans, 1):
             fmt = FORMAT_EMOJI.get(p.get("format", ""), "📄")
-            plats = " ".join(PLATFORM_EMOJI.get(pl, "?") for pl in p.get("platforms", []))
+            plats = " ".join(
+                PLATFORM_EMOJI.get(pl, "?") for pl in p.get("platforms", [])
+            )
             lines.append(
                 f"{i}\\. {fmt} *{p.get('headline', '?')}*\n"
                 f"   {plats} · `{p.get('format')}` · {p.get('pillar', '')}"
@@ -172,8 +180,11 @@ def register_workflows(
 
     # Custom runners for workflows that don't return plain strings
     _CUSTOM_RUNNERS: dict = {
-        "content_brain_daily": (_run_content_brain, "0 7 * * *",
-                                "Content Brain — fetch feeds, select topics, generate briefs"),
+        "content_brain_daily": (
+            _run_content_brain,
+            "0 7 * * *",
+            "Content Brain — fetch feeds, select topics, generate briefs",
+        ),
     }
 
     for wf in _WORKFLOW_DEFS:

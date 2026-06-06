@@ -53,7 +53,9 @@ class _FakeRouter:
     def get_default_brain(self) -> _FakeBrain:
         return self._brain
 
-    def smart_route(self, message: str, rate_monitor: object | None = None) -> tuple[str, str]:
+    def smart_route(
+        self, message: str, rate_monitor: object | None = None
+    ) -> tuple[str, str]:
         return ("haiku", "smoke")
 
 
@@ -65,7 +67,9 @@ def test_dashboard_api_chat_smoke() -> None:
         app = create_api_app(EventBus(), _make_settings(), brain_router=_FakeRouter())
     client = TestClient(app)
 
-    res = client.post("/api/chat", json={"message": "run quick check", "brain": "haiku"})
+    res = client.post(
+        "/api/chat", json={"message": "run quick check", "brain": "haiku"}
+    )
     assert res.status_code == 200
     body = res.json()
     assert body["ok"] is True
@@ -94,7 +98,9 @@ async def test_routine_runner_background_dedup_and_result(monkeypatch) -> None:
             setattr(routine, k, v)
         return routine
 
-    async def _append_log(rid: str, status: str, output: str, duration_ms: int, brain_used: str) -> None:
+    async def _append_log(
+        rid: str, status: str, output: str, duration_ms: int, brain_used: str
+    ) -> None:
         logs.append((rid, status))
 
     monkeypatch.setattr(routine_runner, "get_routine", _get_routine)
@@ -182,7 +188,10 @@ async def test_rag_indexer_incremental_smoke(tmp_path: Path, monkeypatch) -> Non
 
     first = await idx.index_file(p, "mission")
     second = await idx.index_file(p, "mission")
-    p.write_text("# Mission\nImprove Telegram stability\nAdd dashboard checks\n", encoding="utf-8")
+    p.write_text(
+        "# Mission\nImprove Telegram stability\nAdd dashboard checks\n",
+        encoding="utf-8",
+    )
     third = await idx.index_file(p, "mission")
 
     assert first["indexed"] > 0
@@ -207,7 +216,8 @@ async def test_memory_layer_store_and_search_smoke(monkeypatch) -> None:
         return [{"content": f"Memoria relevante sobre: {query}", "score": 0.9}]
 
     # Patch at the RAG layer so no Ollama/SQLite needed in CI
-    from src.rag import indexer as _idx_mod, retriever as _ret_mod
+    from src.rag import indexer as _idx_mod
+    from src.rag import retriever as _ret_mod
 
     class _FakeIndexer:
         async def index_text(self, text: str, source: str, source_type: str) -> dict:
@@ -227,5 +237,8 @@ async def test_memory_layer_store_and_search_smoke(monkeypatch) -> None:
     hits = await mempalace_memory.search_memory("estabilizar telegram", top_k=3)
 
     assert len(indexed_calls) == 1
-    assert "estabilizar" in indexed_calls[0].lower() or "routing" in indexed_calls[0].lower()
+    assert (
+        "estabilizar" in indexed_calls[0].lower()
+        or "routing" in indexed_calls[0].lower()
+    )
     assert len(hits) >= 1

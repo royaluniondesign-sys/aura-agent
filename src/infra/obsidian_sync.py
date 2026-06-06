@@ -3,11 +3,10 @@
 Sincroniza archivos clave de ~/.aura/memory/ → ~/Obsidian/
 Corre automáticamente cada hora + en startup.
 """
+
 from __future__ import annotations
 
 import asyncio
-import json
-import shutil
 from datetime import UTC, datetime
 from pathlib import Path
 
@@ -15,27 +14,27 @@ import structlog
 
 logger = structlog.get_logger()
 
-_MEMORY   = Path.home() / ".aura" / "memory"
+_MEMORY = Path.home() / ".aura" / "memory"
 _OBSIDIAN = Path.home() / "Obsidian"
 
 # Archivos a sincronizar: (origen, destino_en_obsidian)
 _SYNC_MAP = [
     # Shared cross-agent
-    (_MEMORY / "shared" / "tasks.md",        _OBSIDIAN / "shared_tasks.md"),
-    (_MEMORY / "shared" / "projects.md",     _OBSIDIAN / "shared_projects.md"),
+    (_MEMORY / "shared" / "tasks.md", _OBSIDIAN / "shared_tasks.md"),
+    (_MEMORY / "shared" / "projects.md", _OBSIDIAN / "shared_projects.md"),
     (_MEMORY / "shared" / "capabilities.md", _OBSIDIAN / "capabilities.md"),
-    (_MEMORY / "shared" / "learnings.md",    _OBSIDIAN / "shared_learnings.md"),
+    (_MEMORY / "shared" / "learnings.md", _OBSIDIAN / "shared_learnings.md"),
     # AURA core memory
-    (_MEMORY / "MEMORY.md",                  _OBSIDIAN / "AURA_MEMORY.md"),
-    (_MEMORY / "self-awareness.md",          _OBSIDIAN / "AURA_self_awareness.md"),
-    (_MEMORY / "services.md",                _OBSIDIAN / "AURA_services.md"),
-    (_MEMORY / "session-plan.md",            _OBSIDIAN / "AURA_session_plan.md"),
-    (_MEMORY / "social-roadmap.md",          _OBSIDIAN / "social_roadmap.md"),
-    (_MEMORY / "hermes.md",                  _OBSIDIAN / "hermes.md"),
+    (_MEMORY / "MEMORY.md", _OBSIDIAN / "AURA_MEMORY.md"),
+    (_MEMORY / "self-awareness.md", _OBSIDIAN / "AURA_self_awareness.md"),
+    (_MEMORY / "services.md", _OBSIDIAN / "AURA_services.md"),
+    (_MEMORY / "session-plan.md", _OBSIDIAN / "AURA_session_plan.md"),
+    (_MEMORY / "social-roadmap.md", _OBSIDIAN / "social_roadmap.md"),
+    (_MEMORY / "hermes.md", _OBSIDIAN / "hermes.md"),
     # Mesh log
-    (_MEMORY / "mesh-log.md",                _OBSIDIAN / "mesh_log.md"),
+    (_MEMORY / "mesh-log.md", _OBSIDIAN / "mesh_log.md"),
     # Heartbeat
-    (_MEMORY / "heartbeat-state.json",       _OBSIDIAN / "heartbeat-state.json"),
+    (_MEMORY / "heartbeat-state.json", _OBSIDIAN / "heartbeat-state.json"),
 ]
 
 _INTERVAL_S = 3600  # sync cada hora
@@ -47,7 +46,7 @@ def _inject_timestamp(content: str, source: Path) -> str:
     footer = f"\n\n---\n*Sincronizado desde `{source.name}` el {ts}*"
     # Replace existing footer if present
     if "\n---\n*Sincronizado" in content:
-        content = content[:content.rfind("\n---\n*Sincronizado")]
+        content = content[: content.rfind("\n---\n*Sincronizado")]
     return content + footer
 
 
@@ -104,7 +103,7 @@ def _write_dashboard() -> None:
     mesh_lines = []
     mesh_log = _MEMORY / "mesh-log.md"
     if mesh_log.exists():
-        lines = [l for l in mesh_log.read_text().splitlines() if l.strip()]
+        lines = [line for line in mesh_log.read_text().splitlines() if line.strip()]
         mesh_lines = lines[-3:] if len(lines) >= 3 else lines
 
     content = f"""# AURA Dashboard

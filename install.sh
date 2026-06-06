@@ -220,17 +220,29 @@ echo ""
 if [[ "$(uname)" == "Darwin" ]]; then
     echo -e "${BOLD}Setting up auto-start (macOS)...${NC}"
 
-    PLIST_PATH="$HOME/Library/LaunchAgents/com.aura.telegram-bot.plist"
+    # Remove old plist if it exists (was using stale entrypoint name)
+    OLD_PLIST="$HOME/Library/LaunchAgents/com.aura.telegram-bot.plist"
+    if [ -f "$OLD_PLIST" ]; then
+        launchctl unload "$OLD_PLIST" 2>/dev/null || true
+        rm -f "$OLD_PLIST"
+        echo -e "  ${ARROW} Removed outdated LaunchAgent (com.aura.telegram-bot)"
+    fi
+
+    PYTHON_BIN="$(command -v python3 || echo "$HOME/.local/bin/python3")"
+    PLIST_PATH="$HOME/Library/LaunchAgents/com.aura.bot.plist"
+    mkdir -p "$INSTALL_DIR/logs"
     cat > "$PLIST_PATH" << PLISTEOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.aura.telegram-bot</string>
+    <string>com.aura.bot</string>
     <key>ProgramArguments</key>
     <array>
-        <string>$HOME/.local/bin/claude-telegram-bot</string>
+        <string>$PYTHON_BIN</string>
+        <string>-m</string>
+        <string>src.main</string>
     </array>
     <key>WorkingDirectory</key>
     <string>$INSTALL_DIR</string>
@@ -238,6 +250,8 @@ if [[ "$(uname)" == "Darwin" ]]; then
     <true/>
     <key>KeepAlive</key>
     <true/>
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
     <key>StandardOutPath</key>
     <string>$INSTALL_DIR/logs/bot.stdout.log</string>
     <key>StandardErrorPath</key>
@@ -253,9 +267,9 @@ if [[ "$(uname)" == "Darwin" ]]; then
 </plist>
 PLISTEOF
 
-    mkdir -p "$INSTALL_DIR/logs"
+    launchctl unload "$PLIST_PATH" 2>/dev/null || true
     launchctl load "$PLIST_PATH" 2>/dev/null || true
-    echo -e "  ${CHECK} Auto-start configured"
+    echo -e "  ${CHECK} Auto-start configured (com.aura.bot)"
 fi
 
 echo ""

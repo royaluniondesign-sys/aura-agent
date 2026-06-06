@@ -57,17 +57,21 @@ async def _git_activity(scan_dirs: Optional[List[Path]] = None) -> List[Dict[str
         for line in log_output.split("\n"):
             parts = line.split("|", 2)
             if len(parts) == 3:
-                commits.append({
-                    "hash": parts[0],
-                    "message": parts[1],
-                    "time": parts[2],
-                })
+                commits.append(
+                    {
+                        "hash": parts[0],
+                        "message": parts[1],
+                        "time": parts[2],
+                    }
+                )
 
         if commits:
-            activity.append({
-                "project": project_dir.name,
-                "commits": commits,
-            })
+            activity.append(
+                {
+                    "project": project_dir.name,
+                    "commits": commits,
+                }
+            )
 
     return activity
 
@@ -89,10 +93,8 @@ async def _pending_from_memory() -> List[str]:
         return []
 
 
-
 async def _system_health_brief() -> Dict[str, Any]:
     """Minimal system health snapshot."""
-    import os
     import shutil
 
     info: Dict[str, Any] = {}
@@ -116,12 +118,7 @@ async def _system_health_brief() -> Dict[str, Any]:
 
 def _h(text: str) -> str:
     """Escape text for safe Telegram HTML (escapes <, >, &)."""
-    return (
-        str(text)
-        .replace("&", "&amp;")
-        .replace("<", "&lt;")
-        .replace(">", "&gt;")
-    )
+    return str(text).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
 async def generate_standup(
@@ -134,9 +131,7 @@ async def generate_standup(
     characters in commit messages (*, _, `, [, ], etc.).
     """
     now = datetime.now()
-    sections: List[str] = [
-        f"🌅 <b>Daily Standup — {now.strftime('%A %d %b')}</b>"
-    ]
+    sections: List[str] = [f"🌅 <b>Daily Standup — {now.strftime('%A %d %b')}</b>"]
 
     # 1. Git activity
     activity = await _git_activity(scan_dirs)

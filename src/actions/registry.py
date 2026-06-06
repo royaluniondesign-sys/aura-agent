@@ -8,6 +8,7 @@ The registry loads them at startup and makes them available to:
 
 Adding a new capability = drop a .py file in tools/, no other changes.
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -15,7 +16,7 @@ import importlib
 import inspect
 import pkgutil
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Awaitable, Callable, Dict, List, Optional
 
@@ -29,11 +30,12 @@ class ToolSpec:
     name: str
     description: str
     fn: Callable[..., Awaitable[Any]]
-    parameters: Dict[str, Any]      # JSON-schema style {"param": {"type":..,"desc":..}}
-    category: str = "general"       # email / system / memory / web / files / git
+    parameters: Dict[str, Any]  # JSON-schema style {"param": {"type":..,"desc":..}}
+    category: str = "general"  # email / system / memory / web / files / git
 
 
 # ── Decorator ─────────────────────────────────────────────────────────────────
+
 
 def aura_tool(
     name: str | None = None,
@@ -51,6 +53,7 @@ def aura_tool(
         async def send_email(to: str, subject: str, body: str) -> str:
             ...
     """
+
     def decorator(fn: Callable) -> Callable:
         tool_name = name or fn.__name__
         desc = description or (fn.__doc__ or "").strip().split("\n")[0]
@@ -76,6 +79,7 @@ def aura_tool(
         _REGISTRY[tool_name] = spec
         logger.debug("tool_registered", name=tool_name, category=category)
         return fn
+
     return decorator
 
 
@@ -107,6 +111,7 @@ def _load_tools() -> None:
 
 # ── Public API ─────────────────────────────────────────────────────────────────
 
+
 def registry() -> Dict[str, ToolSpec]:
     _load_tools()
     return _REGISTRY
@@ -134,6 +139,7 @@ async def call_tool(name: str, **kwargs: Any) -> Any:
 
     # Transparent cache — callers never need to change
     from src.actions.tool_cache import get_cached, set_cached
+
     cached = get_cached(name, **kwargs)
     if cached is not None:
         logger.debug("tool_cache_hit", name=name)

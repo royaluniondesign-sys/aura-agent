@@ -11,7 +11,6 @@ Falls back gracefully if sandbox-exec is unavailable (Linux, sandboxed macOS CI)
 from __future__ import annotations
 
 import asyncio
-import logging
 import os
 import resource
 import tempfile
@@ -150,9 +149,12 @@ def is_sandbox_available() -> bool:
 def _build_profile(cwd: str, allow_network: bool) -> str:
     """Return a sandbox profile with placeholders replaced by runtime paths."""
     import os
+
     home = os.path.expanduser("~")
     template = _PROFILE_TEMPLATE_NETWORK if allow_network else _PROFILE_TEMPLATE
-    return template.replace("HOME_PLACEHOLDER", home).replace("WORKDIR_PLACEHOLDER", cwd)
+    return template.replace("HOME_PLACEHOLDER", home).replace(
+        "WORKDIR_PLACEHOLDER", cwd
+    )
 
 
 def _make_ulimit_preexec(max_cpu_seconds: int, max_memory_mb: int):
@@ -168,7 +170,10 @@ def _make_ulimit_preexec(max_cpu_seconds: int, max_memory_mb: int):
         try:
             # Max CPU time
             soft, hard = resource.getrlimit(resource.RLIMIT_CPU)
-            new_soft = min(max_cpu_seconds, hard if hard != resource.RLIM_INFINITY else max_cpu_seconds)
+            new_soft = min(
+                max_cpu_seconds,
+                hard if hard != resource.RLIM_INFINITY else max_cpu_seconds,
+            )
             resource.setrlimit(resource.RLIMIT_CPU, (new_soft, hard))
         except Exception:
             pass
@@ -208,9 +213,7 @@ async def _run_subprocess(
         return -1, "", f"OS error launching process: {exc}"
 
     try:
-        stdout_b, stderr_b = await asyncio.wait_for(
-            proc.communicate(), timeout=timeout
-        )
+        stdout_b, stderr_b = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except asyncio.TimeoutError:
         try:
             proc.kill()

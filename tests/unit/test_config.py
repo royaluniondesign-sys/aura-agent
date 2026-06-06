@@ -77,7 +77,7 @@ def test_security_relaxation_settings_defaults_and_overrides(monkeypatch):
     """Security relaxation settings should default to False and be configurable."""
     # Clear .env vars to test actual defaults, not environment overrides
     # Must clear before Settings() is instantiated
-    import os
+
     monkeypatch.setenv("DISABLE_SECURITY_PATTERNS", "false")
     monkeypatch.setenv("DISABLE_TOOL_VALIDATION", "false")
 

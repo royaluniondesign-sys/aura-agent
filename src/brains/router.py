@@ -16,17 +16,17 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
+from ..economy.intent import Intent
+from ..economy.semantic_intent import classify_semantic
 from .api_brain import ApiBrain
 from .autonomous_brain import AutonomousBrain
-from .base import Brain, BrainResponse, BrainStatus
+from .base import Brain, BrainStatus
 from .claude_brain import ClaudeBrain
 from .executor_brain import ClineBrain, CodexBrain
 from .gemini_brain import GeminiBrain
 from .image_brain import ImageBrain
 from .ollama_brain import OllamaBrain
 from .openrouter_brain import OpenRouterBrain
-from ..economy.intent import Intent, IntentResult, classify
-from ..economy.semantic_intent import classify_semantic
 
 logger = structlog.get_logger()
 
@@ -34,11 +34,13 @@ logger = structlog.get_logger()
 def _has_openrouter_key() -> bool:
     """True if an OpenRouter API key is configured."""
     import os
+
     key = os.environ.get("OPENROUTER_API_KEY", "").strip()
     if key:
         return True
-    from pathlib import Path
     import json
+    from pathlib import Path
+
     secrets = Path.home() / ".aura" / "secrets.json"
     if secrets.exists():
         try:
@@ -51,11 +53,11 @@ def _has_openrouter_key() -> bool:
 
 # Cascade order — used for fallback resolution
 _FULL_CASCADE: List[str] = [
-    "api-zero",    # instant public APIs
+    "api-zero",  # instant public APIs
     "openrouter",  # free models primary
-    "haiku",       # Claude fallback
-    "sonnet",      # Claude deeper
-    "opus",        # Claude deepest
+    "haiku",  # Claude fallback
+    "sonnet",  # Claude deeper
+    "opus",  # Claude deepest
 ]
 
 # Intent → primary brain
@@ -71,13 +73,13 @@ _INTENT_BRAIN_MAP: Dict[Intent, str] = {
     Intent.FILES: "zero-token",
     Intent.GIT: "zero-token",
     Intent.IMAGE: "image",
-    Intent.EMAIL: "haiku",       # needs Claude tool access — never downgrade
-    Intent.CALENDAR: "haiku",    # needs Claude tool access — never downgrade
-    Intent.CHAT: "haiku",        # Haiku primary — OpenRouter only on rate-limit pressure
-    Intent.SEARCH: "openrouter", # bulk lookups — free tier fine here
-    Intent.TRANSLATE: "haiku",   # Haiku for quality; OpenRouter fallback on pressure
-    Intent.CODE: "haiku",        # code — correctness + safety require Claude
-    Intent.DEEP: "sonnet",       # complex analysis — Sonnet earns its place
+    Intent.EMAIL: "haiku",  # needs Claude tool access — never downgrade
+    Intent.CALENDAR: "haiku",  # needs Claude tool access — never downgrade
+    Intent.CHAT: "haiku",  # Haiku primary — OpenRouter only on rate-limit pressure
+    Intent.SEARCH: "openrouter",  # bulk lookups — free tier fine here
+    Intent.TRANSLATE: "haiku",  # Haiku for quality; OpenRouter fallback on pressure
+    Intent.CODE: "haiku",  # code — correctness + safety require Claude
+    Intent.DEEP: "sonnet",  # complex analysis — Sonnet earns its place
 }
 
 # API-zero keyword shortcuts — checked before intent routing
@@ -210,6 +212,7 @@ class BrainRouter:
         OpenRouter handles bulk/background when Claude is under pressure.
         """
         import re as _re
+
         intent = classify_semantic(message)
 
         # Zero-token always wins
@@ -295,19 +298,22 @@ class BrainRouter:
         (which prefixes "claude-") resolves correctly in the cascade.
         """
         normalized = (
-            failed_brain[len("claude-"):]
+            failed_brain[len("claude-") :]
             if failed_brain.startswith("claude-")
             else failed_brain
         )
         try:
             idx = _FULL_CASCADE.index(normalized)
-            return _FULL_CASCADE[idx + 1:]
+            return _FULL_CASCADE[idx + 1 :]
         except ValueError:
             return ["haiku", "sonnet"]  # safe fallback
 
-    def get_fallback_brain(self, failed_brain: str,
-                           intent: Optional[Intent] = None,
-                           rate_monitor: Any = None) -> Optional[str]:
+    def get_fallback_brain(
+        self,
+        failed_brain: str,
+        intent: Optional[Intent] = None,
+        rate_monitor: Any = None,
+    ) -> Optional[str]:
         """Return next brain in cascade after failed_brain.
 
         Uses _FULL_CASCADE ordering (free → paid). Skips rate-limited brains
@@ -339,12 +345,14 @@ class BrainRouter:
                 info["is_active"] = name == self._active_brain
                 infos.append(info)
             except Exception as e:
-                infos.append({
-                    "name": name,
-                    "display_name": brain.display_name,
-                    "emoji": brain.emoji,
-                    "status": "error",
-                    "error": str(e),
-                    "is_active": name == self._active_brain,
-                })
+                infos.append(
+                    {
+                        "name": name,
+                        "display_name": brain.display_name,
+                        "emoji": brain.emoji,
+                        "status": "error",
+                        "error": str(e),
+                        "is_active": name == self._active_brain,
+                    }
+                )
         return infos

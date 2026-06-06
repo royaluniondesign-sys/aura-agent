@@ -17,6 +17,7 @@ Usage:
     tier = route_request(text="refactoriza el módulo de auth completo", urgent=False)
     # → ModelTier.SONNET
 """
+
 from __future__ import annotations
 
 import re
@@ -30,6 +31,7 @@ logger = structlog.get_logger()
 
 
 # ── Model Tiers ─────────────────────────────────────────────────────────────
+
 
 class ModelTier(str, Enum):
     HAIKU = "haiku"
@@ -47,6 +49,7 @@ class ModelTier(str, Enum):
 
 # ── Scoring Weights ──────────────────────────────────────────────────────────
 
+
 @dataclass(frozen=True)
 class _KeywordGroup:
     tier: ModelTier
@@ -60,17 +63,22 @@ _GROUPS: list[_KeywordGroup] = [
         tier=ModelTier.OPUS,
         weight=10,
         patterns=[
-            r"\barquitectura\b", r"\barchitecture\b",
-            r"\bsistema distribuido\b", r"\bdistributed system\b",
+            r"\barquitectura\b",
+            r"\barchitecture\b",
+            r"\bsistema distribuido\b",
+            r"\bdistributed system\b",
             r"\brefactor\s+(completo|total|masivo|grande|toda)\b",
             r"\bfull\s+refactor\b",
             r"\bpor\s+qu[eé]\s+(fall[oó]|no\s+funciona|rompe)\b",
             r"\bwhy\s+(is\s+it\s+(failing|broken)|doesn.t\s+work)\b",
             r"\bdise[ñn]a?\b.*\bsistema\b",
             r"\bdesign\b.*\bsystem\b",
-            r"\btradeoff\b", r"\btrade.off\b",
-            r"\bscalabilit\w+\b", r"\bescalabilidad\b",
-            r"\bconcurrencia\b", r"\bconcurrency\b",
+            r"\btradeoff\b",
+            r"\btrade.off\b",
+            r"\bscalabilit\w+\b",
+            r"\bescalabilidad\b",
+            r"\bconcurrencia\b",
+            r"\bconcurrency\b",
             r"\brace\s+condition\b",
         ],
     ),
@@ -83,16 +91,24 @@ _GROUPS: list[_KeywordGroup] = [
         weight=5,
         patterns=[
             r"\brefactor\s+(complejo|módulo|clase|servicio|sistema)\b",
-            r"\bfull\s+debug\b", r"\bdeep\s+debug\b",
-            r"\bcode\s+review\b", r"\brevisar?\b.*\bc[oó]digo\b",
-            r"\bwrite\s+tests?\b", r"\bescribir\s+tests?\b",
+            r"\bfull\s+debug\b",
+            r"\bdeep\s+debug\b",
+            r"\bcode\s+review\b",
+            r"\brevisar?\b.*\bc[oó]digo\b",
+            r"\bwrite\s+tests?\b",
+            r"\bescribir\s+tests?\b",
             r"\bapi\b.*\bdesign\b|\bdesign\b.*\bapi\b",
-            r"\bdatabase\s+schema\b", r"\bdise[ñn]o\s+de\s+base\b",
-            r"\bvulnerabilidad\b", r"\bvulnerabilit\w+\b",
+            r"\bdatabase\s+schema\b",
+            r"\bdise[ñn]o\s+de\s+base\b",
+            r"\bvulnerabilidad\b",
+            r"\bvulnerabilit\w+\b",
             r"\berror\s+handling\b.*\bcompleto\b",
-            r"\bpull\s+request\b", r"\bpr\s+review\b",
-            r"\bmigra[cr]\b.*\bbase\b", r"\bdatabase\s+migrat\b",
-            r"\bsecurity\s+audit\b", r"\baudit[oí]a\b.*\bseguridad\b",
+            r"\bpull\s+request\b",
+            r"\bpr\s+review\b",
+            r"\bmigra[cr]\b.*\bbase\b",
+            r"\bdatabase\s+migrat\b",
+            r"\bsecurity\s+audit\b",
+            r"\baudit[oí]a\b.*\bseguridad\b",
             r"\bperformance\s+(issue|problem|bottleneck)\b",
         ],
     ),
@@ -101,11 +117,14 @@ _GROUPS: list[_KeywordGroup] = [
         tier=ModelTier.HAIKU,
         weight=-3,  # Negative = pushes DOWN toward Haiku
         patterns=[
-            r"^[!/]",             # Commands starting with ! or /
+            r"^[!/]",  # Commands starting with ! or /
             r"\bls\b|\bpwd\b|\bgit\s+status\b",
-            r"\bqu[eé]\s+hora\b", r"\bwhat\s+time\b",
-            r"\bresumen?\s+r[aá]pido\b", r"\bquick\s+summar\b",
-            r"\btraduc[ei]\b", r"\btranslat\b",
+            r"\bqu[eé]\s+hora\b",
+            r"\bwhat\s+time\b",
+            r"\bresumen?\s+r[aá]pido\b",
+            r"\bquick\s+summar\b",
+            r"\btraduc[ei]\b",
+            r"\btranslat\b",
             r"\bdef\b.{0,40}\bdef\b",  # Short code snippet
         ],
     ),
@@ -114,17 +133,18 @@ _GROUPS: list[_KeywordGroup] = [
 # Base thresholds
 # meta-router only activates BETWEEN Claude tiers (haiku/sonnet/opus),
 # never to skip free brains. Thresholds calibrated accordingly.
-_SONNET_THRESHOLD = 10   # was 5 — raised to avoid false escalation
-_OPUS_THRESHOLD = 20     # was 15 — raised proportionally
+_SONNET_THRESHOLD = 10  # was 5 — raised to avoid false escalation
+_OPUS_THRESHOLD = 20  # was 15 — raised proportionally
 
 # Length scoring: long messages signal complexity
 _LENGTH_THRESHOLDS = [
-    (200, 2),   # > 200 chars → +2
-    (500, 5),   # > 500 chars → +5
+    (200, 2),  # > 200 chars → +2
+    (500, 5),  # > 500 chars → +5
     (1000, 8),  # > 1000 chars → +8
 ]
 
 # ── Router ───────────────────────────────────────────────────────────────────
+
 
 @dataclass
 class RouteDecision:
@@ -183,7 +203,9 @@ def route_request(
             contribution = group.weight * len(matched)
             score += contribution
             short_pats = [p[:30] for p in matched[:3]]
-            signals.append(f"{group.tier.value} keywords {short_pats} ({contribution:+d})")
+            signals.append(
+                f"{group.tier.value} keywords {short_pats} ({contribution:+d})"
+            )
 
     # 3. Category hint
     if category in ("architecture", "analysis"):
@@ -233,6 +255,7 @@ def explain_decision(decision: RouteDecision) -> str:
 
 
 # ── Quick helpers ────────────────────────────────────────────────────────────
+
 
 def should_escalate(text: str, current_tier: ModelTier = ModelTier.HAIKU) -> bool:
     """True if the text warrants a higher tier than current."""

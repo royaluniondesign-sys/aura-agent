@@ -41,9 +41,7 @@ class Machine:
 
     @property
     def display(self) -> str:
-        icon = {"darwin": "🍎", "linux": "🐧", "windows": "🪟"}.get(
-            self.platform, "💻"
-        )
+        icon = {"darwin": "🍎", "linux": "🐧", "windows": "🪟"}.get(self.platform, "💻")
         status = "🟢" if self.is_reachable else "⚪"
         return f"{status} {icon} {self.label} ({self.name})"
 
@@ -85,7 +83,11 @@ class SSHResult:
     def output(self) -> str:
         if self.success:
             return self.stdout.strip() or "(no output)"
-        return self.stderr.strip() or self.stdout.strip() or f"Exit code {self.return_code}"
+        return (
+            self.stderr.strip()
+            or self.stdout.strip()
+            or f"Exit code {self.return_code}"
+        )
 
 
 class FleetManager:
@@ -187,9 +189,12 @@ class FleetManager:
         try:
             proc = await asyncio.create_subprocess_exec(
                 "ssh",
-                "-o", "BatchMode=yes",
-                "-o", f"ConnectTimeout={_CONNECT_TIMEOUT}",
-                "-o", "StrictHostKeyChecking=accept-new",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                f"ConnectTimeout={_CONNECT_TIMEOUT}",
+                "-o",
+                "StrictHostKeyChecking=accept-new",
                 machine.host,
                 "echo ok",
                 stdout=asyncio.subprocess.PIPE,
@@ -216,10 +221,7 @@ class FleetManager:
 
     async def ping_all(self) -> Dict[str, bool]:
         """Ping all machines concurrently."""
-        tasks = {
-            name: asyncio.create_task(self.ping(name))
-            for name in self._machines
-        }
+        tasks = {name: asyncio.create_task(self.ping(name)) for name in self._machines}
         results = {}
         for name, task in tasks.items():
             try:
@@ -250,17 +252,18 @@ class FleetManager:
         try:
             proc = await asyncio.create_subprocess_exec(
                 "ssh",
-                "-o", "BatchMode=yes",
-                "-o", f"ConnectTimeout={_CONNECT_TIMEOUT}",
-                "-o", "StrictHostKeyChecking=accept-new",
+                "-o",
+                "BatchMode=yes",
+                "-o",
+                f"ConnectTimeout={_CONNECT_TIMEOUT}",
+                "-o",
+                "StrictHostKeyChecking=accept-new",
                 machine.host,
                 command,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
-            stdout, stderr = await asyncio.wait_for(
-                proc.communicate(), timeout=timeout
-            )
+            stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
             elapsed_ms = int((time.time() - start) * 1000)
 
             self._update_machine(name, last_seen=time.time(), last_error=None)
@@ -375,7 +378,9 @@ class MemorySync:
         try:
             # Auto-commit any local changes
             proc = await asyncio.create_subprocess_exec(
-                "git", "status", "--porcelain",
+                "git",
+                "status",
+                "--porcelain",
                 cwd=str(self._dir),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -396,7 +401,11 @@ class MemorySync:
 
             # Pull with rebase
             proc = await asyncio.create_subprocess_exec(
-                "git", "pull", "--rebase", "origin", "main",
+                "git",
+                "pull",
+                "--rebase",
+                "origin",
+                "main",
                 cwd=str(self._dir),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -406,7 +415,10 @@ class MemorySync:
 
             # Push
             proc = await asyncio.create_subprocess_exec(
-                "git", "push", "origin", "main",
+                "git",
+                "push",
+                "origin",
+                "main",
                 cwd=str(self._dir),
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
@@ -428,5 +440,7 @@ class MemorySync:
 
         lines = ["<b>🧠 Memory Sync</b>\n"]
         lines.append(f"📂 {self._dir}")
-        lines.append(f"🔗 Git: {'✅ initialized' if self.is_git_repo else '❌ not initialized'}")
+        lines.append(
+            f"🔗 Git: {'✅ initialized' if self.is_git_repo else '❌ not initialized'}"
+        )
         return "\n".join(lines)

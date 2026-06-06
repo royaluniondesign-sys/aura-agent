@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import List, Optional
 
 import structlog
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
 _SCHEDULED_DIR = Path.home() / ".aura" / "social_scheduled"
@@ -23,6 +23,7 @@ router = APIRouter(prefix="/api/publish", tags=["publish"])
 
 
 # ─── REQUEST MODELS ───────────────────────────────────────────────────────────
+
 
 class BlogPublishRequest(BaseModel):
     topic: str = Field(..., description="Topic or title for the blog post")
@@ -38,17 +39,20 @@ class SocialPublishRequest(BaseModel):
     image_urls: Optional[List[str]] = Field(
         None,
         description="Pre-generated local draft URLs (/api/social/drafts/...). "
-                    "2+ URLs → Instagram carousel automatically.",
+        "2+ URLs → Instagram carousel automatically.",
     )
 
 
 class ScheduleRequest(BaseModel):
     caption: str = Field(..., description="Post caption / text content")
     platforms: List[str] = Field(default=["instagram"])
-    scheduled_for: str = Field(..., description="ISO 8601 datetime (e.g. 2026-04-26T18:00:00)")
+    scheduled_for: str = Field(
+        ..., description="ISO 8601 datetime (e.g. 2026-04-26T18:00:00)"
+    )
 
 
 # ─── ROUTES ───────────────────────────────────────────────────────────────────
+
 
 @router.post("/blog")
 async def publish_blog(req: BlogPublishRequest) -> dict:
@@ -57,10 +61,13 @@ async def publish_blog(req: BlogPublishRequest) -> dict:
     Steps: Gemini generates content → GitHub API commit → Vercel auto-deploys (~60s).
     """
     from ...workflows.blog_publisher import publish_blog_from_topic
+
     logger.info("api_publish_blog", topic=req.topic[:60])
     result = await publish_blog_from_topic(req.topic)
     if not result.get("ok"):
-        raise HTTPException(status_code=500, detail=result.get("error", "Unknown error"))
+        raise HTTPException(
+            status_code=500, detail=result.get("error", "Unknown error")
+        )
     return result
 
 
@@ -71,12 +78,17 @@ async def publish_social_post(req: SocialPublishRequest) -> dict:
     Steps: Gemini caption + FLUX.1 image → upload → Meta Graph API post.
     """
     from ...workflows.social_publisher import publish_social
-    logger.info("api_publish_social", platforms=req.platforms, desc=req.description[:60])
+
+    logger.info(
+        "api_publish_social", platforms=req.platforms, desc=req.description[:60]
+    )
 
     valid_platforms = {"instagram", "facebook"}
     platforms = [p for p in req.platforms if p in valid_platforms]
     if not platforms:
-        raise HTTPException(status_code=400, detail=f"Platforms must be one of: {valid_platforms}")
+        raise HTTPException(
+            status_code=400, detail=f"Platforms must be one of: {valid_platforms}"
+        )
 
     return await publish_social(
         description=req.description,
@@ -90,17 +102,25 @@ async def publish_social_post(req: SocialPublishRequest) -> dict:
 async def publish_status() -> dict:
     """Check publishing capabilities: token validity, account connections, etc."""
     import asyncio
+
     from ...workflows.social_publisher import get_social_status
+
     try:
         return await asyncio.wait_for(get_social_status(), timeout=10.0)
     except (asyncio.TimeoutError, Exception) as e:
-        return {"ok": False, "error": str(e), "instagram": {"valid": False}, "twitter": {"valid": False}}
+        return {
+            "ok": False,
+            "error": str(e),
+            "instagram": {"valid": False},
+            "twitter": {"valid": False},
+        }
 
 
 @router.post("/instagram")
 async def publish_instagram(req: SocialPublishRequest) -> dict:
     """Shortcut: publish to Instagram only."""
     from ...workflows.social_publisher import publish_social
+
     return await publish_social(
         description=req.description,
         platforms=["instagram"],
@@ -112,6 +132,7 @@ async def publish_instagram(req: SocialPublishRequest) -> dict:
 async def publish_facebook(req: SocialPublishRequest) -> dict:
     """Shortcut: publish to Facebook only."""
     from ...workflows.social_publisher import publish_social
+
     return await publish_social(
         description=req.description,
         platforms=["facebook"],
@@ -128,10 +149,14 @@ async def schedule_social_post(req: ScheduleRequest) -> dict:
     try:
         scheduled_dt = datetime.fromisoformat(req.scheduled_for.replace("Z", "+00:00"))
     except ValueError as e:
-        raise HTTPException(status_code=400, detail=f"Invalid scheduled_for datetime: {e}")
+        raise HTTPException(
+            status_code=400, detail=f"Invalid scheduled_for datetime: {e}"
+        )
 
     if scheduled_dt <= datetime.now(timezone.utc):
-        raise HTTPException(status_code=400, detail="scheduled_for must be in the future")
+        raise HTTPException(
+            status_code=400, detail="scheduled_for must be in the future"
+        )
 
     _SCHEDULED_DIR.mkdir(parents=True, exist_ok=True)
     ts = int(time.time())
@@ -143,8 +168,15 @@ async def schedule_social_post(req: ScheduleRequest) -> dict:
         "created_at": datetime.now(timezone.utc).isoformat(),
         "status": "pending",
     }
-    (_SCHEDULED_DIR / filename).write_text(json.dumps(payload, ensure_ascii=False, indent=2))
-    logger.info("social_scheduled", file=filename, platforms=req.platforms, scheduled_for=req.scheduled_for)
+    (_SCHEDULED_DIR / filename).write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2)
+    )
+    logger.info(
+        "social_scheduled",
+        file=filename,
+        platforms=req.platforms,
+        scheduled_for=req.scheduled_for,
+    )
     return {"ok": True, "file": filename, "scheduled_for": req.scheduled_for}
 
 

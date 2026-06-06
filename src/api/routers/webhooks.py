@@ -50,6 +50,7 @@ def _update_env_instagram_token(token: str, user_id: str) -> None:
 async def _notify_ig_auth_success(user_id: str, expires_in: int) -> None:
     """Send Telegram message when Instagram OAuth completes."""
     import aiohttp as _aio
+
     bot_token = os.environ.get("TELEGRAM_BOT_TOKEN", "")
     chat_id = (os.environ.get("NOTIFICATION_CHAT_IDS", "") or "").split(",")[0].strip()
     if not bot_token or not chat_id:
@@ -87,9 +88,14 @@ def _make_receive_webhook(event_bus: Any, settings: Any, db_manager: Any):
         if provider == "github":
             secret = settings.github_webhook_secret
             if not secret:
-                raise HTTPException(status_code=500, detail="GitHub webhook secret not configured")
+                raise HTTPException(
+                    status_code=500, detail="GitHub webhook secret not configured"
+                )
             if not verify_github_signature(body, x_hub_signature_256, secret):
-                logger.warning("GitHub webhook signature verification failed", delivery_id=x_github_delivery)
+                logger.warning(
+                    "GitHub webhook signature verification failed",
+                    delivery_id=x_github_delivery,
+                )
                 raise HTTPException(status_code=401, detail="Invalid signature")
             event_type_name = x_github_event or "unknown"
             delivery_id = x_github_delivery or str(uuid.uuid4())
@@ -111,7 +117,8 @@ def _make_receive_webhook(event_bus: Any, settings: Any, db_manager: Any):
             payload = {"raw_body": body.decode("utf-8", errors="replace")[:5000]}
 
         if db_manager and delivery_id:
-            from ...storage.database import DatabaseManager
+            pass
+
             is_new = await _try_record_webhook(
                 db_manager,
                 event_id=str(uuid.uuid4()),
@@ -121,7 +128,11 @@ def _make_receive_webhook(event_bus: Any, settings: Any, db_manager: Any):
                 payload=payload,
             )
             if not is_new:
-                logger.info("Duplicate webhook delivery ignored", provider=provider, delivery_id=delivery_id)
+                logger.info(
+                    "Duplicate webhook delivery ignored",
+                    provider=provider,
+                    delivery_id=delivery_id,
+                )
                 return {"status": "duplicate", "delivery_id": delivery_id}
 
         event = WebhookEvent(
@@ -131,7 +142,11 @@ def _make_receive_webhook(event_bus: Any, settings: Any, db_manager: Any):
             delivery_id=delivery_id,
         )
         await event_bus.publish(event)
-        logger.info("Webhook received and published", provider=provider, event_type=event_type_name)
+        logger.info(
+            "Webhook received and published",
+            provider=provider,
+            event_type=event_type_name,
+        )
         return {"status": "accepted", "event_id": event.id}
 
     return receive_webhook
@@ -186,7 +201,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             _ig_oauth_state["app_id"] = app_id
 
         scope = "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_comments,instagram_business_manage_insights"
-        redirect_uri = f"http://localhost:{settings.api_server_port}/auth/instagram/callback"
+        redirect_uri = (
+            f"http://localhost:{settings.api_server_port}/auth/instagram/callback"
+        )
 
         params = {
             "client_id": app_id,
@@ -207,17 +224,23 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         error = request.query_params.get("error", "")
 
         if error:
-            return HTMLResponse(f"<h2>❌ Error: {error}</h2><p>Cierra esta ventana y vuelve a intentar.</p>")
+            return HTMLResponse(
+                f"<h2>❌ Error: {error}</h2><p>Cierra esta ventana y vuelve a intentar.</p>"
+            )
 
         if not code:
             return HTMLResponse("<h2>❌ No se recibió código</h2>")
 
         app_id = _ig_oauth_state.get("app_id") or os.environ.get("META_APP_ID", "")
         app_secret = _ig_oauth_state.get("app_secret", "")
-        redirect_uri = f"http://localhost:{settings.api_server_port}/auth/instagram/callback"
+        redirect_uri = (
+            f"http://localhost:{settings.api_server_port}/auth/instagram/callback"
+        )
 
         if not app_secret:
-            return HTMLResponse("<h2>❌ App secret no configurado</h2><p>Usa /ig-auth con el secret del app.</p>")
+            return HTMLResponse(
+                "<h2>❌ App secret no configurado</h2><p>Usa /ig-auth con el secret del app.</p>"
+            )
 
         try:
             # Step 1: Exchange code → short-lived token
@@ -235,7 +258,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                     token_data = await resp.json()
 
             if "error_type" in token_data or "access_token" not in token_data:
-                return HTMLResponse(f"<h2>❌ Token exchange failed</h2><pre>{token_data}</pre>")
+                return HTMLResponse(
+                    f"<h2>❌ Token exchange failed</h2><pre>{token_data}</pre>"
+                )
 
             short_token = token_data["access_token"]
             ig_user_id = str(token_data.get("user_id", ""))
@@ -257,7 +282,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
             # Save token + credentials to .env and token file
             import json as _json
-            from datetime import datetime as _dt, timezone as _tz
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
 
             token_info = {
                 "access_token": long_token,
@@ -267,8 +293,12 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 "expires_in": expires_in,
                 "created_at": _dt.now(_tz.utc).isoformat(),
                 "type": "instagram_login",
-                "scopes": ["instagram_business_basic", "instagram_business_content_publish",
-                           "instagram_business_manage_comments", "instagram_business_manage_insights"],
+                "scopes": [
+                    "instagram_business_basic",
+                    "instagram_business_content_publish",
+                    "instagram_business_manage_comments",
+                    "instagram_business_manage_insights",
+                ],
             }
             token_path = Path.home() / ".aura" / "instagram_token.json"
             token_path.write_text(_json.dumps(token_info, indent=2))
@@ -280,12 +310,15 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             _ig_oauth_state["token"] = long_token
             _ig_oauth_state["user_id"] = ig_user_id
 
-            logger.info("instagram_oauth_complete", user_id=ig_user_id, expires_in=expires_in)
+            logger.info(
+                "instagram_oauth_complete", user_id=ig_user_id, expires_in=expires_in
+            )
 
             # Notify via Telegram if bot is available
             asyncio.create_task(_notify_ig_auth_success(ig_user_id, expires_in))
 
-            return HTMLResponse(f"""
+            return HTMLResponse(
+                f"""
             <html><body style="font-family:sans-serif;max-width:500px;margin:80px auto;text-align:center;">
             <h1>✅ Instagram conectado</h1>
             <p>Token guardado. AURA puede publicar en Instagram.</p>
@@ -293,7 +326,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             <p style="color:#888">Expira en: {expires_in // 86400} días</p>
             <p><b>Cierra esta ventana.</b></p>
             </body></html>
-            """)
+            """
+            )
 
         except Exception as exc:
             logger.error("instagram_oauth_error", error=str(exc))
@@ -302,8 +336,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     @r.get("/auth/instagram/refresh")
     async def instagram_token_refresh() -> Dict[str, Any]:
         """Refresh the Instagram long-lived token (call before expiry)."""
-        import aiohttp as _aiohttp
         import json as _json
+
+        import aiohttp as _aiohttp
 
         token_path = Path.home() / ".aura" / "instagram_token.json"
         if not token_path.exists():
@@ -322,11 +357,17 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         if "access_token" in data:
             info["access_token"] = data["access_token"]
             info["expires_in"] = data.get("expires_in", 5183944)
-            from datetime import datetime as _dt, timezone as _tz
+            from datetime import datetime as _dt
+            from datetime import timezone as _tz
+
             info["refreshed_at"] = _dt.now(_tz.utc).isoformat()
             token_path.write_text(_json.dumps(info, indent=2))
             _update_env_instagram_token(data["access_token"], info.get("user_id", ""))
-            return {"ok": True, "expires_in": data.get("expires_in"), "message": "Token refreshed"}
+            return {
+                "ok": True,
+                "expires_in": data.get("expires_in"),
+                "message": "Token refreshed",
+            }
         return {"ok": False, "error": str(data)}
 
     @r.post("/api/social/enhance-prompt")
@@ -345,11 +386,22 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         text = (body.get("text") or "").strip()
         fmt = (body.get("format") or "1:1").strip()
-        references = body.get("references") or []  # list of {slot, role, subject, materials, colors, lighting, mood}
+        references = (
+            body.get("references") or []
+        )  # list of {slot, role, subject, materials, colors, lighting, mood}
         # Legacy single-reference support
         if not references and body.get("reference_analysis"):
             ra = body["reference_analysis"]
-            references = [{"slot": 1, "role": "referencia", **{k: ra.get(k) for k in ("subject","materials","colors","lighting","mood")}}]
+            references = [
+                {
+                    "slot": 1,
+                    "role": "referencia",
+                    **{
+                        k: ra.get(k)
+                        for k in ("subject", "materials", "colors", "lighting", "mood")
+                    },
+                }
+            ]
 
         if not text:
             raise HTTPException(status_code=400, detail="text is required")
@@ -424,7 +476,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 for model in _enhance_models:
                     async with session.post(
                         "https://openrouter.ai/api/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {openrouter_key}", "Content-Type": "application/json"},
+                        headers={
+                            "Authorization": f"Bearer {openrouter_key}",
+                            "Content-Type": "application/json",
+                        },
                         json={
                             "model": model,
                             "messages": [{"role": "user", "content": enhance_prompt}],
@@ -443,7 +498,12 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                             logger.warning("enhance_prompt_empty_content", model=model)
                         else:
                             err = await resp.text()
-                            logger.warning("enhance_prompt_openrouter_error", model=model, status=resp.status, body=err[:200])
+                            logger.warning(
+                                "enhance_prompt_openrouter_error",
+                                model=model,
+                                status=resp.status,
+                                body=err[:200],
+                            )
         except Exception as e:
             logger.warning("enhance_prompt_failed", error=str(e))
 
@@ -462,7 +522,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         import json as _json
+
         import aiohttp as _aiohttp
+
         from src.workflows.social_publisher import _sanitize_flux_prompt
 
         image_base64 = (body.get("image_base64") or "").strip()
@@ -515,16 +577,24 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 for model in _vision_models:
                     async with session.post(
                         "https://openrouter.ai/api/v1/chat/completions",
-                        headers={"Authorization": f"Bearer {openrouter_key}", "Content-Type": "application/json"},
+                        headers={
+                            "Authorization": f"Bearer {openrouter_key}",
+                            "Content-Type": "application/json",
+                        },
                         json={
                             "model": model,
-                            "messages": [{
-                                "role": "user",
-                                "content": [
-                                    {"type": "image_url", "image_url": {"url": data_url}},
-                                    {"type": "text", "text": analysis_prompt},
-                                ],
-                            }],
+                            "messages": [
+                                {
+                                    "role": "user",
+                                    "content": [
+                                        {
+                                            "type": "image_url",
+                                            "image_url": {"url": data_url},
+                                        },
+                                        {"type": "text", "text": analysis_prompt},
+                                    ],
+                                }
+                            ],
                             "temperature": 0.2,
                             "max_tokens": 1024,
                             "response_format": {"type": "json_object"},
@@ -533,14 +603,25 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                     ) as resp:
                         if resp.status == 200:
                             candidate = await resp.json()
-                            content = (candidate.get("choices") or [{}])[0].get("message", {}).get("content")
+                            content = (
+                                (candidate.get("choices") or [{}])[0]
+                                .get("message", {})
+                                .get("content")
+                            )
                             if content:
                                 resp_data = candidate
                                 break
-                            logger.warning("analyze_reference_empty_content", model=model)
+                            logger.warning(
+                                "analyze_reference_empty_content", model=model
+                            )
                         else:
                             err_text = await resp.text()
-                            logger.warning("analyze_reference_model_failed", model=model, status=resp.status, body=err_text[:120])
+                            logger.warning(
+                                "analyze_reference_model_failed",
+                                model=model,
+                                status=resp.status,
+                                body=err_text[:120],
+                            )
                 else:
                     return {"ok": False, "error": "All vision models unavailable"}
 
@@ -558,10 +639,16 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                         result = _json.loads(m.group(0))
                     except _json.JSONDecodeError:
                         logger.warning("analyze_reference_json", raw=raw_text[:200])
-                        return {"ok": False, "error": "Could not parse vision model JSON response"}
+                        return {
+                            "ok": False,
+                            "error": "Could not parse vision model JSON response",
+                        }
                 else:
                     logger.warning("analyze_reference_json", raw=raw_text[:200])
-                    return {"ok": False, "error": "Could not parse vision model JSON response"}
+                    return {
+                        "ok": False,
+                        "error": "Could not parse vision model JSON response",
+                    }
 
             if result.get("flux_prompt"):
                 result["flux_prompt"] = _sanitize_flux_prompt(result["flux_prompt"])
@@ -595,34 +682,40 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         import time
         import urllib.parse
-        import aiohttp
         from datetime import datetime, timezone
+
+        import aiohttp
+
         from src.workflows.social_publisher import (
-            generate_social_content,
-            generate_caption_concept,
-            refine_caption_with_claude,
             _STYLE_MOOD,
-            generate_image_nvidia,
-            generate_image_comfyui,
             _sanitize_flux_prompt,
+            generate_caption_concept,
+            generate_image_comfyui,
+            generate_image_nvidia,
+            generate_social_content,
+            refine_caption_with_claude,
         )
 
         topic = (body.get("topic") or "diseño y creatividad Barcelona").strip()
-        direct_prompt = (body.get("direct_prompt") or "").strip()   # skip LLM → straight to FLUX
-        direct_caption = (body.get("caption") or "").strip()        # use caption as-is
+        direct_prompt = (
+            body.get("direct_prompt") or ""
+        ).strip()  # skip LLM → straight to FLUX
+        direct_caption = (body.get("caption") or "").strip()  # use caption as-is
         platforms = body.get("platforms", ["instagram"])
         fmt = body.get("format", "1:1")
         platform = platforms[0] if platforms else "instagram"
         _count_raw = int(body.get("count", 1))
-        caption_only = _count_raw == 0  # count=0 means caption generation only, no images
+        caption_only = (
+            _count_raw == 0
+        )  # count=0 means caption generation only, no images
         count = max(1, min(10, _count_raw)) if not caption_only else 1
         style = (body.get("style") or "photorealistic").strip()
         brain = (body.get("brain") or "auto").strip()
 
         # Format → FLUX composition context
         fmt_composition = {
-            "1:1":  "square 1:1 centered composition, perfect symmetry, Instagram feed format, subject centered with breathing room",
-            "4:5":  "vertical 4:5 portrait, editorial close-up, magazine cover crop, subject fills upper two-thirds",
+            "1:1": "square 1:1 centered composition, perfect symmetry, Instagram feed format, subject centered with breathing room",
+            "4:5": "vertical 4:5 portrait, editorial close-up, magazine cover crop, subject fills upper two-thirds",
             "9:16": "tall 9:16 full-bleed mobile story, immersive vertical, subject dominates frame, cinematic crop",
             "16:9": "wide 16:9 cinematic landscape, panoramic depth, rule of thirds, widescreen film aesthetic",
         }
@@ -630,7 +723,11 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         def _flux_fallback_prompt(concept_text: str) -> str:
             """Last-resort fallback FLUX prompt when AI generation fails."""
-            core = concept_text.strip() if concept_text and len(concept_text) > 20 else topic
+            core = (
+                concept_text.strip()
+                if concept_text and len(concept_text) > 20
+                else topic
+            )
             mood = _STYLE_MOOD.get(style, _STYLE_MOOD["photorealistic"])
             return f"{core}, {mood}, {composition}, cool neutral tones, no text, no watermark"
 
@@ -638,13 +735,19 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         # claude/auto: Gemini Flash concept → Claude refines caption (quality pipeline, ~8s)
         # gemini-flash/gemini/codex: direct call to that model only (fast, ~3-5s)
         # Returns (caption, flux_prompts_list) — N prompts for N carousel images
-        async def _generate_caption_with_brain(t: str, p: str, n: int = 1) -> tuple[str, list[str]]:
+        async def _generate_caption_with_brain(
+            t: str, p: str, n: int = 1
+        ) -> tuple[str, list[str]]:
             if brain in ("claude", "auto"):
-                concept = await generate_caption_concept(t, p, count=n, style=style, composition=composition)
+                concept = await generate_caption_concept(
+                    t, p, count=n, style=style, composition=composition
+                )
                 caption = await refine_caption_with_claude(concept, t, p)
                 flux_prompts: list[str] = concept.get("flux_prompts") or []
                 if not flux_prompts:
-                    flux_prompts = [_flux_fallback_prompt(concept.get("image_prompt", t))]
+                    flux_prompts = [
+                        _flux_fallback_prompt(concept.get("image_prompt", t))
+                    ]
                 while len(flux_prompts) < n:
                     flux_prompts.append(flux_prompts[-1])
                 return caption, flux_prompts[:n]
@@ -662,9 +765,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         # Format → pixel dimensions (NVIDIA FLUX.1-schnell valid: 768,832,896,960,1024,1088,1152,1216,1280,1344)
         _fmt_dims: dict[str, tuple[int, int]] = {
-            "1:1":  (1024, 1024),
-            "4:5":  (1024, 1280),
-            "9:16": (768,  1344),  # Story vertical (was 576×1024 — invalid for NVIDIA)
+            "1:1": (1024, 1024),
+            "4:5": (1024, 1280),
+            "9:16": (768, 1344),  # Story vertical (was 576×1024 — invalid for NVIDIA)
             "16:9": (1344, 768),
         }
         img_w, img_h = _fmt_dims.get(fmt, (1024, 1024))
@@ -683,20 +786,42 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 async with aiohttp.ClientSession() as session:
                     async with session.post(
                         endpoint,
-                        headers={"Authorization": f"Bearer {hf_token}", "Content-Type": "application/json"},
-                        json={"inputs": prompt, "parameters": {"width": img_w, "height": img_h, "num_inference_steps": 28, "seed": seed}},
+                        headers={
+                            "Authorization": f"Bearer {hf_token}",
+                            "Content-Type": "application/json",
+                        },
+                        json={
+                            "inputs": prompt,
+                            "parameters": {
+                                "width": img_w,
+                                "height": img_h,
+                                "num_inference_steps": 28,
+                                "seed": seed,
+                            },
+                        },
                         timeout=aiohttp.ClientTimeout(total=120),
                     ) as resp:
                         if resp.status == 200:
                             data = await resp.read()
                             _hf_min = 10_000  # schnell produces smaller files than dev
-                            if data[:2] in (b'\xff\xd8', b'\x89P') and len(data) >= _hf_min:
-                                logger.info("hf_flux_ok", res=f"{img_w}x{img_h}", kb=len(data)//1024)
+                            if (
+                                data[:2] in (b"\xff\xd8", b"\x89P")
+                                and len(data) >= _hf_min
+                            ):
+                                logger.info(
+                                    "hf_flux_ok",
+                                    res=f"{img_w}x{img_h}",
+                                    kb=len(data) // 1024,
+                                )
                                 return data
-                            if data[:2] in (b'\xff\xd8', b'\x89P'):
-                                logger.warning("hf_flux_black_image", kb=len(data)//1024)
+                            if data[:2] in (b"\xff\xd8", b"\x89P"):
+                                logger.warning(
+                                    "hf_flux_black_image", kb=len(data) // 1024
+                                )
                         body = await resp.text() if resp.status != 200 else ""
-                        logger.warning("hf_flux_error", status=resp.status, body=body[:150])
+                        logger.warning(
+                            "hf_flux_error", status=resp.status, body=body[:150]
+                        )
             except Exception as e:
                 logger.warning("hf_flux_exception", error=str(e))
             return None
@@ -710,13 +835,20 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             )
             try:
                 async with aiohttp.ClientSession() as session:
-                    async with session.get(url, timeout=aiohttp.ClientTimeout(total=90)) as resp:
+                    async with session.get(
+                        url, timeout=aiohttp.ClientTimeout(total=90)
+                    ) as resp:
                         if resp.status == 200:
                             data = await resp.read()
-                            if data[:2] in (b'\xff\xd8', b'\x89P') and len(data) >= _MIN_IMAGE_BYTES:
+                            if (
+                                data[:2] in (b"\xff\xd8", b"\x89P")
+                                and len(data) >= _MIN_IMAGE_BYTES
+                            ):
                                 return data
-                            if data[:2] in (b'\xff\xd8', b'\x89P'):
-                                logger.warning("pollinations_black_image", kb=len(data)//1024)
+                            if data[:2] in (b"\xff\xd8", b"\x89P"):
+                                logger.warning(
+                                    "pollinations_black_image", kb=len(data) // 1024
+                                )
             except Exception as e:
                 logger.warning("pollinations_error", error=str(e))
             return None
@@ -724,7 +856,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         # BFL aspect ratio mapping
         _bfl_aspect = {"1:1": "1:1", "4:5": "4:5", "9:16": "9:16", "16:9": "16:9"}
 
-        quality_mode = bool(body.get("quality"))  # True → ComfyUI local (lento, hiperrealista)
+        quality_mode = bool(
+            body.get("quality")
+        )  # True → ComfyUI local (lento, hiperrealista)
 
         async def _fetch_one(prompt: str, seed: int, filename: str) -> str | None:
             """Fetch ONE image.
@@ -740,9 +874,13 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             if quality_mode:
                 source = "comfyui"
                 try:
-                    data = await generate_image_comfyui(clean_prompt, aspect_ratio=_bfl_aspect.get(fmt, "1:1"), seed=seed)
+                    data = await generate_image_comfyui(
+                        clean_prompt,
+                        aspect_ratio=_bfl_aspect.get(fmt, "1:1"),
+                        seed=seed,
+                    )
                     if data and len(data) < _MIN_IMAGE_BYTES:
-                        logger.warning("comfyui_small_image", kb=len(data)//1024)
+                        logger.warning("comfyui_small_image", kb=len(data) // 1024)
                         data = None
                 except Exception as e:
                     logger.warning("comfyui_gen_failed", error=str(e)[:120])
@@ -751,9 +889,11 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             if not data:
                 source = "nvidia"
                 try:
-                    data = await generate_image_nvidia(clean_prompt, width=img_w, height=img_h)
+                    data = await generate_image_nvidia(
+                        clean_prompt, width=img_w, height=img_h
+                    )
                     if data and len(data) < _MIN_IMAGE_BYTES:
-                        logger.warning("nvidia_black_image", kb=len(data)//1024)
+                        logger.warning("nvidia_black_image", kb=len(data) // 1024)
                         data = None
                 except Exception as e:
                     logger.warning("nvidia_gen_failed_webhook", error=str(e)[:80])
@@ -769,20 +909,28 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 logger.warning("image_fetch_failed", filename=filename)
                 return None
             (drafts_dir / filename).write_bytes(data)
-            logger.info("image_saved", filename=filename, source=source, kb=len(data)//1024)
+            logger.info(
+                "image_saved", filename=filename, source=source, kb=len(data) // 1024
+            )
             return f"/api/social/drafts/{filename}"
 
-        def _save_sidecar_for_image(fname: str, flux_prompt_text: str, caption_text: str) -> None:
+        def _save_sidecar_for_image(
+            fname: str, flux_prompt_text: str, caption_text: str
+        ) -> None:
             """Save prompt sidecar right after image file is written."""
-            _save_prompt_sidecar(drafts_dir, fname, {
-                "flux_prompt": flux_prompt_text,
-                "caption": caption_text,
-                "topic": topic,
-                "style": style,
-                "format": fmt,
-                "platform": platform,
-                "surface": "photo",
-            })
+            _save_prompt_sidecar(
+                drafts_dir,
+                fname,
+                {
+                    "flux_prompt": flux_prompt_text,
+                    "caption": caption_text,
+                    "topic": topic,
+                    "style": style,
+                    "format": fmt,
+                    "platform": platform,
+                    "surface": "photo",
+                },
+            )
 
         try:
             base_seed = int(time.time())
@@ -796,16 +944,27 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             else:
                 # STAGE 1 (~3-8s): AI generates caption + N FLUX prompts (one per image)
                 # Each brain routes exclusively to its model; claude/auto uses quality pipeline
-                caption, flux_prompts = await _generate_caption_with_brain(topic, platform, n=count)
+                caption, flux_prompts = await _generate_caption_with_brain(
+                    topic, platform, n=count
+                )
 
             # CAPTION-ONLY MODE: return caption without generating any image
             if caption_only:
-                return {"ok": True, "caption": caption, "image_url": None, "carousel_urls": []}
+                return {
+                    "ok": True,
+                    "caption": caption,
+                    "image_url": None,
+                    "carousel_urls": [],
+                }
 
             # STAGE 2: Generate images — each image uses its own AI-crafted prompt
             # (AI owns the creative direction per image; no rigid template override)
-            first_flux_prompt = flux_prompts[0] if flux_prompts else _flux_fallback_prompt(topic)
-            first_img_url = await _fetch_one(first_flux_prompt, base_seed, first_filename)
+            first_flux_prompt = (
+                flux_prompts[0] if flux_prompts else _flux_fallback_prompt(topic)
+            )
+            first_img_url = await _fetch_one(
+                first_flux_prompt, base_seed, first_filename
+            )
 
             if not first_img_url:
                 return {
@@ -827,7 +986,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 filename_i = f"{platform}_{fmt.replace(':','')}_{style}_{ts}_{i+1}.jpg"
                 await asyncio.sleep(2)
                 # Use per-image prompt if AI provided N prompts, else reuse first
-                prompt_i = flux_prompts[i] if i < len(flux_prompts) else first_flux_prompt
+                prompt_i = (
+                    flux_prompts[i] if i < len(flux_prompts) else first_flux_prompt
+                )
                 local_url = await _fetch_one(prompt_i, seed, filename_i)
                 if local_url:
                     carousel_urls.append(local_url)
@@ -866,7 +1027,13 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             }
         except Exception as e:
             logger.warning("social_generate_error", error=str(e))
-            return {"ok": False, "caption": None, "image_url": None, "carousel_urls": [], "error": str(e)}
+            return {
+                "ok": False,
+                "caption": None,
+                "image_url": None,
+                "carousel_urls": [],
+                "error": str(e),
+            }
 
     @r.post("/api/social/upload-image")
     async def social_upload_image(request: Request) -> Dict[str, Any]:
@@ -874,9 +1041,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         Returns: {ok: bool, url: str, filename: str}
         """
-        from fastapi import UploadFile
         import mimetypes
         from datetime import datetime, timezone
+
+        from fastapi import UploadFile
 
         try:
             form = await request.form()
@@ -885,7 +1053,9 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 raise HTTPException(status_code=400, detail="No file provided")
 
             # Validate mime type — images only
-            content_type = upload.content_type or mimetypes.guess_type(upload.filename)[0] or ""
+            content_type = (
+                upload.content_type or mimetypes.guess_type(upload.filename)[0] or ""
+            )
             if not content_type.startswith("image/"):
                 raise HTTPException(status_code=400, detail="Only image files allowed")
 
@@ -895,13 +1065,21 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
             # Sanitize filename and save
             ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
-            ext = ".jpg" if "jpeg" in content_type or "jpg" in upload.filename.lower() else ".png"
+            ext = (
+                ".jpg"
+                if "jpeg" in content_type or "jpg" in upload.filename.lower()
+                else ".png"
+            )
             safe_name = f"upload_{ts}{ext}"
             drafts_dir = Path.home() / ".aura" / "social_drafts"
             drafts_dir.mkdir(parents=True, exist_ok=True)
             (drafts_dir / safe_name).write_bytes(data)
             logger.info("image_uploaded", filename=safe_name, kb=len(data) // 1024)
-            return {"ok": True, "url": f"/api/social/drafts/{safe_name}", "filename": safe_name}
+            return {
+                "ok": True,
+                "url": f"/api/social/drafts/{safe_name}",
+                "filename": safe_name,
+            }
         except HTTPException:
             raise
         except Exception as e:
@@ -912,6 +1090,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def serve_social_draft(filename: str) -> Any:
         """Serve a locally saved social draft image."""
         from fastapi.responses import FileResponse as _FR
+
         # Sanitize — no path traversal
         if ".." in filename or "/" in filename:
             raise HTTPException(status_code=400, detail="Invalid filename")
@@ -929,6 +1108,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     def _save_prompt_sidecar(drafts_dir: Path, filename: str, data: dict) -> None:
         """Persist prompt metadata alongside a draft image as a .json sidecar."""
         import json as _json
+
         try:
             path = _sidecar_path(drafts_dir, filename)
             existing: dict = {}
@@ -945,6 +1125,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     def _load_prompt_sidecar(drafts_dir: Path, filename: str) -> dict:
         """Load prompt metadata from sidecar JSON if it exists."""
         import json as _json
+
         try:
             path = _sidecar_path(drafts_dir, filename)
             if path.exists():
@@ -959,25 +1140,31 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         drafts_dir = Path.home() / ".aura" / "social_drafts"
         if not drafts_dir.exists():
             return {"drafts": [], "dir": str(drafts_dir)}
-        files_jpg = sorted(drafts_dir.glob("*.jpg"), key=lambda f: f.stat().st_mtime, reverse=True)
-        files_png = sorted(drafts_dir.glob("*.png"), key=lambda f: f.stat().st_mtime, reverse=True)
+        files_jpg = sorted(
+            drafts_dir.glob("*.jpg"), key=lambda f: f.stat().st_mtime, reverse=True
+        )
+        files_png = sorted(
+            drafts_dir.glob("*.png"), key=lambda f: f.stat().st_mtime, reverse=True
+        )
         files = (files_jpg + files_png)[:50]
         drafts = []
         for f in files:
             meta = _load_prompt_sidecar(drafts_dir, f.name)
-            drafts.append({
-                "filename": f.name,
-                "url": f"/api/social/drafts/{f.name}",
-                "size_kb": f.stat().st_size // 1024,
-                "created": f.stat().st_mtime,
-                "prompt": meta.get("flux_prompt") or meta.get("prompt", ""),
-                "brief": meta.get("brief", ""),
-                "caption": meta.get("caption", ""),
-                "topic": meta.get("topic", ""),
-                "style": meta.get("style", ""),
-                "format": meta.get("format", ""),
-                "surface": meta.get("surface", "photo"),
-            })
+            drafts.append(
+                {
+                    "filename": f.name,
+                    "url": f"/api/social/drafts/{f.name}",
+                    "size_kb": f.stat().st_size // 1024,
+                    "created": f.stat().st_mtime,
+                    "prompt": meta.get("flux_prompt") or meta.get("prompt", ""),
+                    "brief": meta.get("brief", ""),
+                    "caption": meta.get("caption", ""),
+                    "topic": meta.get("topic", ""),
+                    "style": meta.get("style", ""),
+                    "format": meta.get("format", ""),
+                    "surface": meta.get("surface", "photo"),
+                }
+            )
         return {"drafts": drafts, "dir": str(drafts_dir)}
 
     @r.patch("/api/social/drafts/{filename}/prompt")
@@ -1011,6 +1198,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def open_drafts_folder() -> Dict[str, Any]:
         """Open the social_drafts folder in Finder."""
         import subprocess as _sp
+
         drafts_dir = Path.home() / ".aura" / "social_drafts"
         drafts_dir.mkdir(parents=True, exist_ok=True)
         _sp.Popen(["open", str(drafts_dir)])
@@ -1023,6 +1211,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def social_history_get() -> Dict[str, Any]:
         """Load published post history from server (persists across tunnel restarts)."""
         import json as _json
+
         try:
             if _HISTORY_FILE.exists():
                 posts = _json.loads(_HISTORY_FILE.read_text())
@@ -1035,6 +1224,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def social_history_save(request: Request) -> Dict[str, Any]:
         """Append a post record to server-side history."""
         import json as _json
+
         try:
             post = await request.json()
             existing: list = []
@@ -1052,6 +1242,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def social_history_delete(post_id: str) -> Dict[str, Any]:
         """Delete one post from history by id."""
         import json as _json
+
         try:
             if _HISTORY_FILE.exists():
                 posts = _json.loads(_HISTORY_FILE.read_text())
@@ -1070,10 +1261,15 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         The image_url must be publicly accessible (GitHub CDN or similar).
         """
         import aiohttp as _aiohttp
+
         from src.workflows.social_publisher import (
-            _ig_token, _ig_account_id, _ig_wait_ready,
-            generate_image_nvidia, upload_image_to_host,
+            _ig_account_id,
+            _ig_token,
+            _ig_wait_ready,
+            generate_image_nvidia,
+            upload_image_to_host,
         )
+
         try:
             body = await request.json()
         except Exception:
@@ -1082,7 +1278,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         image_url: str = body.get("image_url", "")
         # If no public URL provided, generate a 9:16 story image
         if not image_url:
-            prompt = body.get("prompt", "cinematic vertical story, bold visual impact, 9:16 format, no text")
+            prompt = body.get(
+                "prompt",
+                "cinematic vertical story, bold visual impact, 9:16 format, no text",
+            )
             try:
                 img_bytes = await generate_image_nvidia(prompt, width=768, height=1344)
                 image_url = await upload_image_to_host(img_bytes)
@@ -1110,7 +1309,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                     data = await resp.json()
                     creation_id = data.get("id")
                     if not creation_id:
-                        return {"ok": False, "error": f"Container creation failed: {data}"}
+                        return {
+                            "ok": False,
+                            "error": f"Container creation failed: {data}",
+                        }
 
                 # Step 2: Wait for processing
                 await _ig_wait_ready(session, creation_id, max_wait=30)
@@ -1142,8 +1344,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         import uuid as _uuid
+
         import aiohttp as _aiohttp
-        from datetime import datetime as _dt, timezone as _tz
 
         brief = (body.get("brief") or "").strip()
         fmt = (body.get("format") or "1:1").strip()
@@ -1160,8 +1362,14 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         }
         w, h = dims.get(fmt, (1080, 1080))
 
-        design_md_path = Path.home() / "Projects/design-systems/royaluniondesign/DESIGN.md"
-        design_md = design_md_path.read_text(encoding="utf-8") if design_md_path.exists() else ""
+        design_md_path = (
+            Path.home() / "Projects/design-systems/royaluniondesign/DESIGN.md"
+        )
+        design_md = (
+            design_md_path.read_text(encoding="utf-8")
+            if design_md_path.exists()
+            else ""
+        )
 
         slides_instruction = (
             f"Create {slides} slides with prev/next arrow navigation (plain JS, no external libs)."
@@ -1264,13 +1472,15 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         # Brain 3: Gemini CLI subprocess (Google OAuth, always available)
         if not html_content:
             import asyncio as _asyncio
-            import subprocess as _sp2
             import shutil as _shutil
+
             gemini_bin = _shutil.which("gemini") or "/opt/homebrew/bin/gemini"
             if _shutil.which("gemini"):
                 try:
                     proc = await _asyncio.create_subprocess_exec(
-                        gemini_bin, "-p", design_prompt,
+                        gemini_bin,
+                        "-p",
+                        design_prompt,
                         stdout=_asyncio.subprocess.PIPE,
                         stderr=_asyncio.subprocess.PIPE,
                     )
@@ -1288,6 +1498,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         # Brain 4: Ollama local (qwen2.5, no-internet fallback)
         if not html_content:
             import aiohttp as _ah2
+
             try:
                 async with _ah2.ClientSession() as session:
                     async with session.post(
@@ -1313,7 +1524,10 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
                 logger.warning("design_ollama_failed", error=repr(_e))
 
         if not html_content:
-            return {"ok": False, "error": "All AI brains unavailable. Check OPENROUTER_API_KEY or start Ollama."}
+            return {
+                "ok": False,
+                "error": "All AI brains unavailable. Check OPENROUTER_API_KEY or start Ollama.",
+            }
 
         task_id = _uuid.uuid4().hex[:12]
         designs_dir = Path.home() / ".aura" / "social_designs"
@@ -1334,6 +1548,7 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
     async def social_design_preview(task_id: str) -> Any:
         """Serve the generated design HTML file."""
         import re as _re
+
         from fastapi.responses import HTMLResponse as _HR
 
         if not _re.match(r"^[a-f0-9]{12}$", task_id):
@@ -1357,7 +1572,8 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
 
         import re as _re
         import subprocess as _sp
-        from datetime import datetime as _dt, timezone as _tz
+        from datetime import datetime as _dt
+        from datetime import timezone as _tz
 
         task_id = (body.get("taskId") or "").strip()
         fmt = (body.get("format") or "1:1").strip()
@@ -1393,17 +1609,29 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         _venv_python = str(_proj_root / ".venv" / "bin" / "python")
         if not Path(_venv_python).exists():
             import sys as _sys
+
             _venv_python = _sys.executable
 
         try:
             result = _sp.run(
-                [_venv_python, script, preview_url, str(out_path), str(w), str(h), str(slide)],
+                [
+                    _venv_python,
+                    script,
+                    preview_url,
+                    str(out_path),
+                    str(w),
+                    str(h),
+                    str(slide),
+                ],
                 capture_output=True,
                 text=True,
                 timeout=35,
             )
             if result.returncode != 0:
-                return {"ok": False, "error": result.stderr.strip() or "Screenshot failed"}
+                return {
+                    "ok": False,
+                    "error": result.stderr.strip() or "Screenshot failed",
+                }
         except _sp.TimeoutExpired:
             return {"ok": False, "error": "Screenshot timeout (35s)"}
         except Exception as _e:
@@ -1417,14 +1645,18 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
         # Save sidecar — store brief/task_id so prompt panel can show it
         brief_text = body.get("brief", "")
         caption_text = body.get("caption", "")
-        _save_prompt_sidecar(drafts_dir, filename, {
-            "brief": brief_text,
-            "caption": caption_text,
-            "task_id": task_id,
-            "format": fmt,
-            "slide": slide,
-            "surface": "design",
-        })
+        _save_prompt_sidecar(
+            drafts_dir,
+            filename,
+            {
+                "brief": brief_text,
+                "caption": caption_text,
+                "task_id": task_id,
+                "format": fmt,
+                "slide": slide,
+                "surface": "design",
+            },
+        )
 
         return {
             "ok": True,
@@ -1452,9 +1684,11 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             raise HTTPException(status_code=400, detail="text or topic required")
         try:
             from src.workflows.social_post import (
-                generate_images_for_post, generate_captions,
-                post_to_social, build_n8n_payload,
+                generate_captions,
+                generate_images_for_post,
+                post_to_social,
             )
+
             platform = platforms[0] if platforms else "instagram"
             style = f"social media {fmt}, dark background #141413, orange accent #d97757, professional, {width}x{height}"
             count = 1
@@ -1464,20 +1698,41 @@ def make_webhooks_router(event_bus: Any, settings: Any, db_manager: Any) -> APIR
             ok_images = [img for img in images if not img.get("error")]
             image_url = ok_images[0]["url"] if ok_images else None
             n8n_url = os.environ.get("RUD_N8N_URL", "")
-            result = {"success": False, "error": "N8N not configured", "draft_saved": ""}
+            result = {
+                "success": False,
+                "error": "N8N not configured",
+                "draft_saved": "",
+            }
             if n8n_url:
-                result = await post_to_social(platform, "post", topic, ok_images, [caption], n8n_url)
+                result = await post_to_social(
+                    platform, "post", topic, ok_images, [caption], n8n_url
+                )
             else:
                 # Save draft locally
                 import json as _json
                 from datetime import datetime, timezone
+
                 drafts_dir = Path.home() / ".aura" / "social_drafts"
                 drafts_dir.mkdir(parents=True, exist_ok=True)
                 ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
                 draft_file = drafts_dir / f"{platform}_{ts}.json"
-                draft_data = {"platform": platform, "type": "post", "caption": caption, "image_url": image_url, "topic": topic, "format": fmt, "timestamp": ts}
-                draft_file.write_text(_json.dumps(draft_data, ensure_ascii=False, indent=2))
-                result = {"success": False, "error": f"N8N no configurado — borrador guardado en {draft_file}", "draft_saved": str(draft_file)}
+                draft_data = {
+                    "platform": platform,
+                    "type": "post",
+                    "caption": caption,
+                    "image_url": image_url,
+                    "topic": topic,
+                    "format": fmt,
+                    "timestamp": ts,
+                }
+                draft_file.write_text(
+                    _json.dumps(draft_data, ensure_ascii=False, indent=2)
+                )
+                result = {
+                    "success": False,
+                    "error": f"N8N no configurado — borrador guardado en {draft_file}",
+                    "draft_saved": str(draft_file),
+                }
             return {
                 "ok": result["success"],
                 "image_url": image_url,

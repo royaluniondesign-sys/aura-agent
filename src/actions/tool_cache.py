@@ -10,6 +10,7 @@ Default TTLs:
   git_status        → 10s
   get_terminal_url  → 120s (URL doesn't change often)
 """
+
 from __future__ import annotations
 
 import hashlib
@@ -17,22 +18,22 @@ import time
 from typing import Any, Dict, Optional, Tuple
 
 _TOOL_TTL: Dict[str, int] = {
-    "get_aura_status":  30,
-    "bash_run":          5,
-    "file_read":        15,
-    "file_list":        15,
-    "memory_search":    60,
-    "memory_store":      0,   # Never cache writes
-    "git_status":       10,
-    "git_log":          30,
-    "git_commit":        0,   # Never cache writes
-    "file_write":        0,   # Never cache writes
-    "send_email":        0,   # Never cache sends
+    "get_aura_status": 30,
+    "bash_run": 5,
+    "file_read": 15,
+    "file_list": 15,
+    "memory_search": 60,
+    "memory_store": 0,  # Never cache writes
+    "git_status": 10,
+    "git_log": 30,
+    "git_commit": 0,  # Never cache writes
+    "file_write": 0,  # Never cache writes
+    "send_email": 0,  # Never cache sends
     "get_terminal_url": 120,
 }
 _DEFAULT_TTL = 10
 
-_cache: Dict[str, Tuple[Any, float]] = {}   # key → (result, expires_at)
+_cache: Dict[str, Tuple[Any, float]] = {}  # key → (result, expires_at)
 
 
 def _cache_key(tool_name: str, kwargs: Dict[str, Any]) -> str:

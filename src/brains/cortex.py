@@ -19,8 +19,8 @@ Session context:
   Used to enrich prompts automatically
 """
 
-import os
 import json
+import os
 import re
 from datetime import UTC, datetime
 from pathlib import Path
@@ -42,7 +42,14 @@ _CORTEX_TMP = Path.home() / ".aura" / ".cortex.json.tmp"
 
 # Cascade order for picking bypass brain
 _CASCADE_ORDER = [
-    "ollama-rud", "haiku", "gemini", "openrouter", "cline", "codex", "sonnet", "opus"
+    "ollama-rud",
+    "haiku",
+    "gemini",
+    "openrouter",
+    "cline",
+    "codex",
+    "sonnet",
+    "opus",
 ]
 
 # Keywords for topic extraction
@@ -50,12 +57,39 @@ _TOPIC_RE = re.compile(
     r"\b([a-zA-Z][a-zA-Z0-9_\-]{3,})\b",
     re.IGNORECASE,
 )
-_STOPWORDS = frozenset([
-    "that", "this", "with", "from", "have", "will", "what", "when",
-    "where", "there", "their", "which", "about", "into", "your", "more",
-    "also", "some", "been", "como", "para", "esto", "esta", "tiene",
-    "hacer", "puede", "quiero", "necesito", "favor",
-])
+_STOPWORDS = frozenset(
+    [
+        "that",
+        "this",
+        "with",
+        "from",
+        "have",
+        "will",
+        "what",
+        "when",
+        "where",
+        "there",
+        "their",
+        "which",
+        "about",
+        "into",
+        "your",
+        "more",
+        "also",
+        "some",
+        "been",
+        "como",
+        "para",
+        "esto",
+        "esta",
+        "tiene",
+        "hacer",
+        "puede",
+        "quiero",
+        "necesito",
+        "favor",
+    ]
+)
 
 
 def _now_iso() -> str:
@@ -132,7 +166,9 @@ class AuraCortex:
             # Resolve the intent string for bypass lookup
             intent_str = ""
             try:
-                intent_str = intent.intent.value if hasattr(intent, "intent") else str(intent)
+                intent_str = (
+                    intent.intent.value if hasattr(intent, "intent") else str(intent)
+                )
             except Exception:
                 pass
 
@@ -170,7 +206,8 @@ class AuraCortex:
             except Exception as exc2:
                 logger.error("cortex_route_fallback_error", error=str(exc2))
                 # Return safe sentinel — IntentResult-like object
-                from ..economy.intent import IntentResult, Intent
+                from ..economy.intent import Intent, IntentResult
+
                 safe = IntentResult(
                     intent=Intent.CHAT,
                     confidence=0.5,
@@ -369,7 +406,7 @@ class AuraCortex:
             idx = _CASCADE_ORDER.index(failed_brain)
         except ValueError:
             idx = -1
-        for candidate in _CASCADE_ORDER[idx + 1:]:
+        for candidate in _CASCADE_ORDER[idx + 1 :]:
             if candidate in available:
                 return candidate
         return "haiku"
@@ -383,12 +420,15 @@ class AuraCortex:
 
     def _update_session_context(self, intent: str, brain: str, prompt: str) -> None:
         """Update session context with latest intent and extracted topics."""
-        ctx = self.data.setdefault("session_context", {
-            "last_intent": "",
-            "last_brain": "",
-            "recent_topics": [],
-            "recent_intents": [],
-        })
+        ctx = self.data.setdefault(
+            "session_context",
+            {
+                "last_intent": "",
+                "last_brain": "",
+                "recent_topics": [],
+                "recent_intents": [],
+            },
+        )
 
         # Immutable list updates (cap at 10)
         recent_intents = list(ctx.get("recent_intents", []))
@@ -446,6 +486,7 @@ class AuraCortex:
 
 # ── Workflow Memory ─────────────────────────────────────────────────────────
 
+
 class WorkflowMemory:
     """Learns successful workflow patterns. Next time → fewer steps, faster.
 
@@ -498,8 +539,14 @@ class WorkflowMemory:
                 best = entry
         return best
 
-    def record(self, pattern: str, keywords: list, params: dict,
-                duration_ms: int, success: bool) -> None:
+    def record(
+        self,
+        pattern: str,
+        keywords: list,
+        params: dict,
+        duration_ms: int,
+        success: bool,
+    ) -> None:
         """Update or create workflow memory entry."""
         entry = next((e for e in self._data if e["pattern"] == pattern), None)
         if entry is None:
@@ -518,7 +565,9 @@ class WorkflowMemory:
             entry["success_count"] = entry.get("success_count", 0) + 1
             # EMA on duration
             old = entry.get("avg_duration_ms", duration_ms)
-            entry["avg_duration_ms"] = int(self._EMA * duration_ms + (1 - self._EMA) * old)
+            entry["avg_duration_ms"] = int(
+                self._EMA * duration_ms + (1 - self._EMA) * old
+            )
             # Merge params (update defaults with what actually worked)
             for k, v in params.items():
                 entry["default_params"][k] = v
@@ -535,6 +584,7 @@ class WorkflowMemory:
 
 # Singleton
 _workflow_memory: Optional[WorkflowMemory] = None
+
 
 def get_workflow_memory() -> WorkflowMemory:
     global _workflow_memory

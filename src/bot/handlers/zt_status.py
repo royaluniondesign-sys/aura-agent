@@ -4,7 +4,7 @@ import json as _json
 from pathlib import Path
 
 import structlog
-from telegram import Update, InlineKeyboardMarkup, InlineKeyboardButton
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import ContextTypes
 
 logger = structlog.get_logger()
@@ -18,19 +18,23 @@ class ZeroTokenStatusMixin:
     ) -> None:
         """Dashboard URL via ngrok — pre-embedded token, one tap and you're in."""
         import os as _os
+
         from ...infra.tunnel import get_dashboard_url
 
         _token = _os.environ.get("DASHBOARD_TOKEN", "")
 
         # Termora: interactive terminal (port 4030)
         import urllib.request as _req
+
         termora_url = ""
         termora_online = False
         try:
             with _req.urlopen("http://localhost:4030/api/info", timeout=3) as r:
                 info = _json.loads(r.read())
             termora_url = info.get("authUrl") or info.get("tunnelUrl", "")
-            termora_online = bool(termora_url) and not termora_url.startswith("http://localhost")
+            termora_online = bool(termora_url) and not termora_url.startswith(
+                "http://localhost"
+            )
         except Exception:
             pass
 
@@ -52,11 +56,17 @@ class ZeroTokenStatusMixin:
         msg_lines.append("<b>📊 Dashboard</b>")
         if dashboard_auth_url:
             # Show clean URL + auth URL for copy-paste from other networks
-            msg_lines.append(f"🔗 <a href='{dashboard_auth_url}'>Abrir directo</a> (token incluido)")
+            msg_lines.append(
+                f"🔗 <a href='{dashboard_auth_url}'>Abrir directo</a> (token incluido)"
+            )
             msg_lines.append(f"\n<code>{dashboard_auth_url}</code>")
-            buttons.append([InlineKeyboardButton("📊 Dashboard →", url=dashboard_auth_url)])
+            buttons.append(
+                [InlineKeyboardButton("📊 Dashboard →", url=dashboard_auth_url)]
+            )
         else:
-            msg_lines.append("   Túnel offline — Dashboard solo en LAN: <code>http://localhost:8080</code>")
+            msg_lines.append(
+                "   Túnel offline — Dashboard solo en LAN: <code>http://localhost:8080</code>"
+            )
             if _token:
                 msg_lines.append(f"\n🔑 Token: <code>{_token}</code>")
 
@@ -91,8 +101,14 @@ class ZeroTokenStatusMixin:
 
             report = await run_diagnostics()
             ts = datetime.fromtimestamp(report.checked_at).strftime("%Y-%m-%d %H:%M")
-            icon = "✅" if report.ok and not report.warnings else "⚠️" if not report.issues else "🔴"
-            lines = [f"<b>🩺 AURA Diagnostics</b> — {ts}\n{icon} <b>{'OK' if report.ok else 'ISSUES'}</b>"]
+            icon = (
+                "✅"
+                if report.ok and not report.warnings
+                else "⚠️" if not report.issues else "🔴"
+            )
+            lines = [
+                f"<b>🩺 AURA Diagnostics</b> — {ts}\n{icon} <b>{'OK' if report.ok else 'ISSUES'}</b>"
+            ]
 
             if report.issues:
                 lines.append(f"\n<b>Problemas ({len(report.issues)}):</b>")
@@ -153,15 +169,19 @@ class ZeroTokenStatusMixin:
         """Clean status: active brain + real rate limits + disk."""
         import shutil
 
-        router      = context.bot_data.get("brain_router")
+        router = context.bot_data.get("brain_router")
         rate_monitor = context.bot_data.get("rate_monitor")
-        user_id     = update.effective_user.id
+        user_id = update.effective_user.id
 
         # ── Active brain ──────────────────────────────────────────────────────
         brain_name = router.get_active_brain_name(user_id) if router else "?"
         _EMOJIS = {
-            "haiku": "🟡", "sonnet": "🟠", "opus": "🔴",
-            "gemini": "🔵", "codex": "🟢", "cline": "🟣",
+            "haiku": "🟡",
+            "sonnet": "🟠",
+            "opus": "🔴",
+            "gemini": "🔵",
+            "codex": "🟢",
+            "cline": "🟣",
         }
         brain_emoji = _EMOJIS.get(brain_name, "🧠")
         is_auto = user_id not in (getattr(router, "_user_brains", {}) or {})
@@ -176,12 +196,18 @@ class ZeroTokenStatusMixin:
 
         # ── Disk ─────────────────────────────────────────────────────────────
         usage = shutil.disk_usage(Path.home())
-        disk_gb = usage.free / (1024 ** 3)
+        disk_gb = usage.free / (1024**3)
 
         # ── Working directory ─────────────────────────────────────────────────
-        current_dir = context.user_data.get("current_directory") if hasattr(context, "user_data") else None
+        current_dir = (
+            context.user_data.get("current_directory")
+            if hasattr(context, "user_data")
+            else None
+        )
         if not current_dir:
-            approved = getattr(getattr(self, "settings", None), "approved_directory", None)
+            approved = getattr(
+                getattr(self, "settings", None), "approved_directory", None
+            )
             current_dir = str(approved) if approved else "~"
         dir_short = str(current_dir).replace(str(Path.home()), "~")
 

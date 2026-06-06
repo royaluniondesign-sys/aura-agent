@@ -1,4 +1,5 @@
 """Conductor planner: system prompt, prompt builder, plan parser, simple plan."""
+
 from __future__ import annotations
 
 import json
@@ -83,11 +84,15 @@ def _build_planner_prompt(
 
     # ADENTRO — inject self-knowledge so planner avoids repeating mistakes
     if meta_context:
-        prompt_parts.append(f"\n## AURA Self-Knowledge (use to inform your strategy):\n{meta_context}\n")
+        prompt_parts.append(
+            f"\n## AURA Self-Knowledge (use to inform your strategy):\n{meta_context}\n"
+        )
 
     # Include pending tasks if available
     if pending_tasks and len(pending_tasks) > 0:
-        prompt_parts.append("\nPending tasks (you can reference these task IDs in your plan):")
+        prompt_parts.append(
+            "\nPending tasks (you can reference these task IDs in your plan):"
+        )
         for t in pending_tasks[:10]:
             task_id = t.get("id", "")
             title = t.get("title", "")[:50]
@@ -121,14 +126,16 @@ def _parse_plan(raw: str, run_id: str) -> Optional[ConductorPlan]:
 
     steps = []
     for s in steps_raw:
-        steps.append(ConductorStep(
-            step=int(s.get("step", len(steps) + 1)),
-            layer=int(s.get("layer", 3)),
-            brain=str(s.get("brain", "haiku")),
-            role=str(s.get("role", "executor")),
-            prompt=str(s.get("prompt", "")),
-            depends_on=[int(d) for d in s.get("depends_on", [])],
-        ))
+        steps.append(
+            ConductorStep(
+                step=int(s.get("step", len(steps) + 1)),
+                layer=int(s.get("layer", 3)),
+                brain=str(s.get("brain", "haiku")),
+                role=str(s.get("role", "executor")),
+                prompt=str(s.get("prompt", "")),
+                depends_on=[int(d) for d in s.get("depends_on", [])],
+            )
+        )
 
     return ConductorPlan(
         task_summary=str(data.get("task_summary", "Task"))[:120],
@@ -143,9 +150,14 @@ def _simple_plan(task: str, brain: str, run_id: str) -> ConductorPlan:
     return ConductorPlan(
         task_summary=task[:80],
         strategy="Direct execution (planner unavailable)",
-        steps=[ConductorStep(
-            step=1, layer=3, brain=brain,
-            role="executor", prompt=task,
-        )],
+        steps=[
+            ConductorStep(
+                step=1,
+                layer=3,
+                brain=brain,
+                role="executor",
+                prompt=task,
+            )
+        ],
         run_id=run_id,
     )

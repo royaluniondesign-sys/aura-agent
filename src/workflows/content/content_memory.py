@@ -3,11 +3,12 @@
 Tracks every piece of content planned or published so the brain
 never repeats a topic within the configured cooldown window.
 """
+
 from __future__ import annotations
 
 import json
 import sqlite3
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Optional
 
@@ -18,7 +19,8 @@ COOLDOWN_DAYS = 21  # Don't revisit same topic within 3 weeks
 def _conn() -> sqlite3.Connection:
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     c = sqlite3.connect(str(DB_PATH))
-    c.execute("""
+    c.execute(
+        """
         CREATE TABLE IF NOT EXISTS content_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             topic_key TEXT NOT NULL,
@@ -29,7 +31,8 @@ def _conn() -> sqlite3.Connection:
             meta TEXT DEFAULT '{}',
             created_at TEXT DEFAULT (datetime('now'))
         )
-    """)
+    """
+    )
     c.execute("CREATE INDEX IF NOT EXISTS idx_topic ON content_log(topic_key)")
     c.commit()
     return c
@@ -58,8 +61,14 @@ def log_planned(
         cur = c.execute(
             "INSERT INTO content_log (topic_key, title, format, platform, status, meta) "
             "VALUES (?,?,?,?,?,?)",
-            (topic_key.lower()[:100], title[:200], fmt, platform, "planned",
-             json.dumps(meta or {})),
+            (
+                topic_key.lower()[:100],
+                title[:200],
+                fmt,
+                platform,
+                "planned",
+                json.dumps(meta or {}),
+            ),
         )
         return cur.lastrowid or 0
 
@@ -86,7 +95,14 @@ def recent_topics(limit: int = 30) -> list[dict]:
             (limit,),
         ).fetchall()
     return [
-        {"id": r[0], "topic": r[1], "title": r[2], "format": r[3],
-         "platform": r[4], "status": r[5], "created": r[6]}
+        {
+            "id": r[0],
+            "topic": r[1],
+            "title": r[2],
+            "format": r[3],
+            "platform": r[4],
+            "status": r[5],
+            "created": r[6],
+        }
         for r in rows
     ]

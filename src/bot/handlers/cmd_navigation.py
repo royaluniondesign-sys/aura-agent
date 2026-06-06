@@ -8,7 +8,6 @@ from ...claude.facade import ClaudeIntegration
 from ...config.settings import Settings
 from ...security.audit import AuditLogger
 from ...security.validators import SecurityValidator
-from ..utils.html_format import escape_html
 from ._handler_utils import (
     _escape_markdown,
     _format_file_size,

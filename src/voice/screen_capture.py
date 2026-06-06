@@ -3,10 +3,11 @@
 Captures screen or webcam, compresses to JPEG for Gemini vision.
 No Gemini dependency here — pure capture/compress utilities.
 """
+
 from __future__ import annotations
 
 import io
-from typing import Optional, Tuple
+from typing import Tuple
 
 _MSS_OK = False
 _PIL_OK = False
@@ -15,19 +16,22 @@ _CV2_OK = False
 try:
     import mss
     import mss.tools
+
     _MSS_OK = True
 except ImportError:
     pass
 
 try:
     import PIL.Image
+
     _PIL_OK = True
 except ImportError:
     pass
 
 try:
     import cv2  # type: ignore[import]
-    import numpy as np  # type: ignore[import]
+    import numpy as np  # type: ignore[import]  # noqa: F401
+
     _CV2_OK = True
 except ImportError:
     pass
@@ -82,11 +86,14 @@ def capture_region(x: int, y: int, w: int, h: int) -> Tuple[bytes, str]:
 def capture_camera(index: int = 0) -> Tuple[bytes, str]:
     """Capture a frame from webcam. Returns (jpeg_bytes, mime_type)."""
     if not _CV2_OK:
-        raise RuntimeError("opencv-python not installed. Run: pip install opencv-python")
+        raise RuntimeError(
+            "opencv-python not installed. Run: pip install opencv-python"
+        )
 
     # AVFoundation backend on macOS for best compatibility
     try:
         import platform
+
         backend = cv2.CAP_AVFOUNDATION if platform.system() == "Darwin" else cv2.CAP_ANY
     except Exception:
         backend = 0
@@ -119,6 +126,7 @@ def capture_camera(index: int = 0) -> Tuple[bytes, str]:
 def screenshot_to_base64(monitor: int = 1) -> str:
     """Capture screen and return as base64 string (for Telegram/API use)."""
     import base64
+
     img_bytes, mime = capture_screen(monitor)
     b64 = base64.b64encode(img_bytes).decode()
     return f"data:{mime};base64,{b64}"

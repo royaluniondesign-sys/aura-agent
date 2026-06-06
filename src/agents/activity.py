@@ -1,9 +1,11 @@
 """Agent Activity Tracker — real-time state of the squad."""
+
 from __future__ import annotations
 
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from typing import Optional
+
 import structlog
 
 logger = structlog.get_logger()
@@ -15,7 +17,7 @@ class AgentState:
     title: str
     emoji: str
     brain: str
-    status: str = "idle"        # idle | thinking | working | done | error
+    status: str = "idle"  # idle | thinking | working | done | error
     current_task: str = ""
     last_output: str = ""
     started_at: Optional[float] = None
@@ -39,7 +41,7 @@ class AgentMessage:
     from_key: str
     to_key: str
     text: str
-    msg_type: str = "info"   # task | result | debate | review | approved | rejected
+    msg_type: str = "info"  # task | result | debate | review | approved | rejected
     ts: float = field(default_factory=time.time)
 
     def to_dict(self) -> dict:
@@ -50,10 +52,11 @@ class ActivityTracker:
     """Singleton tracking all agent states and inter-agent messages."""
 
     _MAX_MESSAGES = 100  # rolling window
-    _MAX_RUNS = 10       # keep last N run results
+    _MAX_RUNS = 10  # keep last N run results
 
     def __init__(self) -> None:
         from src.agents.team import ROLES
+
         self._agents: dict[str, AgentState] = {
             key: AgentState(
                 key=key,
@@ -98,17 +101,19 @@ class ActivityTracker:
             self._last_result = result
             self._last_result_ts = time.time()
             # Add to history
-            self._run_history.append({
-                "task": self._run_task,
-                "result": result,
-                "duration_ms": duration_ms,
-                "ts": self._last_result_ts,
-                "agents_used": [
-                    k for k, ag in self._agents.items() if ag.task_count > 0
-                ],
-            })
+            self._run_history.append(
+                {
+                    "task": self._run_task,
+                    "result": result,
+                    "duration_ms": duration_ms,
+                    "ts": self._last_result_ts,
+                    "agents_used": [
+                        k for k, ag in self._agents.items() if ag.task_count > 0
+                    ],
+                }
+            )
             if len(self._run_history) > self._MAX_RUNS:
-                self._run_history = self._run_history[-self._MAX_RUNS:]
+                self._run_history = self._run_history[-self._MAX_RUNS :]
         logger.info("squad_run_end", duration_ms=duration_ms)
 
     def request_stop(self) -> None:
@@ -182,7 +187,7 @@ class ActivityTracker:
         )
         self._messages.append(msg)
         if len(self._messages) > self._MAX_MESSAGES:
-            self._messages = self._messages[-self._MAX_MESSAGES:]
+            self._messages = self._messages[-self._MAX_MESSAGES :]
         logger.info(
             "agent_message",
             from_agent=from_key,

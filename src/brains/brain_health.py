@@ -2,13 +2,12 @@
 
 Detects failures in AURA's brain modules and applies targeted fixes.
 """
+
 import asyncio
-import logging
 import os
 import subprocess
 import sys
 import traceback
-from pathlib import Path
 from typing import NamedTuple
 
 import structlog
@@ -18,6 +17,7 @@ logger = structlog.get_logger()
 
 class HealthCheck(NamedTuple):
     """Result of a brain health check."""
+
     brain_name: str
     is_healthy: bool
     error_msg: str | None = None
@@ -34,7 +34,7 @@ def check_brain_health(brain_name: str) -> HealthCheck:
         HealthCheck result with health status and any error details.
     """
     try:
-        module = __import__(f"src.brains.{brain_name}", fromlist=[brain_name])
+        __import__(f"src.brains.{brain_name}", fromlist=[brain_name])
         return HealthCheck(brain_name=brain_name, is_healthy=True)
     except Exception as e:
         error_msg = f"{type(e).__name__}: {str(e)[:100]}"
@@ -95,7 +95,9 @@ def diagnose_error(brain_name: str, error_msg: str) -> dict:
     return diagnosis
 
 
-def repair_error(brain_name: str, diagnosis: dict, error: Exception | None = None) -> bool:
+def repair_error(
+    brain_name: str, diagnosis: dict, error: Exception | None = None
+) -> bool:
     """Attempt to repair a brain error with improved error handling.
 
     Args:
@@ -123,7 +125,10 @@ def repair_error(brain_name: str, diagnosis: dict, error: Exception | None = Non
             if "CancelledError" in error_tb:
                 logger.error("repair_error_cancelled", **log_context)
                 return _handle_cancelled_error(brain_name)
-            elif "asyncio.exceptions.TimeoutError" in error_tb or "TimeoutError" in error_type:
+            elif (
+                "asyncio.exceptions.TimeoutError" in error_tb
+                or "TimeoutError" in error_type
+            ):
                 logger.error("repair_error_timeout", **log_context)
                 return _handle_timeout_error(brain_name)
 
@@ -251,7 +256,14 @@ def run_tests() -> dict:
         # Parse pytest output for summary
         output = result.stdout + result.stderr
         lines = output.split("\n")
-        summary_line = next((l for l in reversed(lines) if " passed" in l or " failed" in l), "")
+        summary_line = next(
+            (
+                line
+                for line in reversed(lines)
+                if " passed" in line or " failed" in line
+            ),
+            "",
+        )
 
         return {
             "success": result.returncode == 0,
@@ -312,7 +324,9 @@ def self_repair():
         )
 
 
-def log_self_repair_action(action: str, result: str, details: str | None = None) -> None:
+def log_self_repair_action(
+    action: str, result: str, details: str | None = None
+) -> None:
     """Log self-repair action with result and context.
 
     Args:
@@ -333,5 +347,3 @@ def log_self_repair_action(action: str, result: str, details: str | None = None)
         logger.error("repair_action_failed", **context)
     else:
         logger.warning("repair_action_" + result.lower(), **context)
-
-

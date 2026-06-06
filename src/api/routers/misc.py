@@ -93,11 +93,14 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
     days=0 → all time; days=30/7 → last N days.
     """
     import re as _re
-    from datetime import date, timedelta, datetime as _dt
+    from datetime import date
+    from datetime import datetime as _dt
+    from datetime import timedelta
 
     try:
         # ── SQLite activity ──────────────────────────────────────
         from ...config.settings import Settings
+
         _settings = Settings()
         db_path = _settings.database_path
         daily: Dict[str, int] = {}
@@ -109,6 +112,7 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
 
         if db_path and Path(db_path).exists():
             import aiosqlite
+
             async with aiosqlite.connect(str(db_path)) as _db:
                 cutoff = ""
                 if days > 0:
@@ -149,9 +153,9 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
         if log_path.exists():
             log_text = log_path.read_text(errors="replace")
             # Parse blocks: "## YYYY-MM-DD HH:MM — run_id"
-            blocks = _re.split(r'\n## \d{4}-\d{2}-\d{2}', log_text)
+            blocks = _re.split(r"\n## \d{4}-\d{2}-\d{2}", log_text)
             for block in blocks:
-                date_m = _re.search(r'^(\d{4}-\d{2}-\d{2})', block)
+                date_m = _re.search(r"^(\d{4}-\d{2}-\d{2})", block)
                 day_str = date_m.group(1) if date_m else None
                 if days > 0 and day_str:
                     try:
@@ -161,13 +165,24 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
                     except ValueError:
                         pass
                 # Count brain mentions
-                for brain in ("haiku", "sonnet", "opus", "qwen", "gemini", "granite", "openrouter", "local-ollama"):
+                for brain in (
+                    "haiku",
+                    "sonnet",
+                    "opus",
+                    "qwen",
+                    "gemini",
+                    "granite",
+                    "openrouter",
+                    "local-ollama",
+                ):
                     if brain in block.lower():
                         cnt = block.lower().count(brain)
                         model_totals[brain] = model_totals.get(brain, 0) + cnt
                         if day_str:
                             model_day_counts.setdefault(brain, {})
-                            model_day_counts[brain][day_str] = model_day_counts[brain].get(day_str, 0) + cnt
+                            model_day_counts[brain][day_str] = (
+                                model_day_counts[brain].get(day_str, 0) + cnt
+                            )
                 # Also count per-day for heatmap (conductor runs)
                 if day_str:
                     if "✅" in block or "COMMITTED" in block:
@@ -186,7 +201,19 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
         while cur_d <= today:
             ds = cur_d.isoformat()
             cnt = daily.get(ds, 0)
-            level = 0 if cnt == 0 else (1 if cnt <= max_day * 0.25 else (2 if cnt <= max_day * 0.5 else (3 if cnt <= max_day * 0.75 else 4)))
+            level = (
+                0
+                if cnt == 0
+                else (
+                    1
+                    if cnt <= max_day * 0.25
+                    else (
+                        2
+                        if cnt <= max_day * 0.5
+                        else (3 if cnt <= max_day * 0.75 else 4)
+                    )
+                )
+            )
             heatmap.append({"date": ds, "count": cnt, "level": level})
             cur_d += timedelta(days=1)
 
@@ -236,6 +263,7 @@ async def get_usage_stats(days: int = 0) -> Dict[str, Any]:
         }
     except Exception as e:
         import traceback
+
         return {"ok": False, "error": str(e), "trace": traceback.format_exc()[-500:]}
 
 
@@ -247,6 +275,7 @@ async def get_sqlite_stats() -> Dict[str, Any]:
         return {"error": "No database found", "sessions": 0}
     try:
         import aiosqlite
+
         async with aiosqlite.connect(str(db_path)) as conn:
             conn.row_factory = aiosqlite.Row
 
@@ -302,16 +331,10 @@ async def rud_server_status() -> Dict[str, Any]:
     """Return status and available models for the RUD remote server."""
     import httpx as _httpx
 
-    ollama_url = (
-        __import__("os").environ.get("RUD_OLLAMA_URL", "").rstrip("/")
-    )
+    ollama_url = __import__("os").environ.get("RUD_OLLAMA_URL", "").rstrip("/")
     n8n_url = __import__("os").environ.get("RUD_N8N_URL", "").rstrip("/")
-    grafana_url = (
-        __import__("os").environ.get("RUD_GRAFANA_URL", "").rstrip("/")
-    )
-    portainer_url = (
-        __import__("os").environ.get("RUD_PORTAINER_URL", "").rstrip("/")
-    )
+    grafana_url = __import__("os").environ.get("RUD_GRAFANA_URL", "").rstrip("/")
+    portainer_url = __import__("os").environ.get("RUD_PORTAINER_URL", "").rstrip("/")
 
     async def _check(url: str, path: str = "/") -> bool:
         try:
@@ -357,6 +380,7 @@ async def rud_server_status() -> Dict[str, Any]:
 async def shell_execute(request: Request) -> Dict[str, Any]:
     """Execute a shell command and return output. For dashboard terminal."""
     import asyncio as _aio
+
     try:
         body = await request.json()
     except Exception:
@@ -378,7 +402,11 @@ async def shell_execute(request: Request) -> Dict[str, Any]:
         timeout = int(body.get("timeout", 30))
         out, _ = await _aio.wait_for(proc.communicate(), timeout=timeout)
         text = _strip_ansi(out.decode(errors="replace").strip())
-        return {"ok": proc.returncode == 0, "output": text[:8000], "exit_code": proc.returncode}
+        return {
+            "ok": proc.returncode == 0,
+            "output": text[:8000],
+            "exit_code": proc.returncode,
+        }
     except _aio.TimeoutError:
         return {"ok": False, "output": f"⏱ Timeout after {timeout}s", "exit_code": 124}
     except Exception as e:
@@ -389,6 +417,7 @@ async def shell_execute(request: Request) -> Dict[str, Any]:
 async def terminal_info() -> Dict[str, Any]:
     """Return Termora auth URL for dashboard iframe embedding."""
     import httpx as _httpx
+
     try:
         async with _httpx.AsyncClient(timeout=3.0) as client:
             r = await client.get("http://localhost:4030/api/info")
@@ -403,14 +432,22 @@ async def terminal_info() -> Dict[str, Any]:
                 }
     except Exception:
         pass
-    return {"online": False, "authUrl": None, "tunnelUrl": None, "tunnelMethod": None, "machineName": None}
+    return {
+        "online": False,
+        "authUrl": None,
+        "tunnelUrl": None,
+        "tunnelMethod": None,
+        "machineName": None,
+    }
 
 
 @router.get("/api/dashboard-url")
 async def dashboard_url_info() -> Dict[str, Any]:
     """Return the public dashboard URL served via cloudflared tunnel."""
     import os as _os
+
     from ...infra.tunnel import get_dashboard_url
+
     url = get_dashboard_url()
     dashboard_url_file = Path.home() / ".aura" / "dashboard_url.txt"
     # Fall back to file on disk (survives restarts)

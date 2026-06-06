@@ -288,8 +288,13 @@ class Storage:
         except Exception:
             pass
 
-        logger.debug("message_saved_raw", user_id=user_id, brain=brain,
-                     cost=cost, duration_ms=duration_ms)
+        logger.debug(
+            "message_saved_raw",
+            user_id=user_id,
+            brain=brain,
+            cost=cost,
+            duration_ms=duration_ms,
+        )
 
     async def log_bot_event(
         self,

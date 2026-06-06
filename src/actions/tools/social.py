@@ -3,11 +3,10 @@
 Exposes AURA's social publishing capabilities as MCP tools so Hermes
 and other agents can trigger publications without knowing the API details.
 """
+
 from __future__ import annotations
 
-import asyncio
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
@@ -29,8 +28,14 @@ _SCHEDULED_DIR = Path.home() / ".aura" / "social_scheduled"
     category="social",
     parameters={
         "caption": {"type": "str", "description": "Post caption with hashtags"},
-        "image_path": {"type": "str", "description": "Path to image file in social_drafts (optional — if omitted, generates one)"},
-        "prompt": {"type": "str", "description": "Image generation prompt (used only if image_path not provided)"},
+        "image_path": {
+            "type": "str",
+            "description": "Path to image file in social_drafts (optional — if omitted, generates one)",
+        },
+        "prompt": {
+            "type": "str",
+            "description": "Image generation prompt (used only if image_path not provided)",
+        },
     },
 )
 async def instagram_publish(
@@ -39,8 +44,10 @@ async def instagram_publish(
     prompt: Optional[str] = None,
 ) -> str:
     import sys
+
     sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent))
     from dotenv import load_dotenv
+
     load_dotenv(Path(__file__).parent.parent.parent.parent / ".env")
 
     from src.workflows.instagram_direct import post_image
@@ -61,11 +68,13 @@ async def instagram_publish(
         # Try to generate via image_brain
         try:
             from src.brains.image_brain import ImageBrain
+
             brain = ImageBrain()
             result = await brain.generate(prompt, style="photorealistic", format="1:1")
             if result and result.get("images"):
                 img_url = result["images"][0]
                 import aiohttp
+
                 async with aiohttp.ClientSession() as session:
                     async with session.get(img_url) as resp:
                         if resp.status == 200:
@@ -128,9 +137,18 @@ async def social_list_drafts() -> str:
     category="social",
     parameters={
         "caption": {"type": "str", "description": "Post caption with hashtags"},
-        "image_path": {"type": "str", "description": "Path or filename from social_drafts"},
-        "scheduled_at": {"type": "str", "description": "ISO datetime string e.g. '2026-05-01T18:00:00'"},
-        "platform": {"type": "str", "description": "Platform: 'instagram', 'facebook', or 'all' (default: instagram)"},
+        "image_path": {
+            "type": "str",
+            "description": "Path or filename from social_drafts",
+        },
+        "scheduled_at": {
+            "type": "str",
+            "description": "ISO datetime string e.g. '2026-05-01T18:00:00'",
+        },
+        "platform": {
+            "type": "str",
+            "description": "Platform: 'instagram', 'facebook', or 'all' (default: instagram)",
+        },
     },
 )
 async def social_schedule_post(
@@ -140,6 +158,7 @@ async def social_schedule_post(
     platform: str = "instagram",
 ) -> str:
     import time
+
     _SCHEDULED_DIR.mkdir(parents=True, exist_ok=True)
 
     p = Path(image_path)
@@ -176,9 +195,18 @@ async def social_schedule_post(
     category="social",
     parameters={
         "description": {"type": "str", "description": "Topic or brief for the post"},
-        "platform": {"type": "str", "description": "'instagram', 'facebook', or 'social' (both). Default: instagram"},
-        "schedule_for": {"type": "str", "description": "ISO8601 UTC datetime e.g. '2026-05-07T18:00:00Z'. Omit to publish now."},
-        "custom_caption": {"type": "str", "description": "Override AI-generated caption (optional)"},
+        "platform": {
+            "type": "str",
+            "description": "'instagram', 'facebook', or 'social' (both). Default: instagram",
+        },
+        "schedule_for": {
+            "type": "str",
+            "description": "ISO8601 UTC datetime e.g. '2026-05-07T18:00:00Z'. Omit to publish now.",
+        },
+        "custom_caption": {
+            "type": "str",
+            "description": "Override AI-generated caption (optional)",
+        },
     },
 )
 async def social_generate_and_publish(
@@ -189,9 +217,14 @@ async def social_generate_and_publish(
 ) -> str:
     """Autonomous social post: generate caption + image, then publish or schedule."""
     import time as _time
-    from datetime import datetime as _dt, timezone as _tz
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
 
-    platforms = ["instagram", "facebook"] if platform in ("social", "all", "ambas") else [platform]
+    platforms = (
+        ["instagram", "facebook"]
+        if platform in ("social", "all", "ambas")
+        else [platform]
+    )
 
     if schedule_for:
         # Schedule: write JSON for the scheduler loop to pick up
@@ -207,12 +240,15 @@ async def social_generate_and_publish(
             "created_at": _dt.now(_tz.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "auto_generate": True,
         }
-        (_SCHEDULED_DIR / fname).write_text(json.dumps(job, indent=2, ensure_ascii=False))
+        (_SCHEDULED_DIR / fname).write_text(
+            json.dumps(job, indent=2, ensure_ascii=False)
+        )
         return f"✅ Programado para {schedule_for} en {', '.join(platforms)} — {fname}"
 
     # Publish immediately
     try:
         from src.workflows.social_publisher import publish_social
+
         result = await publish_social(
             description=description,
             platforms=platforms,
@@ -220,12 +256,15 @@ async def social_generate_and_publish(
         )
         if result.get("ok"):
             urls = [
-                r.get("url", "") for r in result.get("platforms", {}).values() if r.get("ok")
+                r.get("url", "")
+                for r in result.get("platforms", {}).values()
+                if r.get("ok")
             ]
             return "✅ Publicado: " + " | ".join(urls) if urls else "✅ Publicado"
         errors = [
             f"{p}: {r.get('error', '?')[:80]}"
-            for p, r in result.get("platforms", {}).items() if not r.get("ok")
+            for p, r in result.get("platforms", {}).items()
+            if not r.get("ok")
         ]
         draft = result.get("image_url", "")
         return f"⚠️ {'; '.join(errors)}" + (f" | Draft: {draft}" if draft else "")

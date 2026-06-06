@@ -23,8 +23,13 @@ class ZeroTokenMemoryMixin:
         /memory identity — show AURA's identity profile
         """
         from ...context.aura_context import (
-            format_for_display, update_memory, add_client, add_task,
-            get_identity, _MEMORY_FILE, _BRAIN_DIR,
+            _BRAIN_DIR,
+            _MEMORY_FILE,
+            add_client,
+            add_task,
+            format_for_display,
+            get_identity,
+            update_memory,
         )
 
         text = (update.message.text or "").strip()
@@ -54,7 +59,7 @@ class ZeroTokenMemoryMixin:
         elif sub == "task" and len(parts) > 2:
             add_task(parts[2].strip())
             await update.message.reply_text(
-                f"✅ Tarea guardada en memoria.", parse_mode="HTML"
+                "✅ Tarea guardada en memoria.", parse_mode="HTML"
             )
 
         elif sub == "clear":
@@ -80,12 +85,15 @@ class ZeroTokenMemoryMixin:
                     parse_mode="HTML",
                 )
             else:
-                await update.message.reply_text("❌ Identity file not found at ~/.aura/brain/identity.md")
+                await update.message.reply_text(
+                    "❌ Identity file not found at ~/.aura/brain/identity.md"
+                )
 
         elif sub == "palace":
             # Show MemPalace semantic memory stats
             try:
                 from ...context.mempalace_memory import get_all_memories, palace_count
+
                 total = await palace_count()
                 recent = await get_all_memories(limit=5)
                 lines = [f"<b>🧠 Palace — {total} memorias semánticas</b>"]
@@ -126,8 +134,6 @@ class ZeroTokenMemoryMixin:
                     f" · {usage.errors_in_window} err"
                 )
 
-        lines.append(
-            "\n💡 Zero-token: !, $, /ls, /git, /sh bypass LLMs entirely"
-        )
+        lines.append("\n💡 Zero-token: !, $, /ls, /git, /sh bypass LLMs entirely")
 
         await update.message.reply_text("\n".join(lines), parse_mode="HTML")

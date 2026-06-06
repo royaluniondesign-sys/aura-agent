@@ -21,6 +21,7 @@ Usage:
     # Full (~2000 chars) — for L1 diagnosis step (local-ollama)
     ctx = build_full_context()
 """
+
 from __future__ import annotations
 
 import re
@@ -37,23 +38,32 @@ _USAGE_FILE = Path.home() / ".aura" / "usage.json"
 
 # ── Brain health snapshot ─────────────────────────────────────────────────────
 
+
 def _brain_health_summary() -> str:
     """Compact brain health from rate monitor. Never crashes."""
     try:
         from .rate_monitor import get_global_monitor
+
         monitor = get_global_monitor()
         parts = []
         for u in monitor.get_all_usage():
             if u.last_request == 0:
                 continue  # never used — skip
-            status = "⛔RL" if u.is_rate_limited else ("⚠️" if (u.usage_pct or 0) >= 0.75 else "✅")
-            parts.append(f"{u.brain_name}:{u.requests_in_window}req/{u.errors_in_window}err{status}")
+            status = (
+                "⛔RL"
+                if u.is_rate_limited
+                else ("⚠️" if (u.usage_pct or 0) >= 0.75 else "✅")
+            )
+            parts.append(
+                f"{u.brain_name}:{u.requests_in_window}req/{u.errors_in_window}err{status}"
+            )
         return ", ".join(parts) if parts else "no usage yet"
     except Exception:
         return "unavailable"
 
 
 # ── Conductor history parser ──────────────────────────────────────────────────
+
 
 def _parse_conductor_log(max_entries: int = 8) -> list[dict]:
     """Parse recent entries from conductor_log.md into structured dicts."""
@@ -69,20 +79,27 @@ def _parse_conductor_log(max_entries: int = 8) -> list[dict]:
             task_match = re.search(r"\*\*Task:\*\* (.+)", block)
             result_match = re.search(r"\*\*Result:\*\* (.+)", block)
             if ts_match and task_match:
-                entries.append({
-                    "ts": ts_match.group(1),
-                    "run_id": ts_match.group(2),
-                    "task": task_match.group(1).strip()[:80],
-                    "result": result_match.group(1).strip()[:100] if result_match else "?",
-                    "ok": "COMMITTED" in (result_match.group(1) if result_match else ""),
-                    "failed": "FAILED" in (result_match.group(1) if result_match else ""),
-                })
+                entries.append(
+                    {
+                        "ts": ts_match.group(1),
+                        "run_id": ts_match.group(2),
+                        "task": task_match.group(1).strip()[:80],
+                        "result": (
+                            result_match.group(1).strip()[:100] if result_match else "?"
+                        ),
+                        "ok": "COMMITTED"
+                        in (result_match.group(1) if result_match else ""),
+                        "failed": "FAILED"
+                        in (result_match.group(1) if result_match else ""),
+                    }
+                )
     except Exception:
         pass
     return entries
 
 
 # ── Error pattern reader ──────────────────────────────────────────────────────
+
 
 def _recent_error_patterns(n_lines: int = 200) -> list[str]:
     """Extract unique recent error types from stderr log."""
@@ -94,11 +111,18 @@ def _recent_error_patterns(n_lines: int = 200) -> list[str]:
         # Read last N lines efficiently
         result = subprocess.run(
             ["tail", "-n", str(n_lines), str(_LOG_PATH)],
-            capture_output=True, text=True, timeout=3,
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         for line in result.stdout.splitlines():
             # Extract key part of error lines
-            if "Error" in line or "error" in line or "Traceback" in line or "Exception" in line:
+            if (
+                "Error" in line
+                or "error" in line
+                or "Traceback" in line
+                or "Exception" in line
+            ):
                 # Normalize: strip timestamps and variable parts
                 clean = re.sub(r"\d{4}-\d{2}-\d{2}T[\d:.Z]+", "", line)
                 clean = re.sub(r'"[^"]{40,}"', '"..."', clean)  # long strings
@@ -115,6 +139,7 @@ def _recent_error_patterns(n_lines: int = 200) -> list[str]:
 
 # ── Mission progress reader ───────────────────────────────────────────────────
 
+
 def _mission_progress() -> tuple[list[str], list[str]]:
     """Return (done_items, pending_items) from MISSION.md checkboxes."""
     done: list[str] = []
@@ -124,7 +149,9 @@ def _mission_progress() -> tuple[list[str], list[str]]:
             return done, pending
         for line in _MISSION_PATH.read_text(errors="replace").splitlines():
             if "- [x]" in line or "- [X]" in line:
-                done.append(line.strip().replace("- [x]", "").replace("- [X]", "").strip()[:60])
+                done.append(
+                    line.strip().replace("- [x]", "").replace("- [X]", "").strip()[:60]
+                )
             elif "- [ ]" in line:
                 pending.append(line.strip().replace("- [ ]", "").strip()[:60])
     except Exception:
@@ -134,11 +161,13 @@ def _mission_progress() -> tuple[list[str], list[str]]:
 
 # ── Failed task history ───────────────────────────────────────────────────────
 
+
 def _failed_task_titles() -> list[str]:
     """Task titles that failed 3+ times — should not be retried with same approach."""
     titles: list[str] = []
     try:
         from .task_store import list_tasks
+
         for t in list_tasks():
             if t.get("status") == "failed" and (t.get("attempts") or 0) >= 3:
                 titles.append(t.get("title", "")[:60])
@@ -148,6 +177,7 @@ def _failed_task_titles() -> list[str]:
 
 
 # ── Context builders ──────────────────────────────────────────────────────────
+
 
 def build_compact_context() -> str:
     """Build ~400-char self-knowledge summary for planner prompt injection.
@@ -196,7 +226,11 @@ def build_full_context() -> str:
     if history:
         lines = ["### Recent Conductor Runs (newest first):"]
         for h in history:
-            icon = "✅ COMMITTED" if h["ok"] else ("❌ FAILED" if h["failed"] else "⚠️ NO-COMMIT")
+            icon = (
+                "✅ COMMITTED"
+                if h["ok"]
+                else ("❌ FAILED" if h["failed"] else "⚠️ NO-COMMIT")
+            )
             lines.append(f"  {h['ts']} [{h['run_id']}] {icon}")
             lines.append(f"    Task: {h['task']}")
             lines.append(f"    Result: {h['result']}")
@@ -209,7 +243,10 @@ def build_full_context() -> str:
     # --- Recent errors ---
     errors = _recent_error_patterns()
     if errors:
-        sections.append("### Recent Errors (from stderr log):\n" + "\n".join(f"  {e}" for e in errors))
+        sections.append(
+            "### Recent Errors (from stderr log):\n"
+            + "\n".join(f"  {e}" for e in errors)
+        )
 
     # --- Mission progress ---
     done, pending = _mission_progress()
@@ -244,7 +281,9 @@ def build_outcome_context(task_title: str, run_id: str) -> Optional[str]:
             return None
         result = subprocess.run(
             ["tail", "-n", "50", str(_LOG_PATH)],
-            capture_output=True, text=True, timeout=3,
+            capture_output=True,
+            text=True,
+            timeout=3,
         )
         recent_log = result.stdout.strip()[-1500:]
         if not recent_log:

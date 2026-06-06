@@ -2,9 +2,11 @@
 
 Auto-descubierto por MCP y voz. Disponible en Telegram + Voice AURA.
 """
+
 from __future__ import annotations
 
 import os
+
 from src.actions.registry import aura_tool
 
 
@@ -17,10 +19,13 @@ from src.actions.registry import aura_tool
     ),
     category="email",
     parameters={
-        "to":       {"type": "str", "description": "Email del destinatario"},
-        "subject":  {"type": "str", "description": "Asunto del correo"},
-        "body":     {"type": "str", "description": "Cuerpo en texto plano"},
-        "html":     {"type": "str", "description": "Cuerpo HTML opcional (si se da, se usa en lugar de body)"},
+        "to": {"type": "str", "description": "Email del destinatario"},
+        "subject": {"type": "str", "description": "Asunto del correo"},
+        "body": {"type": "str", "description": "Cuerpo en texto plano"},
+        "html": {
+            "type": "str",
+            "description": "Cuerpo HTML opcional (si se da, se usa en lugar de body)",
+        },
         "reply_to": {"type": "str", "description": "Reply-To address opcional"},
     },
 )
@@ -32,8 +37,9 @@ async def rud_email_send(
     reply_to: str = "",
 ) -> str:
     from src.integrations.ionos_client import send_email
+
     try:
-        result = await send_email(
+        await send_email(
             to=to,
             subject=subject,
             body=body,
@@ -54,13 +60,25 @@ async def rud_email_send(
     ),
     category="email",
     parameters={
-        "to":            {"type": "str", "description": "Email del cliente"},
-        "cliente_nombre":{"type": "str", "description": "Nombre del cliente o empresa"},
-        "proyecto":      {"type": "str", "description": "Nombre del proyecto o servicio"},
-        "items":         {"type": "list", "description": "Lista de items: [{'descripcion': '...', 'precio': 1200}]"},
-        "total":         {"type": "float", "description": "Total del presupuesto en EUR"},
-        "validez_dias":  {"type": "int",   "description": "Días de validez del presupuesto (default 30)"},
-        "notas":         {"type": "str",   "description": "Notas adicionales o condiciones (opcional)"},
+        "to": {"type": "str", "description": "Email del cliente"},
+        "cliente_nombre": {
+            "type": "str",
+            "description": "Nombre del cliente o empresa",
+        },
+        "proyecto": {"type": "str", "description": "Nombre del proyecto o servicio"},
+        "items": {
+            "type": "list",
+            "description": "Lista de items: [{'descripcion': '...', 'precio': 1200}]",
+        },
+        "total": {"type": "float", "description": "Total del presupuesto en EUR"},
+        "validez_dias": {
+            "type": "int",
+            "description": "Días de validez del presupuesto (default 30)",
+        },
+        "notas": {
+            "type": "str",
+            "description": "Notas adicionales o condiciones (opcional)",
+        },
     },
 )
 async def rud_email_presupuesto(
@@ -87,7 +105,11 @@ async def rud_email_presupuesto(
           <td style="padding:10px 16px;border-bottom:1px solid #1e1e1e;color:#c9a84c;text-align:right;font-weight:bold">{precio}</td>
         </tr>"""
 
-    notas_html = f'<p style="margin:16px 0 0;color:#888;font-size:13px">{notas}</p>' if notas else ""
+    notas_html = (
+        f'<p style="margin:16px 0 0;color:#888;font-size:13px">{notas}</p>'
+        if notas
+        else ""
+    )
 
     html = f"""<!DOCTYPE html>
 <html lang="es">

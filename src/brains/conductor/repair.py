@@ -1,7 +1,7 @@
 """Self-repair logic: self_repair_step, _repair_tests, retry_broken_tests, _run_tests, self_repair."""
+
 from __future__ import annotations
 
-import os
 import time
 from typing import Any, Callable, Dict, List, Optional
 
@@ -35,7 +35,9 @@ def self_repair_step(step: Callable[[], Any]) -> bool:
             if retries < max_retries:
                 logger.info(f"Retrying self-repair step ({retries}/{max_retries})")
             else:
-                logger.error(f"Self-repair step failed after {max_retries} attempts. Marking as failed.")
+                logger.error(
+                    f"Self-repair step failed after {max_retries} attempts. Marking as failed."
+                )
                 return False
 
     return True  # Implicit success if we exit the loop
@@ -113,7 +115,11 @@ def _repair_tests(
             _repair_test_with_replacement,
         ]
 
-    logger.info("repair_tests_started", count=len(broken_tests), strategies=len(repair_strategies))
+    logger.info(
+        "repair_tests_started",
+        count=len(broken_tests),
+        strategies=len(repair_strategies),
+    )
 
     for test in broken_tests:
         success = False
@@ -176,7 +182,12 @@ def retry_broken_tests(test: str, result: Any) -> bool:
     for attempt in range(max_retries):
         try:
             # Re-execute the test (placeholder for actual execution)
-            logger.debug("test_retry_attempt", test=test, attempt=attempt + 1, max_retries=max_retries)
+            logger.debug(
+                "test_retry_attempt",
+                test=test,
+                attempt=attempt + 1,
+                max_retries=max_retries,
+            )
             time.sleep(1)  # Wait 1 second between retries
             # Assume test passes on retry (in real implementation, execute_test would be called)
             logger.info("test_retry_passed", test=test, attempt=attempt + 1)
@@ -206,7 +217,9 @@ def _run_tests() -> None:
     max_retries = 3
     for attempt in range(max_retries + 1):
         try:
-            logger.debug("test_run_attempt", attempt=attempt + 1, max_retries=max_retries)
+            logger.debug(
+                "test_run_attempt", attempt=attempt + 1, max_retries=max_retries
+            )
             # Test execution logic
             logger.info("tests_passed", attempt=attempt + 1)
             return
@@ -234,31 +247,25 @@ def _run_tests() -> None:
 def self_repair_launch_agent() -> None:
     """Repair LaunchAgent configuration if missing or invalid.
 
-    Checks if the AURA LaunchAgent plist file exists at the expected
-    location. If missing, attempts to reload it via launchctl.
+    Regenerates the plist with current interpreter/project paths and reloads
+    it via launchctl. This handles post-restart failures caused by stale plist
+    content (wrong Python path, moved project directory, etc.).
 
     Raises:
-        Exception: If repair attempt fails
+        Exception: If repair attempt fails.
     """
-    launch_agent_path = '/Library/LaunchAgents/aura.launchagent.plist'
+    from src.infra.launch_agent import _PLIST_DEST, ensure_launch_agent_is_running
 
-    # Check if the LaunchAgent exists
-    if not os.path.exists(launch_agent_path):
-        logger.warning(
-            "launch_agent_missing",
-            path=launch_agent_path
-        )
-        try:
-            # Attempt to repair by loading the LaunchAgent
-            cmd = f"sudo launchctl load -w {launch_agent_path}"
-            logger.info("launch_agent_repair_attempt", command=cmd)
-            os.system(cmd)
-            logger.info("launch_agent_repaired", path=launch_agent_path)
-        except Exception as e:
-            logger.error("launch_agent_repair_failed", error=str(e), path=launch_agent_path)
-            raise
-    else:
-        logger.debug("launch_agent_present", path=launch_agent_path)
+    logger.info("launch_agent_repair_started", plist=str(_PLIST_DEST))
+    try:
+        ok = ensure_launch_agent_is_running()
+        if ok:
+            logger.info("launch_agent_repaired", plist=str(_PLIST_DEST))
+        else:
+            raise RuntimeError("ensure_launch_agent_is_running returned False")
+    except Exception as e:
+        logger.error("launch_agent_repair_failed", error=str(e))
+        raise
 
 
 def self_repair() -> None:

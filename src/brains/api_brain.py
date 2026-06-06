@@ -42,7 +42,9 @@ _CURRENCY_KW = re.compile(
     r"usd|eur|gbp|jpy|mxn|exchange\s+rate|€\s+to|\$\s+to|convert\b)\b"
 )
 
-_QR_KW = re.compile(r"(?i)\b(qr|c[oó]digo\s+qr|genera\s+qr|qrcode|make\s+qr|create\s+qr)\b")
+_QR_KW = re.compile(
+    r"(?i)\b(qr|c[oó]digo\s+qr|genera\s+qr|qrcode|make\s+qr|create\s+qr)\b"
+)
 
 _DICT_KW = re.compile(
     r"(?i)\b(qu[eé]\s+significa|define|meaning\s+of|definici[oó]n\s+de|"
@@ -120,7 +122,17 @@ def _extract_word(prompt: str) -> str:
     # Last resort: last capitalized word or any word
     words = re.findall(r"\b[a-zA-Z]{3,}\b", prompt)
     # Filter common question words
-    stop = {"what", "does", "mean", "significa", "define", "meaning", "the", "of", "que"}
+    stop = {
+        "what",
+        "does",
+        "mean",
+        "significa",
+        "define",
+        "meaning",
+        "the",
+        "of",
+        "que",
+    }
     filtered = [w for w in words if w.lower() not in stop]
     return filtered[-1] if filtered else "serendipity"
 
@@ -273,7 +285,9 @@ class ApiBrain(Brain):
             price_str = f"${price_usd:.6f}"
 
         emoji = "₿" if symbol == "BTC" else "🪙"
-        content = f"{emoji} {name} ({symbol}): {price_str} ({sign}{change_24h:.2f}% 24h)"
+        content = (
+            f"{emoji} {name} ({symbol}): {price_str} ({sign}{change_24h:.2f}% 24h)"
+        )
         return BrainResponse(
             content=content,
             brain_name=self.name,
@@ -323,6 +337,7 @@ class ApiBrain(Brain):
                 image_bytes = await r.read()
 
         import base64
+
         b64 = base64.b64encode(image_bytes).decode("ascii")
         content = f"__QR_IMAGE_B64__:{b64}"
         return BrainResponse(
@@ -345,7 +360,9 @@ class ApiBrain(Brain):
                         f"'{word}' not found in dictionary.", start
                     )
                 if r.status != 200:
-                    return self._error_response(f"Dictionary API error {r.status}", start)
+                    return self._error_response(
+                        f"Dictionary API error {r.status}", start
+                    )
                 entries = await r.json()
 
         if not entries or not isinstance(entries, list):

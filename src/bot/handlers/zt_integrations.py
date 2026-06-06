@@ -2,7 +2,6 @@
 
 import json as _json
 import os as _os
-from pathlib import Path
 
 import structlog
 from telegram import Update
@@ -57,10 +56,12 @@ class ZeroTokenIntegrationsMixin:
         api_port = int(_os.environ.get("API_SERVER_PORT", "8080"))
 
         from src.api.server import _ig_oauth_state
+
         _ig_oauth_state["app_secret"] = app_secret
         _ig_oauth_state["app_id"] = app_id
 
         from urllib.parse import urlencode
+
         scope = "instagram_business_basic,instagram_business_content_publish,instagram_business_manage_comments,instagram_business_manage_insights"
         redirect_uri = f"http://localhost:{api_port}/auth/instagram/callback"
         params = {
@@ -89,6 +90,7 @@ class ZeroTokenIntegrationsMixin:
         """/posts — list recent publications from the database."""
         try:
             from src.integrations.publication_db import get_recent_publications
+
             pubs = get_recent_publications(10)
 
             if not pubs:
@@ -137,7 +139,6 @@ class ZeroTokenIntegrationsMixin:
         from src.integrations.google_auth import (
             get_credentials_info,
             get_setup_instructions,
-            is_configured,
             save_service_account_credentials,
             start_oauth_flow,
         )
@@ -148,21 +149,42 @@ class ZeroTokenIntegrationsMixin:
         if sub == "status":
             info = get_credentials_info()
             if info["configured"]:
-                from src.integrations.publication_db import get_recent_publications, _SHEET_ID_PATH, _DRIVE_ROOT_ID_PATH
-                sheet_id = _SHEET_ID_PATH.read_text().strip() if _SHEET_ID_PATH.exists() else None
-                root_id = _DRIVE_ROOT_ID_PATH.read_text().strip() if _DRIVE_ROOT_ID_PATH.exists() else None
-                pubs = get_recent_publications(1)
+                from src.integrations.publication_db import (
+                    _DRIVE_ROOT_ID_PATH,
+                    _SHEET_ID_PATH,
+                    get_recent_publications,
+                )
+
+                sheet_id = (
+                    _SHEET_ID_PATH.read_text().strip()
+                    if _SHEET_ID_PATH.exists()
+                    else None
+                )
+                root_id = (
+                    _DRIVE_ROOT_ID_PATH.read_text().strip()
+                    if _DRIVE_ROOT_ID_PATH.exists()
+                    else None
+                )
+                get_recent_publications(1)
                 total = len(get_recent_publications(1000))
 
-                sheet_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}" if sheet_id else "—"
-                drive_url = f"https://drive.google.com/drive/folders/{root_id}" if root_id else "—"
+                sheet_url = (
+                    f"https://docs.google.com/spreadsheets/d/{sheet_id}"
+                    if sheet_id
+                    else "—"
+                )
+                drive_url = (
+                    f"https://drive.google.com/drive/folders/{root_id}"
+                    if root_id
+                    else "—"
+                )
 
                 await update.message.reply_text(
                     f"✅ <b>Google Drive conectado</b>\n"
                     f"Tipo: {info.get('type','?')}\n"
                     f"Email: {info.get('email','?')}\n\n"
-                    f"📊 <a href=\"{sheet_url}\">Abrir Google Sheet</a>\n"
-                    f"📁 <a href=\"{drive_url}\">Abrir Drive AURA Social</a>\n\n"
+                    f'📊 <a href="{sheet_url}">Abrir Google Sheet</a>\n'
+                    f'📁 <a href="{drive_url}">Abrir Drive AURA Social</a>\n\n'
                     f"Publicaciones registradas: {total}",
                     parse_mode="HTML",
                     disable_web_page_preview=True,
@@ -189,7 +211,7 @@ class ZeroTokenIntegrationsMixin:
             if auth_url:
                 await update.message.reply_text(
                     f"🔗 <b>Abre este link para autorizar:</b>\n\n"
-                    f"<a href=\"{auth_url}\">{auth_url[:80]}...</a>\n\n"
+                    f'<a href="{auth_url}">{auth_url[:80]}...</a>\n\n'
                     "Después de autorizar, AURA guardará el token automáticamente.\n"
                     "Tiene 5 minutos.",
                     parse_mode="HTML",
@@ -204,7 +226,9 @@ class ZeroTokenIntegrationsMixin:
                     "✅ Service account guardado. Drive + Sheets activos desde ahora."
                 )
             else:
-                await update.message.reply_text("❌ JSON inválido. Verifica que sea un service account.")
+                await update.message.reply_text(
+                    "❌ JSON inválido. Verifica que sea un service account."
+                )
 
         else:
             await update.message.reply_text(

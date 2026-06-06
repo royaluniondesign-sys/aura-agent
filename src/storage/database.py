@@ -400,15 +400,15 @@ class DatabaseManager:
 
         async with self._pool_lock:
             self._is_closing = True
-            
+
             # Close all known connections
             close_tasks = []
             for conn in list(self._all_connections):
                 close_tasks.append(conn.close())
-            
+
             if close_tasks:
                 await asyncio.gather(*close_tasks, return_exceptions=True)
-            
+
             self._connection_pool.clear()
             self._all_connections.clear()
 

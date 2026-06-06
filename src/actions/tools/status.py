@@ -1,9 +1,10 @@
 """AURA self-status tool — gathers real system + bot state."""
+
 from __future__ import annotations
+
 import asyncio
-import os
-import time
 from pathlib import Path
+
 from src.actions.registry import aura_tool
 
 
@@ -20,7 +21,8 @@ async def get_aura_status() -> str:
     try:
         proc = await asyncio.create_subprocess_shell(
             "launchctl list com.aura.telegram-bot 2>/dev/null | awk '{print $1,$3}'",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         out, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         lines.append(f"Bot: {out.decode().strip() or 'unknown'}")
@@ -30,6 +32,7 @@ async def get_aura_status() -> str:
     # Disk
     try:
         import shutil
+
         usage = shutil.disk_usage("/")
         pct = usage.used / usage.total * 100
         free_gb = usage.free / 1e9
@@ -42,16 +45,18 @@ async def get_aura_status() -> str:
         # Get actual RAM total from hardware
         proc_memsize = await asyncio.create_subprocess_shell(
             "/usr/sbin/sysctl -n hw.memsize",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         memsize_out, _ = await asyncio.wait_for(proc_memsize.communicate(), timeout=5)
         total_bytes = int(memsize_out.decode().strip())
-        total_gb = total_bytes / (1024 ** 3)
+        total_gb = total_bytes / (1024**3)
 
         # Get unused RAM from PhysMem
         proc = await asyncio.create_subprocess_shell(
             "top -l 1 | grep PhysMem",
-            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.PIPE,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
         )
         out, _ = await asyncio.wait_for(proc.communicate(), timeout=5)
         # Output: "PhysMem: 15G used (2140M wired, 6337M compressor), 335M unused"
@@ -59,7 +64,8 @@ async def get_aura_status() -> str:
 
         # Extract unused MB
         import re
-        unused_match = re.search(r'(\d+)M unused', physmem)
+
+        unused_match = re.search(r"(\d+)M unused", physmem)
 
         if unused_match:
             unused_mb = int(unused_match.group(1))
@@ -67,7 +73,7 @@ async def get_aura_status() -> str:
             used_pct = ((total_gb - free_gb) / total_gb) * 100
             lines.append(f"RAM: {used_pct:.0f}% used · {free_gb:.1f}GB free")
         else:
-            lines.append(f"RAM: parse error")
+            lines.append("RAM: parse error")
     except Exception:
         pass
 
@@ -76,9 +82,12 @@ async def get_aura_status() -> str:
     if log_path.exists():
         try:
             import subprocess
+
             result = subprocess.run(
                 ["grep", "-c", '"level": "error"', str(log_path)],
-                capture_output=True, text=True, timeout=3,
+                capture_output=True,
+                text=True,
+                timeout=3,
             )
             err_count = result.stdout.strip()
             lines.append(f"Log errors: {err_count} total")
@@ -88,6 +97,7 @@ async def get_aura_status() -> str:
     # Rate limits — RateMonitor.get_all_usage() returns List[BrainUsage]
     try:
         from src.infra.rate_monitor import RateMonitor
+
         monitor = RateMonitor()
         usages = monitor.get_all_usage()
         if isinstance(usages, dict):

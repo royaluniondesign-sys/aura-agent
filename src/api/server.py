@@ -19,7 +19,6 @@ The actual route handlers live in src/api/routers/:
 """
 
 import asyncio
-import json
 import os as _os_top
 from pathlib import Path
 from typing import Any, Optional
@@ -33,18 +32,18 @@ from fastapi.staticfiles import StaticFiles
 from ..config.settings import Settings
 from ..events.bus import EventBus
 from ..storage.database import DatabaseManager
-from .routers import system as system_router_mod
-from .routers import brains as brains_router_mod
-from .routers import routines as routines_router_mod
-from .routers import conductor as conductor_router_mod
-from .routers import tasks as tasks_router_mod
-from .routers import memory as memory_router_mod
-from .routers import squad as squad_router_mod
-from .routers import misc as misc_router_mod
-from .routers.webhooks import make_webhooks_router
-from .routers import publish as publish_router_mod
 from .routers import agent_mesh as agent_mesh_router_mod
+from .routers import brains as brains_router_mod
+from .routers import conductor as conductor_router_mod
+from .routers import memory as memory_router_mod
+from .routers import misc as misc_router_mod
 from .routers import opendesign_proxy as opendesign_proxy_router_mod
+from .routers import publish as publish_router_mod
+from .routers import routines as routines_router_mod
+from .routers import squad as squad_router_mod
+from .routers import system as system_router_mod
+from .routers import tasks as tasks_router_mod
+from .routers.webhooks import make_webhooks_router
 
 logger = structlog.get_logger()
 
@@ -90,7 +89,11 @@ def create_api_app(
         path = request.url.path
 
         # Always allow health + favicon + webhooks + social drafts (Meta API fetches images directly)
-        if path in _OPEN_PATHS or path.startswith("/webhooks/") or path.startswith("/api/social/drafts/"):
+        if (
+            path in _OPEN_PATHS
+            or path.startswith("/webhooks/")
+            or path.startswith("/api/social/drafts/")
+        ):
             return await call_next(request)
 
         # Check cookie first, then query param, then Authorization header
@@ -106,7 +109,9 @@ def create_api_app(
             # Serve the proper login page from dashboard/login.html
             login_file = _DASHBOARD_DIR / "login.html"
             if login_file.exists():
-                return HTMLResponse(login_file.read_text(encoding="utf-8"), status_code=401)
+                return HTMLResponse(
+                    login_file.read_text(encoding="utf-8"), status_code=401
+                )
             # Minimal fallback (login.html missing)
             return HTMLResponse(
                 f'<html><body style="background:#000;color:#fff;font-family:monospace;display:flex;align-items:center;justify-content:center;height:100vh">'
@@ -114,13 +119,14 @@ def create_api_app(
                 f'<b style="color:#8b5cf6;font-size:18px">AURA</b>'
                 f'<input name="token" type="password" placeholder="Token" autofocus style="padding:10px;background:#1e1e2e;border:1px solid #333;color:#fff;border-radius:8px;font-size:14px">'
                 f'<button type="submit" style="padding:10px;background:#7c3aed;border:none;color:#fff;border-radius:8px;cursor:pointer;font-weight:600">Entrar</button>'
-                f'</form></body></html>',
+                f"</form></body></html>",
                 status_code=401,
             )
 
         # Valid token via query param → set cookie and redirect clean URL
         if query_token and query_token == _DASHBOARD_TOKEN:
             from starlette.responses import RedirectResponse
+
             redirect_path = path
             if request.url.query:
                 other_params = "&".join(
@@ -128,7 +134,13 @@ def create_api_app(
                 )
                 redirect_path = f"{path}?{other_params}" if other_params else path
             response = RedirectResponse(url=redirect_path, status_code=302)
-            response.set_cookie("aura_token", _DASHBOARD_TOKEN, max_age=86400 * 30, httponly=True, samesite="lax")
+            response.set_cookie(
+                "aura_token",
+                _DASHBOARD_TOKEN,
+                max_age=86400 * 30,
+                httponly=True,
+                samesite="lax",
+            )
             return response
 
         return await call_next(request)
@@ -160,15 +172,18 @@ def create_api_app(
     async def chat_with_brain(request: Request) -> dict:
         """Send a message through the brain router. Returns response + metadata."""
         import time as _time
+
         try:
             body = await request.json()
         except Exception:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         message = (body.get("message") or "").strip()
         if not message:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=400, detail="message required")
 
         brain_name = (body.get("brain") or "").strip() or None
@@ -182,14 +197,22 @@ def create_api_app(
             if brain_name:
                 brain = brain_router.get_brain(brain_name)
             else:
-                auto_name, _ = brain_router.smart_route(message, rate_monitor=rate_monitor)
-                brain = brain_router.get_brain(auto_name) if auto_name != "zero-token" else brain_router.get_brain("gemini")
+                auto_name, _ = brain_router.smart_route(
+                    message, rate_monitor=rate_monitor
+                )
+                brain = (
+                    brain_router.get_brain(auto_name)
+                    if auto_name != "zero-token"
+                    else brain_router.get_brain("gemini")
+                )
                 brain_name = brain.name if brain else "unknown"
 
             if not brain:
                 return {"ok": False, "error": f"Brain '{brain_name}' not found"}
 
-            response = await brain.execute(prompt=message, working_directory=working_dir)
+            response = await brain.execute(
+                prompt=message, working_directory=working_dir
+            )
 
             if rate_monitor and not response.is_error:
                 rate_monitor.record_request(brain.name)
@@ -214,17 +237,27 @@ def create_api_app(
     async def get_router_status() -> dict:
         """All brains from brain router with rate-monitor data merged."""
         import time as _time
+
         if not brain_router:
             return {"brains": [], "cascade": [], "error": "router not ready"}
 
         _CASCADE = [
-            "api-zero", "ollama-rud", "qwen-code",
-            "gemini", "openrouter", "cline", "codex",
-            "haiku", "sonnet", "opus", "image",
+            "api-zero",
+            "ollama-rud",
+            "qwen-code",
+            "gemini",
+            "openrouter",
+            "cline",
+            "codex",
+            "haiku",
+            "sonnet",
+            "opus",
+            "image",
         ]
         rate_data: dict = {}
         try:
             from ..infra.rate_monitor import RateMonitor
+
             monitor = RateMonitor()
             for u in monitor.get_all_usage():
                 rate_data[u.brain_name] = u
@@ -240,28 +273,40 @@ def create_api_app(
             pct = round(u.usage_pct * 100, 1) if u and u.usage_pct is not None else None
             warn_t = 0.75
             is_rl = bool(u and u.is_rate_limited)
-            status = "rate_limited" if is_rl else ("warn" if pct and pct >= warn_t * 100 else "ok")
-            brains.append({
-                "name": name,
-                "rank": rank,
-                "display_name": getattr(brain, "display_name", name),
-                "emoji": getattr(brain, "emoji", "●"),
-                "cost": getattr(brain, "cost", "free"),
-                "requests": u.requests_in_window if u else 0,
-                "limit": u.known_limit if u else None,
-                "usage_pct": pct,
-                "window": getattr(u, "window_seconds", None),
-                "window_remaining": u.window_remaining_str if u else None,
-                "errors": u.errors_in_window if u else 0,
-                "is_rate_limited": is_rl,
-                "status": status,
-            })
+            status = (
+                "rate_limited"
+                if is_rl
+                else ("warn" if pct and pct >= warn_t * 100 else "ok")
+            )
+            brains.append(
+                {
+                    "name": name,
+                    "rank": rank,
+                    "display_name": getattr(brain, "display_name", name),
+                    "emoji": getattr(brain, "emoji", "●"),
+                    "cost": getattr(brain, "cost", "free"),
+                    "requests": u.requests_in_window if u else 0,
+                    "limit": u.known_limit if u else None,
+                    "usage_pct": pct,
+                    "window": getattr(u, "window_seconds", None),
+                    "window_remaining": u.window_remaining_str if u else None,
+                    "errors": u.errors_in_window if u else 0,
+                    "is_rate_limited": is_rl,
+                    "status": status,
+                }
+            )
 
         _INTENT_MAP = {
-            "BASH": "zero-token", "FILES": "zero-token", "GIT": "zero-token",
-            "CHAT": "qwen-code", "DEEP": "qwen-code", "TRANSLATE": "qwen-code",
-            "CODE": "ollama-rud", "SEARCH": "gemini",
-            "EMAIL": "haiku", "CALENDAR": "haiku",
+            "BASH": "zero-token",
+            "FILES": "zero-token",
+            "GIT": "zero-token",
+            "CHAT": "qwen-code",
+            "DEEP": "qwen-code",
+            "TRANSLATE": "qwen-code",
+            "CODE": "ollama-rud",
+            "SEARCH": "gemini",
+            "EMAIL": "haiku",
+            "CALENDAR": "haiku",
         }
         return {
             "brains": brains,
@@ -276,40 +321,59 @@ def create_api_app(
         """Merged panel: brains status + context window + bot stats."""
         import json as _json
         import time as _time
-        from datetime import UTC, datetime as _dt
+        from datetime import UTC
+        from datetime import datetime as _dt
         from pathlib import Path as _Path
 
         result: dict = {"ok": True, "ts": _time.time()}
 
         # ── Brains (from rate monitor) ─────────────────────────────────────
-        _SHOW_BRAINS = ["haiku", "sonnet", "opus", "codex", "gemini",
-                        "openrouter", "cline", "ollama-rud", "api-zero"]
+        _SHOW_BRAINS = [
+            "haiku",
+            "sonnet",
+            "opus",
+            "codex",
+            "gemini",
+            "openrouter",
+            "cline",
+            "ollama-rud",
+            "api-zero",
+        ]
         brain_rows = []
         try:
             from ..infra.rate_monitor import RateMonitor as _RM
+
             mon = _RM()
             rate_data = {u.brain_name: u for u in mon.get_all_usage()}
             for name in _SHOW_BRAINS:
                 u = rate_data.get(name)
                 if u is None and brain_router and not brain_router.get_brain(name):
                     continue
-                pct = round(u.usage_pct * 100) if u and u.usage_pct is not None else None
+                pct = (
+                    round(u.usage_pct * 100) if u and u.usage_pct is not None else None
+                )
                 is_rl = bool(u and u.is_rate_limited)
                 status = "rl" if is_rl else ("warn" if pct and pct >= 75 else "ok")
                 last_req = u.last_request if u else 0
                 last_ago = ""
                 if last_req > 0:
                     d = int(_time.time() - last_req)
-                    last_ago = f"{d}s" if d < 60 else (f"{d//60}m" if d < 3600 else f"{d//3600}h")
-                brain_rows.append({
-                    "name": name,
-                    "status": status,
-                    "requests": u.requests_in_window if u else 0,
-                    "limit": u.known_limit if u else None,
-                    "pct": pct,
-                    "last_ago": last_ago,
-                    "errors": u.errors_in_window if u else 0,
-                })
+                    last_ago = (
+                        f"{d}s"
+                        if d < 60
+                        else (f"{d//60}m" if d < 3600 else f"{d//3600}h")
+                    )
+                brain_rows.append(
+                    {
+                        "name": name,
+                        "status": status,
+                        "requests": u.requests_in_window if u else 0,
+                        "limit": u.known_limit if u else None,
+                        "pct": pct,
+                        "last_ago": last_ago,
+                        "errors": u.errors_in_window if u else 0,
+                    }
+                )
         except Exception as _e:
             result["brains_error"] = str(_e)
         result["brains"] = brain_rows
@@ -332,27 +396,37 @@ def create_api_app(
 
         # ── Bot stats (PID, uptime, messages today) ────────────────────────
         import asyncio as _aio
+
         try:
             proc = await _aio.create_subprocess_shell(
                 "launchctl list com.aura.telegram-bot 2>/dev/null",
-                stdout=_aio.subprocess.PIPE, stderr=_aio.subprocess.PIPE,
+                stdout=_aio.subprocess.PIPE,
+                stderr=_aio.subprocess.PIPE,
             )
             out, _ = await _aio.wait_for(proc.communicate(), timeout=5)
             pid = None
             for line in out.decode().splitlines():
                 if '"PID"' in line:
                     import re as _re
+
                     m = _re.search(r"\d+", line)
                     if m:
                         pid = int(m.group())
                         break
             uptime_s = None
             if pid:
-                import subprocess as _sp, time as _t
-                r2 = _sp.run(["ps", "-o", "lstart=", "-p", str(pid)],
-                             capture_output=True, text=True, timeout=3)
+                import subprocess as _sp
+                import time as _t
+
+                r2 = _sp.run(
+                    ["ps", "-o", "lstart=", "-p", str(pid)],
+                    capture_output=True,
+                    text=True,
+                    timeout=3,
+                )
                 if r2.stdout.strip():
                     from datetime import datetime as _dt2
+
                     started = _dt2.strptime(r2.stdout.strip(), "%c")
                     uptime_s = int(_t.time() - started.timestamp())
             result["bot"] = {"pid": pid, "uptime_s": uptime_s}
@@ -381,11 +455,13 @@ def create_api_app(
             body = await request.json()
         except Exception:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=400, detail="Invalid JSON")
 
         task = (body.get("task") or "").strip()
         if not task:
             from fastapi import HTTPException
+
             raise HTTPException(status_code=400, detail="task required")
 
         run_async = bool(body.get("async", True))
@@ -393,7 +469,8 @@ def create_api_app(
         if not brain_router:
             return {"ok": False, "error": "Brain router not available"}
 
-        from ..brains.conductor import get_conductor, Conductor, set_conductor
+        from ..brains.conductor import Conductor, get_conductor, set_conductor
+
         conductor = get_conductor(brain_router)
         if conductor is None:
             conductor = Conductor(brain_router)
@@ -401,13 +478,20 @@ def create_api_app(
 
         if run_async:
             import uuid as _uuid
+
             run_id = str(_uuid.uuid4())[:8]
             asyncio.create_task(conductor.run(task, run_id=run_id, source="manual"))
-            return {"ok": True, "run_id": run_id, "task": task,
-                    "stream": "/api/stream/orchestration"}
+            return {
+                "ok": True,
+                "run_id": run_id,
+                "task": task,
+                "stream": "/api/stream/orchestration",
+            }
         else:
             try:
-                result = await asyncio.wait_for(conductor.run(task, source="manual"), timeout=300)
+                result = await asyncio.wait_for(
+                    conductor.run(task, source="manual"), timeout=300
+                )
                 return {
                     "ok": not result.is_error,
                     "run_id": result.run_id,
@@ -425,7 +509,11 @@ def create_api_app(
     # ── STATIC DASHBOARD ─────────────────────────────────────
 
     if _DASHBOARD_DIR.exists():
-        app.mount("/app", StaticFiles(directory=str(_DASHBOARD_DIR), html=True), name="dashboard")
+        app.mount(
+            "/app",
+            StaticFiles(directory=str(_DASHBOARD_DIR), html=True),
+            name="dashboard",
+        )
         # Serve Anthropic fonts (copied from Termora project)
         _fonts_dir = _DASHBOARD_DIR / "fonts"
         if _fonts_dir.exists():
@@ -460,7 +548,13 @@ async def run_api_server(
 
     from ..infra.tunnel import start_dashboard_tunnel, stop_dashboard_tunnel
 
-    app = create_api_app(event_bus, settings, db_manager, brain_router=brain_router, rate_monitor=rate_monitor)
+    app = create_api_app(
+        event_bus,
+        settings,
+        db_manager,
+        brain_router=brain_router,
+        rate_monitor=rate_monitor,
+    )
     config = uvicorn.Config(
         app=app,
         host="0.0.0.0",

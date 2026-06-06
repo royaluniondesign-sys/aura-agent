@@ -6,6 +6,7 @@ Flow:
 Supports: instagram carousel, twitter/X thread, linkedin post
 N8N handles the actual API calls (Instagram Graph API, etc.)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -38,6 +39,7 @@ _DRAFTS_DIR = Path.home() / ".aura" / "social_drafts"
 # Parsing
 # ---------------------------------------------------------------------------
 
+
 def parse_social_request(prompt: str) -> dict[str, Any]:
     """Extract platform, post_type, topic, count, and style from a prompt.
 
@@ -55,7 +57,9 @@ def parse_social_request(prompt: str) -> dict[str, Any]:
     # --- Platform detection ---
     if re.search(r"\binstagram\b|\bIG\b|\bInsta\b", text, re.IGNORECASE):
         platform = "instagram"
-    elif re.search(r"\btwitter\b|\bX\b|\btweet\b|\bhilo\b|\bthread\b", text, re.IGNORECASE):
+    elif re.search(
+        r"\btwitter\b|\bX\b|\btweet\b|\bhilo\b|\bthread\b", text, re.IGNORECASE
+    ):
         platform = "twitter"
     elif re.search(r"\blinkedin\b", text, re.IGNORECASE):
         platform = "linkedin"
@@ -93,15 +97,28 @@ def parse_social_request(prompt: str) -> dict[str, Any]:
     # Remove platform/type/count noise to isolate the core topic
     topic = text
     noise_patterns = [
-        r"(?i)\bpublica?\b", r"(?i)\bpublic[ao]\b", r"(?i)\bsube?\b",
-        r"(?i)\bpost(?:ea)?\b", r"(?i)\bcomparte?\b",
-        r"(?i)\ben\s+instagram\b", r"(?i)\ben\s+twitter\b", r"(?i)\ben\s+linkedin\b",
-        r"(?i)\binstagram\b", r"(?i)\btwitter\b", r"(?i)\blinkedin\b",
-        r"(?i)\bcarrus?el\b", r"(?i)\bcarousel\b",
-        r"(?i)\bun\s+hilo\b", r"(?i)\bhilo\b", r"(?i)\bthread\b",
-        r"(?i)\bun\s+post\b", r"(?i)\bun\s+tweet\b",
+        r"(?i)\bpublica?\b",
+        r"(?i)\bpublic[ao]\b",
+        r"(?i)\bsube?\b",
+        r"(?i)\bpost(?:ea)?\b",
+        r"(?i)\bcomparte?\b",
+        r"(?i)\ben\s+instagram\b",
+        r"(?i)\ben\s+twitter\b",
+        r"(?i)\ben\s+linkedin\b",
+        r"(?i)\binstagram\b",
+        r"(?i)\btwitter\b",
+        r"(?i)\blinkedin\b",
+        r"(?i)\bcarrus?el\b",
+        r"(?i)\bcarousel\b",
+        r"(?i)\bun\s+hilo\b",
+        r"(?i)\bhilo\b",
+        r"(?i)\bthread\b",
+        r"(?i)\bun\s+post\b",
+        r"(?i)\bun\s+tweet\b",
         r"\b\d+\s*(?:foto|image|imagen|slide|photo|pic|page|página|post|tweet)s?\b",
-        r"(?i)\bsobre\b", r"(?i)\bacerca\s+de\b", r"(?i)\babout\b",
+        r"(?i)\bsobre\b",
+        r"(?i)\bacerca\s+de\b",
+        r"(?i)\babout\b",
         r"(?i)\bde\s+tema\b",
     ]
     for pat in noise_patterns:
@@ -123,13 +140,18 @@ def parse_social_request(prompt: str) -> dict[str, Any]:
 # Image generation
 # ---------------------------------------------------------------------------
 
-async def _fetch_single_image(session: aiohttp.ClientSession, prompt: str, idx: int) -> dict[str, Any]:
+
+async def _fetch_single_image(
+    session: aiohttp.ClientSession, prompt: str, idx: int
+) -> dict[str, Any]:
     """Fetch one image from pollinations.ai. Returns image dict or error dict."""
     encoded = urllib.parse.quote(prompt, safe="")
     url = _POLLINATIONS_URL.format(prompt=encoded)
 
     try:
-        async with session.get(url, timeout=aiohttp.ClientTimeout(total=_IMAGE_TIMEOUT)) as resp:
+        async with session.get(
+            url, timeout=aiohttp.ClientTimeout(total=_IMAGE_TIMEOUT)
+        ) as resp:
             if resp.status != 200:
                 logger.warning("pollinations_error", idx=idx, status=resp.status)
                 return {"error": f"HTTP {resp.status}", "prompt": prompt, "index": idx}
@@ -139,7 +161,11 @@ async def _fetch_single_image(session: aiohttp.ClientSession, prompt: str, idx: 
             return {"url": url, "b64": b64, "prompt": prompt, "index": idx}
     except asyncio.TimeoutError:
         logger.warning("pollinations_timeout", idx=idx, timeout=_IMAGE_TIMEOUT)
-        return {"error": f"timeout after {_IMAGE_TIMEOUT}s", "prompt": prompt, "index": idx}
+        return {
+            "error": f"timeout after {_IMAGE_TIMEOUT}s",
+            "prompt": prompt,
+            "index": idx,
+        }
     except Exception as e:
         logger.error("pollinations_exception", idx=idx, error=str(e))
         return {"error": str(e), "prompt": prompt, "index": idx}
@@ -194,6 +220,7 @@ async def generate_images_for_post(
 # ---------------------------------------------------------------------------
 # Caption generation
 # ---------------------------------------------------------------------------
+
 
 async def generate_captions(
     topic: str,
@@ -262,7 +289,13 @@ async def _call_gemini_for_captions(prompt: str) -> str:
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            gemini_path, "-p", prompt, "--approval-mode", "yolo", "-o", "text",
+            gemini_path,
+            "-p",
+            prompt,
+            "--approval-mode",
+            "yolo",
+            "-o",
+            "text",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -301,17 +334,17 @@ def _parse_captions_json(raw: str, count: int, topic: str, platform: str) -> lis
         "linkedin": "#professional #growth",
     }
     hashtags = hashtag_map.get(platform, "")
-    return [
-        f"✨ {topic} — parte {i + 1} {hashtags}".strip()
-        for i in range(count)
-    ]
+    return [f"✨ {topic} — parte {i + 1} {hashtags}".strip() for i in range(count)]
 
 
 # ---------------------------------------------------------------------------
 # Structured post content generation
 # ---------------------------------------------------------------------------
 
-async def generate_post_content(topic: str, platform: str = "instagram") -> dict[str, str]:
+
+async def generate_post_content(
+    topic: str, platform: str = "instagram"
+) -> dict[str, str]:
     """Ask Gemini to generate structured post content for the image generator.
 
     Returns:
@@ -339,10 +372,10 @@ async def generate_post_content(topic: str, platform: str = "instagram") -> dict
             parsed = json.loads(obj_match.group())
             if isinstance(parsed, dict) and "headline" in parsed:
                 return {
-                    "headline":    str(parsed.get("headline", topic[:40])).strip(),
+                    "headline": str(parsed.get("headline", topic[:40])).strip(),
                     "subheadline": str(parsed.get("subheadline", "")).strip(),
-                    "caption":     str(parsed.get("caption", "")).strip(),
-                    "tag":         str(parsed.get("tag", "AURA AI")).upper().strip(),
+                    "caption": str(parsed.get("caption", "")).strip(),
+                    "tag": str(parsed.get("tag", "AURA AI")).upper().strip(),
                 }
         except json.JSONDecodeError:
             pass
@@ -351,16 +384,17 @@ async def generate_post_content(topic: str, platform: str = "instagram") -> dict
     # Fallback: basic content from topic
     words = topic.split()
     return {
-        "headline":    " ".join(words[:6]),
+        "headline": " ".join(words[:6]),
         "subheadline": topic,
-        "caption":     f"{topic} #ClaudeAI #AI #RUDAgency #Tecnologia",
-        "tag":         "AURA AI",
+        "caption": f"{topic} #ClaudeAI #AI #RUDAgency #Tecnologia",
+        "tag": "AURA AI",
     }
 
 
 # ---------------------------------------------------------------------------
 # N8N payload and posting
 # ---------------------------------------------------------------------------
+
 
 def build_n8n_payload(
     platform: str,
@@ -479,6 +513,7 @@ def _save_draft(payload: dict[str, Any]) -> Optional[Path]:
 # Full pipeline
 # ---------------------------------------------------------------------------
 
+
 async def run_social_pipeline(
     prompt: str,
     notify_fn: Optional[Callable[[str], Any]] = None,
@@ -542,7 +577,9 @@ async def run_social_pipeline(
 
     # Step 4: Post via N8N
     n8n_url = os.environ.get("RUD_N8N_URL", "")
-    result = await post_to_social(platform, post_type, topic, ok_images, captions, n8n_url)
+    result = await post_to_social(
+        platform, post_type, topic, ok_images, captions, n8n_url
+    )
 
     # Build response message
     if result["success"]:

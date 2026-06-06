@@ -15,6 +15,7 @@ Ciclo cada 15 minutos:
   4. Si no hay tareas → ejecutar una rutina fija del schedule
   5. Append a ~/.aura/memory/trace.jsonl (memoria unificada)
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -31,13 +32,13 @@ logger = structlog.get_logger()
 
 # ── Configuración ─────────────────────────────────────────────────────────────
 
-_LOOP_INTERVAL = 900          # 15 minutos
-_AURA_ROOT     = Path.home() / "claude-code-telegram"
-_TRACE_FILE    = Path.home() / ".aura" / "memory" / "trace.jsonl"
-_TRACE_MAX     = 100          # entradas máximas en trace (las más recientes)
+_LOOP_INTERVAL = 900  # 15 minutos
+_AURA_ROOT = Path.home() / "claude-code-telegram"
+_TRACE_FILE = Path.home() / ".aura" / "memory" / "trace.jsonl"
+_TRACE_MAX = 100  # entradas máximas en trace (las más recientes)
 
-_DISK_WARN_GB  = 3.0
-_DISK_SKIP_GB  = 1.5
+_DISK_WARN_GB = 3.0
+_DISK_SKIP_GB = 1.5
 
 # ── Estado en memoria (para dashboard) ───────────────────────────────────────
 
@@ -78,7 +79,36 @@ def get_proactive_status() -> dict:
     return {**_proactive_status}
 
 
+# ── Recovery Knowledge Base ───────────────────────────────────────────────────
+# Persists successful fix patterns to ~/.aura/memory/recovery_kb.md so that
+# RAG can surface them when a similar error occurs in the future.
+
+_RECOVERY_KB = Path.home() / ".aura" / "memory" / "recovery_kb.md"
+
+
+def _write_recovery_learning(task: dict, fix_summary: str) -> None:
+    """Append a successful fix to the recovery knowledge base (RAG-indexed)."""
+    try:
+        _RECOVERY_KB.parent.mkdir(parents=True, exist_ok=True)
+        title = task.get("title", "unknown")
+        desc = task.get("description", "")
+        tags = ", ".join(task.get("tags", []))
+        ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M")
+
+        entry = (
+            f"\n## [{ts}] FIXED: {title}\n"
+            f"**Tags**: {tags or 'none'}  \n"
+            f"**Problem**: {desc[:300]}  \n"
+            f"**Fix applied**: {fix_summary[:500]}  \n"
+        )
+        with open(_RECOVERY_KB, "a") as f:
+            f.write(entry)
+    except Exception as exc:
+        logger.debug("recovery_kb_write_error", error=str(exc))
+
+
 # ── Memoria unificada — append-only trace ────────────────────────────────────
+
 
 def _trace_append(event: str, data: dict) -> None:
     """Añade una entrada al trace unificado. Trunca a _TRACE_MAX entradas."""
@@ -101,15 +131,15 @@ def _trace_recent(n: int = 10) -> list[dict]:
         if not _TRACE_FILE.exists():
             return []
         lines = _TRACE_FILE.read_text().splitlines()
-        return [json.loads(l) for l in lines[-n:] if l.strip()]
+        return [json.loads(line) for line in lines[-n:] if line.strip()]
     except Exception:
         return []
 
 
 # ── Health checks (bash, sin costo de tokens) ─────────────────────────────────
 
-_LOG_MAX_BYTES = 5 * 1024 * 1024   # 5 MB por log file
-_LOG_KEEP_LINES = 5_000            # mantener últimas 5000 líneas tras trim
+_LOG_MAX_BYTES = 5 * 1024 * 1024  # 5 MB por log file
+_LOG_KEEP_LINES = 5_000  # mantener últimas 5000 líneas tras trim
 
 
 def _trim_logs() -> None:
@@ -123,14 +153,19 @@ def _trim_logs() -> None:
                 lines = log_file.read_text(errors="replace").splitlines()
                 trimmed = "\n".join(lines[-_LOG_KEEP_LINES:]) + "\n"
                 log_file.write_text(trimmed)
-                logger.info("log_trimmed", file=log_file.name,
-                            before=len(lines), after=_LOG_KEEP_LINES)
+                logger.info(
+                    "log_trimmed",
+                    file=log_file.name,
+                    before=len(lines),
+                    after=_LOG_KEEP_LINES,
+                )
         except Exception as exc:
             logger.debug("log_trim_error", file=log_file.name, error=str(exc))
 
 
 def _free_disk_gb() -> float:
     import shutil
+
     return shutil.disk_usage("/").free / 1e9
 
 
@@ -139,7 +174,9 @@ def _recent_errors(n: int = 200) -> list[str]:
     if not log.exists():
         return []
     lines = log.read_text(errors="replace").splitlines()[-n:]
-    return [l for l in lines if "error" in l.lower() and "warn" not in l.lower()][:10]
+    return [
+        line for line in lines if "error" in line.lower() and "warn" not in line.lower()
+    ][:10]
 
 
 def _run_tests() -> tuple[bool, str]:
@@ -149,7 +186,10 @@ def _run_tests() -> tuple[bool, str]:
         return True, "no pytest"
     r = subprocess.run(
         [str(venv), "tests/", "-q", "--tb=no", "--no-header"],
-        capture_output=True, text=True, timeout=60, cwd=str(_AURA_ROOT),
+        capture_output=True,
+        text=True,
+        timeout=60,
+        cwd=str(_AURA_ROOT),
     )
     last = r.stdout.strip().splitlines()[-1] if r.stdout.strip() else r.stderr[:100]
     return r.returncode == 0, last
@@ -161,7 +201,10 @@ def _auto_cleanup_disk() -> str:
         "find ~/claude-code-telegram/logs -name '*.log' -size +10M "
         "-exec truncate -s 1M {} \\; 2>/dev/null; "
         "df -h / | tail -1",
-        shell=True, capture_output=True, text=True, timeout=30,
+        shell=True,
+        capture_output=True,
+        text=True,
+        timeout=30,
     )
     return r.stdout.strip()[:200]
 
@@ -171,7 +214,14 @@ def _auto_cleanup_disk() -> str:
 # Cada rutina retorna (descripción, tarea_creada_bool).
 
 _ROUTINE_POINTER = 0  # ciclo round-robin entre rutinas
-_ROUTINES = ["check_errors", "run_tests", "check_disk", "check_ram", "git_status", "memory_summary"]
+_ROUTINES = [
+    "check_errors",
+    "run_tests",
+    "check_disk",
+    "check_ram",
+    "git_status",
+    "memory_summary",
+]
 
 
 def _routine_check_errors() -> tuple[str, bool]:
@@ -179,9 +229,11 @@ def _routine_check_errors() -> tuple[str, bool]:
     if not errors:
         return "No hay errores recurrentes.", False
     from .task_store import create_task, list_tasks
+
     existing = {t["title"] for t in list_tasks(status="pending")}
     created = 0
     import re
+
     patterns: dict[str, int] = {}
     for line in errors:
         m = re.search(r'"event"\s*[=:]\s*"([^"]{4,60})"', line)
@@ -191,10 +243,14 @@ def _routine_check_errors() -> tuple[str, bool]:
         if count >= 3:
             title = f"Fix recurring error: {pattern}"
             if title not in existing:
-                create_task(title, description=f"{count}× en logs recientes",
-                            priority="high" if count >= 8 else "medium",
-                            category="fix", auto_fix=False,
-                            tags=["auto", "log_error"])
+                create_task(
+                    title,
+                    description=f"{count}× en logs recientes",
+                    priority="high" if count >= 8 else "medium",
+                    category="fix",
+                    auto_fix=False,
+                    tags=["auto", "log_error"],
+                )
                 created += 1
     return f"{len(errors)} errores encontrados, {created} tareas creadas.", created > 0
 
@@ -215,11 +271,18 @@ def _routine_run_tests() -> tuple[str, bool]:
             break
     if consecutive_fails >= 2:
         from .task_store import create_task, list_tasks
+
         title = "Fix failing tests"
         existing = {t["title"] for t in list_tasks(status="pending")}
         if title not in existing:
-            create_task(title, description=summary, priority="high",
-                        category="fix", auto_fix=False, tags=["auto", "tests"])
+            create_task(
+                title,
+                description=summary,
+                priority="high",
+                category="fix",
+                auto_fix=False,
+                tags=["auto", "tests"],
+            )
     # Nunca notificar por Telegram — los tests flaky no son emergencia
     return f"Tests: {summary}", False
 
@@ -229,13 +292,18 @@ def _routine_check_disk() -> tuple[str, bool]:
     if free >= _DISK_WARN_GB:
         return f"Disco OK: {free:.1f}GB libre.", False
     from .task_store import create_task, list_tasks
+
     title = f"Limpiar disco — solo {free:.1f}GB libre"
     existing = {t["title"] for t in list_tasks(status="pending")}
     if title not in existing:
-        create_task(title, priority="critical" if free < 2 else "high",
-                    category="maintenance", auto_fix=True,
-                    fix_command="docker system prune -f; df -h /",
-                    tags=["auto", "disk"])
+        create_task(
+            title,
+            priority="critical" if free < 2 else "high",
+            category="maintenance",
+            auto_fix=True,
+            fix_command="docker system prune -f; df -h /",
+            tags=["auto", "disk"],
+        )
     return f"Disco bajo: {free:.1f}GB", True
 
 
@@ -245,15 +313,18 @@ def _routine_check_ram() -> tuple[str, bool]:
     try:
         r = subprocess.run(
             [str(cleanup_script)],
-            capture_output=True, text=True, timeout=60,
+            capture_output=True,
+            text=True,
+            timeout=60,
         )
         output = r.stdout.strip()
         # Parse: "RAM usado: 94% (15GB de 16GB, 520MB libres)"
         import re as _re_ram
+
         ram_pct = 0
         for line in output.split("\n"):
             if "RAM usado:" in line:
-                m = _re_ram.search(r'(\d+)%', line)
+                m = _re_ram.search(r"(\d+)%", line)
                 if m:
                     ram_pct = int(m.group(1))
                 break
@@ -272,7 +343,9 @@ def _routine_check_ram() -> tuple[str, bool]:
 def _routine_git_status() -> tuple[str, bool]:
     r = subprocess.run(
         ["git", "-C", str(_AURA_ROOT), "status", "--short"],
-        capture_output=True, text=True, timeout=5,
+        capture_output=True,
+        text=True,
+        timeout=5,
     )
     status = r.stdout.strip()
     _trace_append("git_status", {"status": status[:200]})
@@ -287,11 +360,11 @@ def _routine_memory_summary() -> tuple[str, bool]:
 
 
 _ROUTINE_FNS = {
-    "check_errors":   _routine_check_errors,
-    "run_tests":      _routine_run_tests,
-    "check_disk":     _routine_check_disk,
-    "check_ram":      _routine_check_ram,
-    "git_status":     _routine_git_status,
+    "check_errors": _routine_check_errors,
+    "run_tests": _routine_run_tests,
+    "check_disk": _routine_check_disk,
+    "check_ram": _routine_check_ram,
+    "git_status": _routine_git_status,
     "memory_summary": _routine_memory_summary,
 }
 
@@ -312,24 +385,29 @@ def _run_next_routine() -> tuple[str, bool]:
 
 # ── ReAct: ejecutar tarea sin fix_command con un solo haiku ──────────────────
 
+
 async def _react_execute_task(task: dict, brain_router: Any) -> tuple[bool, str]:
     """Hermes-style ReAct: un solo haiku con herramientas para resolver la tarea.
 
     Integra RAG para inyectar conocimiento previo del sistema y de aprendizajes pasados.
     """
     title = task.get("title", "")
-    desc  = task.get("description", "")
-    tid   = task.get("id", "")
+    desc = task.get("description", "")
+    tid = task.get("id", "")
 
     # ── RAG: buscar conocimiento previo ──────────────────────────────────────
     rag_ctx = ""
     try:
         from ..rag.retriever import RAGRetriever
+
         retriever = RAGRetriever()
         # Buscamos en memoria y código sobre el tema de la tarea
         results = await retriever.search(f"{title} {desc}", limit=5)
         if results:
-            rag_ctx = "\n".join(f"- [{r.get('source_type')}] {r.get('content')[:300]}..." for r in results)
+            rag_ctx = "\n".join(
+                f"- [{r.get('source_type')}] {r.get('content')[:300]}..."
+                for r in results
+            )
     except Exception as exc:
         logger.debug("proactive_rag_search_fail", error=str(exc))
 
@@ -366,9 +444,9 @@ REGLAS:
 Raíz del proyecto: {_AURA_ROOT}
 """
 
-    brain = brain_router.get_brain("haiku") if brain_router else None
-    if not brain:
-        brain = brain_router.get_brain("sonnet") if brain_router else None
+    haiku_brain = brain_router.get_brain("haiku") if brain_router else None
+    sonnet_brain = brain_router.get_brain("sonnet") if brain_router else None
+    brain = haiku_brain or sonnet_brain
     if not brain:
         return False, "no brain available"
 
@@ -382,13 +460,45 @@ Raíz del proyecto: {_AURA_ROOT}
             timeout_seconds=180,
             allowed_tools=_REACT_TOOLS,
         )
-        success = not resp.is_error and "BLOCKED:" not in (resp.content or "")
+        is_blocked = "BLOCKED:" in (resp.content or "")
+        success = not resp.is_error and not is_blocked
         result = (resp.content or "")[:300]
 
-        _trace_append("react_task", {
-            "task_id": tid[:8], "title": title[:60],
-            "success": success, "result": result,
-        })
+        # When Haiku is BLOCKED, escalate once to Sonnet before giving up.
+        if is_blocked and sonnet_brain and sonnet_brain is not brain:
+            logger.info(
+                "react_task_blocked_escalating",
+                title=title[:60],
+                blocked_reason=result[:120],
+            )
+            escalation_prompt = (
+                f"{prompt}\n\n"
+                f"NOTA: Un modelo anterior intentó resolver esta tarea y se bloqueó con:\n"
+                f"{result}\n\n"
+                f"Eres Sonnet, con mayor capacidad. Intenta resolverlo directamente."
+            )
+            try:
+                resp2 = await sonnet_brain.execute(
+                    escalation_prompt,
+                    working_directory=str(_AURA_ROOT),
+                    timeout_seconds=240,
+                    allowed_tools=_REACT_TOOLS,
+                )
+                is_blocked = "BLOCKED:" in (resp2.content or "")
+                success = not resp2.is_error and not is_blocked
+                result = (resp2.content or "")[:300]
+            except Exception as exc2:
+                logger.warning("react_sonnet_escalation_error", error=str(exc2))
+
+        _trace_append(
+            "react_task",
+            {
+                "task_id": tid[:8],
+                "title": title[:60],
+                "success": success,
+                "result": result,
+            },
+        )
         return success, result
     except Exception as exc:
         logger.error("react_execute_error", error=str(exc))
@@ -397,13 +507,13 @@ Raíz del proyecto: {_AURA_ROOT}
 
 # ── Ciclo principal ────────────────────────────────────────────────────────────
 
+
 async def run_self_improvement(
     brain_router: Any = None,
     notify_fn: Optional[Callable] = None,
     source: str = "proactive",
 ) -> Optional[str]:
     """Un ciclo completo del agente. Retorna resumen o None (silencioso)."""
-    global _proactive_status
 
     if is_external_task_active():
         logger.info("proactive_skip_external_task_active")
@@ -423,13 +533,14 @@ async def run_self_improvement(
         # ── 1. Disco ──────────────────────────────────────────────────────────
         free_gb = _free_disk_gb()
         if free_gb < _DISK_WARN_GB:
-            msg = _auto_cleanup_disk()
+            _auto_cleanup_disk()
             logger.warning("disk_low_cleaned", free_gb=round(free_gb, 1))
             notify_parts.append(f"💾 Disco bajo ({free_gb:.1f}GB) — limpiado")
 
         # ── 2. Auto-executor: tareas con fix_command (bash, sin tokens) ───────
         try:
             from .auto_executor import run_pending_tasks
+
             processed = await run_pending_tasks(notify=notify_fn)
             if processed:
                 steps_ok += processed
@@ -444,6 +555,7 @@ async def run_self_improvement(
         if brain_router:
             try:
                 from .rate_monitor import get_global_monitor as _get_monitor
+
                 _mon = _get_monitor()
                 _h_usage = _mon.get_usage("haiku")
                 _h_pct = _h_usage.usage_pct
@@ -460,45 +572,69 @@ async def run_self_improvement(
         task_to_cleanup: Optional[dict] = None
         if not _haiku_pressure_skip:
             try:
-                from .task_store import list_tasks, update_task, complete_task, fail_task
+                from .task_store import (
+                    complete_task,
+                    fail_task,
+                    list_tasks,
+                    update_task,
+                )
+
                 pending = [
-                    t for t in list_tasks(status="pending")
+                    t
+                    for t in list_tasks(status="pending")
                     if t.get("auto_fix") and not (t.get("fix_command") or "").strip()
                 ]
                 if pending:
                     task = sorted(
                         pending,
-                        key=lambda t: {"critical": 0, "high": 1, "medium": 2, "low": 3}.get(
-                            t.get("priority", "medium"), 2
-                        ),
+                        key=lambda t: {
+                            "critical": 0,
+                            "high": 1,
+                            "medium": 2,
+                            "low": 3,
+                        }.get(t.get("priority", "medium"), 2),
                     )[0]
                     task_to_cleanup = task
                     logger.info("react_task_start", title=task["title"][:60])
-                    update_task(task["id"], status="in_progress",
-                                attempts=(task.get("attempts") or 0) + 1)
+                    update_task(
+                        task["id"],
+                        status="in_progress",
+                        attempts=(task.get("attempts") or 0) + 1,
+                    )
                     ok, result = await _react_execute_task(task, brain_router)
                     if ok:
                         complete_task(task["id"], result)
                         steps_ok += 1
                         notify_parts.append(f"✅ {task['title'][:60]}")
+                        # Persist fix to recovery KB so RAG surfaces it next time
+                        _write_recovery_learning(task, result)
                     else:
                         attempts = (task.get("attempts") or 0) + 1
+                        is_blocked = "BLOCKED:" in result
                         if attempts >= 3:
                             fail_task(task["id"], result)
-                            notify_parts.append(f"❌ Abandonado (3×): {task['title'][:50]}")
+                            label = "BLOCKED" if is_blocked else "Abandonado (3×)"
+                            notify_parts.append(f"❌ {label}: {task['title'][:50]}")
                         else:
                             update_task(task["id"], status="pending", result=result)
+                            if is_blocked:
+                                notify_parts.append(
+                                    f"⚠️ BLOCKED (intento {attempts}/3): {task['title'][:50]}"
+                                )
                         steps_fail += 1
                     task_executed = True
             except (asyncio.CancelledError, asyncio.TimeoutError) as exc:
                 if task_to_cleanup:
                     logger.warning(
                         "react_task_cancelled_or_timeout",
-                        task_id=task_to_cleanup["id"], title=task_to_cleanup["title"][:60],
+                        task_id=task_to_cleanup["id"],
+                        title=task_to_cleanup["title"][:60],
                         error=type(exc).__name__,
                     )
-                    fail_task(task_to_cleanup["id"],
-                              f"{type(exc).__name__}: task cancelled during execution")
+                    fail_task(
+                        task_to_cleanup["id"],
+                        f"{type(exc).__name__}: task cancelled during execution",
+                    )
                     steps_fail += 1
                     task_executed = True
             except Exception as exc:
@@ -536,11 +672,14 @@ async def run_self_improvement(
 
 # ── Entrypoints públicos ───────────────────────────────────────────────────────
 
+
 async def run_proactive_cycle(
     brain_router: Any = None,
     notify_fn: Optional[Callable] = None,
 ) -> str:
-    summary = await run_self_improvement(brain_router, notify_fn=notify_fn, source="scheduler")
+    summary = await run_self_improvement(
+        brain_router, notify_fn=notify_fn, source="scheduler"
+    )
     return summary or ""
 
 
@@ -564,7 +703,9 @@ async def start_proactive_loop(
 
             try:
                 summary = await asyncio.wait_for(
-                    run_self_improvement(brain_router, notify_fn=notify_fn, source="proactive"),
+                    run_self_improvement(
+                        brain_router, notify_fn=notify_fn, source="proactive"
+                    ),
                     timeout=300,
                 )
                 if summary and notify_fn:
@@ -575,6 +716,14 @@ async def start_proactive_loop(
             except asyncio.TimeoutError:
                 logger.error("proactive_loop_timeout", timeout_s=300)
                 _proactive_status["last_result"] = "timeout"
+                if notify_fn:
+                    try:
+                        await notify_fn(
+                            "⏱ Proactive loop timeout (>5min). "
+                            "Ciclo cancelado — revisa logs para ver qué tarea se colgó."
+                        )
+                    except Exception:
+                        pass
             except asyncio.CancelledError:
                 logger.info("proactive_loop_cancelled")
                 raise
@@ -582,7 +731,9 @@ async def start_proactive_loop(
                 logger.error("proactive_loop_exception", error=str(exc))
                 _proactive_status["last_result"] = "exception"
 
-            next_ts = datetime.fromtimestamp(time.time() + _LOOP_INTERVAL, tz=UTC).isoformat()
+            next_ts = datetime.fromtimestamp(
+                time.time() + _LOOP_INTERVAL, tz=UTC
+            ).isoformat()
             _proactive_status["next_run_at"] = next_ts
             await asyncio.sleep(_LOOP_INTERVAL)
     except asyncio.CancelledError:

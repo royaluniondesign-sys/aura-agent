@@ -6,8 +6,6 @@ Tokens: ZERO for detection, Claude for draft suggestions (optional)
 Status: STUB until Gmail OAuth is configured
 """
 
-from pathlib import Path
-
 import structlog
 
 from .email_triage import is_gmail_available

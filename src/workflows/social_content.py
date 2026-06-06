@@ -1,4 +1,5 @@
 """AI content generation for social posts — captions, image prompts, concepts."""
+
 from __future__ import annotations
 
 import asyncio
@@ -22,10 +23,14 @@ def _ensure_gemini_no_mcp_config() -> None:
     config_dir.mkdir(parents=True, exist_ok=True)
     settings_path = config_dir / "settings.json"
     if not settings_path.exists():
-        settings_path.write_text(_json.dumps({
-            "general": {"sessionRetention": {"enabled": False}},
-            "security": {"auth": {"selectedType": "oauth-personal"}},
-        }))
+        settings_path.write_text(
+            _json.dumps(
+                {
+                    "general": {"sessionRetention": {"enabled": False}},
+                    "security": {"auth": {"selectedType": "oauth-personal"}},
+                }
+            )
+        )
     real_gemini = Path.home() / ".gemini"
     for cred_file in ("oauth_creds.json", "google_accounts.json"):
         src = real_gemini / cred_file
@@ -110,14 +115,44 @@ _STYLE_DIRECTIVES: dict[str, dict[str, str]] = {
 _STYLE_MOOD: dict[str, str] = {k: v["aesthetic"] for k, v in _STYLE_DIRECTIVES.items()}
 
 _DEFAULT_HASHTAG_SETS = {
-    "niche": ["#BrandingBarcelona", "#DiseñoWeb", "#AgenciaCreativa", "#IdentidadVisual",
-              "#MarcaPersonal", "#BrandingEspañol", "#DiseñoGrafico", "#MarketingDigital"],
-    "medium": ["#Branding", "#DisenioCorporativo", "#LogoDesign", "#BrandDesign",
-               "#CreativeAgency", "#DesignStudio", "#WebDesign", "#UIDesign"],
-    "high": ["#Design", "#Creative", "#Marketing", "#Business",
-             "#Entrepreneur", "#Startup", "#SmallBusiness", "#GraphicDesign"],
-    "brand": ["#RUDStudio", "#RoyalUnionDesign", "#AgenciaRUD",
-              "#RUDBarcelona", "#CreativosBarcelona", "#EstudioCreativo"],
+    "niche": [
+        "#BrandingBarcelona",
+        "#DiseñoWeb",
+        "#AgenciaCreativa",
+        "#IdentidadVisual",
+        "#MarcaPersonal",
+        "#BrandingEspañol",
+        "#DiseñoGrafico",
+        "#MarketingDigital",
+    ],
+    "medium": [
+        "#Branding",
+        "#DisenioCorporativo",
+        "#LogoDesign",
+        "#BrandDesign",
+        "#CreativeAgency",
+        "#DesignStudio",
+        "#WebDesign",
+        "#UIDesign",
+    ],
+    "high": [
+        "#Design",
+        "#Creative",
+        "#Marketing",
+        "#Business",
+        "#Entrepreneur",
+        "#Startup",
+        "#SmallBusiness",
+        "#GraphicDesign",
+    ],
+    "brand": [
+        "#RUDStudio",
+        "#RoyalUnionDesign",
+        "#AgenciaRUD",
+        "#RUDBarcelona",
+        "#CreativosBarcelona",
+        "#EstudioCreativo",
+    ],
 }
 
 
@@ -161,16 +196,24 @@ async def generate_social_content(
     carousel_narrative = ""
     if count > 1:
         last = count
-        mid = f"- Imágenes 2–{last - 1} (Desarrollo): contexto, proceso, valor. (si aplica)\n" if last > 2 else ""
+        mid = (
+            f"- Imágenes 2–{last - 1} (Desarrollo): contexto, proceso, valor. (si aplica)\n"
+            if last > 2
+            else ""
+        )
         carousel_narrative = f"""
 NARRATIVA VISUAL CARRUSEL ({count} imágenes):
 - Imagen 1: Hook visual — impacto inmediato, hace deslizar.
 {mid}- Imagen {last}: Reveal — resolución, resultado, cierre visual."""
 
-    flux_array_example = "[" + ", ".join(
-        f'"creative FLUX.1 prompt for image {i + 1} (60-120 words, English)"'
-        for i in range(count)
-    ) + "]"
+    flux_array_example = (
+        "["
+        + ", ".join(
+            f'"creative FLUX.1 prompt for image {i + 1} (60-120 words, English)"'
+            for i in range(count)
+        )
+        + "]"
+    )
 
     text_rule = (
         "Typography/text in the image is ALLOWED and encouraged when it serves the concept — "
@@ -236,7 +279,11 @@ Responde SOLO en JSON sin markdown:
             if m:
                 data = _json.loads(m.group(0))
                 prompts = data.get("flux_prompts", [])
-                if isinstance(prompts, list) and prompts and all(isinstance(p, str) for p in prompts):
+                if (
+                    isinstance(prompts, list)
+                    and prompts
+                    and all(isinstance(p, str) for p in prompts)
+                ):
                     while len(prompts) < count:
                         prompts.append(prompts[-1])
                     return data["caption"], prompts[:count]
@@ -245,7 +292,9 @@ Responde SOLO en JSON sin markdown:
                 data = _json.loads(m2.group(0))
                 return data["caption"], [data["image_prompt"]] * count
         except Exception as e:
-            logger.debug("social_ai_attempt_failed", cmd=cmd[0] if cmd else "?", error=str(e))
+            logger.debug(
+                "social_ai_attempt_failed", cmd=cmd[0] if cmd else "?", error=str(e)
+            )
         return None
 
     if brain in _BRAIN_CMDS:
@@ -308,10 +357,14 @@ async def generate_caption_concept(
             f"con narrativa progresiva (Hook visual → Desarrollo → Reveal)."
         )
 
-    flux_array_example = "[" + ", ".join(
-        f'"FLUX.1 prompt image {i + 1} (60 words English, follows visual type below)"'
-        for i in range(count)
-    ) + "]"
+    flux_array_example = (
+        "["
+        + ", ".join(
+            f'"FLUX.1 prompt image {i + 1} (60 words English, follows visual type below)"'
+            for i in range(count)
+        )
+        + "]"
+    )
 
     prompt = f"""Eres un experto en branding y director creativo. Genera un BORRADOR RÁPIDO de concepto.
 
@@ -371,12 +424,16 @@ Responde SOLO en JSON sin markdown:
             "flux_prompts": [
                 f"Professional editorial photography, {description[:60]}, "
                 f"clean studio, cool neutral tones, sharp detail, no text, no watermark"
-            ] * count,
+            ]
+            * count,
         }
 
     existing = concept.get("flux_prompts")
     if not isinstance(existing, list) or not existing:
-        old = concept.get("image_prompt", f"Professional editorial photo: {description[:60]}, {style} aesthetic")
+        old = concept.get(
+            "image_prompt",
+            f"Professional editorial photo: {description[:60]}, {style} aesthetic",
+        )
         concept["flux_prompts"] = [old] * count
     else:
         while len(concept["flux_prompts"]) < count:
@@ -441,7 +498,9 @@ RESPONDE SOLO CON EL CAPTION FINAL. Sin explicaciones, sin JSON, sin bloques de 
 
     try:
         proc = await asyncio.create_subprocess_exec(
-            "claude", "-p", prompt,
+            "claude",
+            "-p",
+            prompt,
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -450,7 +509,9 @@ RESPONDE SOLO CON EL CAPTION FINAL. Sin explicaciones, sin JSON, sin bloques de 
         if caption and len(caption) > 80:
             logger.info("claude_caption_refined", chars=len(caption))
             return caption
-        logger.warning("claude_caption_short", raw=caption[:100], stderr=stderr.decode()[:200])
+        logger.warning(
+            "claude_caption_short", raw=caption[:100], stderr=stderr.decode()[:200]
+        )
     except asyncio.TimeoutError:
         logger.warning("claude_caption_timeout")
     except Exception as e:

@@ -32,6 +32,7 @@ class ConductorHandlerMixin:
     ) -> None:
         """Ruta B — Route complex external task through the 3-layer conductor."""
         import time as _time
+
         from src.infra.task_router import write_external_outcome
 
         progress_msg = await update.message.reply_text(
@@ -42,7 +43,8 @@ class ConductorHandlerMixin:
         t_start = _time.time()
 
         try:
-            from src.brains.conductor import get_conductor, Conductor
+            from src.brains.conductor import Conductor, get_conductor
+
             conductor = get_conductor(router)
             if conductor is None:
                 conductor = Conductor(router, notify_fn=None)
@@ -52,7 +54,9 @@ class ConductorHandlerMixin:
 
             async def _progress_edit(text: str) -> None:
                 nonlocal last_update
-                if _time.time() - last_update < 8:  # max 1 edit per 8s (flood protection)
+                if (
+                    _time.time() - last_update < 8
+                ):  # max 1 edit per 8s (flood protection)
                     return
                 last_update = _time.time()
                 try:
@@ -95,7 +99,9 @@ class ConductorHandlerMixin:
 
             # Split long outputs (Telegram 4096 char limit)
             chunk_size = 3800
-            chunks = [output[i:i + chunk_size] for i in range(0, len(output), chunk_size)]
+            chunks = [
+                output[i : i + chunk_size] for i in range(0, len(output), chunk_size)
+            ]
             for i, chunk in enumerate(chunks):
                 prefix = (
                     f"<b>🧠 Conductor</b> ({duration_s}s · {result.steps_completed}✓)\n\n"
@@ -135,7 +141,9 @@ class ConductorHandlerMixin:
                 output_preview="timeout",
             )
         except Exception as exc:
-            logger.error("conductor_external_task_error", error=str(exc), user_id=user_id)
+            logger.error(
+                "conductor_external_task_error", error=str(exc), user_id=user_id
+            )
             try:
                 await progress_msg.edit_text(
                     f"❌ Error en conductor: {str(exc)[:200]}", parse_mode="HTML"

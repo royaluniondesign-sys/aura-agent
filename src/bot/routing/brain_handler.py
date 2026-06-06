@@ -76,7 +76,10 @@ class BrainHandlerMixin:
 
         logger.info("unknown_command_to_haiku", command=text[:60])
         await self._handle_alt_brain(
-            update, context, router, text,
+            update,
+            context,
+            router,
+            text,
             update.effective_user.id,
             brain_name="haiku",
         )
@@ -104,7 +107,9 @@ class BrainHandlerMixin:
         from src.observability import get_tracer
 
         brain = (
-            router.get_brain(brain_name) if brain_name else router.get_active_brain(user_id)
+            router.get_brain(brain_name)
+            if brain_name
+            else router.get_active_brain(user_id)
         )
         if brain is None:
             brain = router.get_active_brain(user_id)
@@ -146,7 +151,7 @@ class BrainHandlerMixin:
                 try:
                     frame = 0
                     while True:
-                        await asyncio.sleep(0.8)   # fast — show before first token
+                        await asyncio.sleep(0.8)  # fast — show before first token
                         frame += 1
                         elapsed = time.time() - _start
                         spin = _SPIN[frame % len(_SPIN)]
@@ -176,7 +181,11 @@ class BrainHandlerMixin:
                         break
 
                     # First token arrived — stop pre-stream heartbeat
-                    if not accumulated and heartbeat_task_s and not heartbeat_task_s.done():
+                    if (
+                        not accumulated
+                        and heartbeat_task_s
+                        and not heartbeat_task_s.done()
+                    ):
                         heartbeat_task_s.cancel()
                         try:
                             await heartbeat_task_s
@@ -190,9 +199,7 @@ class BrainHandlerMixin:
                     now = time.time()
                     if now - last_edit >= 1.0:
                         elapsed = now - _start
-                        header = (
-                            f"{brain.emoji} <b>{brain.display_name}</b> · {_dur(elapsed)}"
-                        )
+                        header = f"{brain.emoji} <b>{brain.display_name}</b> · {_dur(elapsed)}"
                         display = accumulated[:3700]
                         try:
                             await progress_msg.edit_text(
@@ -209,11 +216,15 @@ class BrainHandlerMixin:
 
             # Final edit — remove cursor, show total time
             elapsed_total = time.time() - _start
-            header = f"{brain.emoji} <b>{brain.display_name}</b> · {_dur(elapsed_total)}"
+            header = (
+                f"{brain.emoji} <b>{brain.display_name}</b> · {_dur(elapsed_total)}"
+            )
 
             if is_error or not accumulated:
                 # Escalate on streaming error — with animated heartbeat during fallback wait
-                fallback_name = router.get_fallback_brain(brain.name) if router else None
+                fallback_name = (
+                    router.get_fallback_brain(brain.name) if router else None
+                )
                 if fallback_name:
                     fallback = router.get_brain(fallback_name)
                     if fallback:
@@ -308,18 +319,21 @@ class BrainHandlerMixin:
                 try:
                     storage = context.bot_data.get("storage")
                     if storage:
-                        asyncio.ensure_future(storage.save_message_raw(
-                            user_id=user_id,
-                            prompt=original_text or message_text,
-                            response=content,
-                            cost=0.0,
-                            duration_ms=int(elapsed_total * 1000),
-                            brain=brain.name,
-                        ))
+                        asyncio.ensure_future(
+                            storage.save_message_raw(
+                                user_id=user_id,
+                                prompt=original_text or message_text,
+                                response=content,
+                                cost=0.0,
+                                duration_ms=int(elapsed_total * 1000),
+                                brain=brain.name,
+                            )
+                        )
                 except Exception:
                     pass
                 try:
                     from src.context.fact_extractor import learn_from_interaction
+
                     asyncio.ensure_future(
                         asyncio.get_event_loop().run_in_executor(
                             None, learn_from_interaction, message_text, content
@@ -330,9 +344,14 @@ class BrainHandlerMixin:
                 # Index conversation in RAG so AURA remembers past exchanges
                 try:
                     from src.rag.indexer import RAGIndexer
+
                     _rag = RAGIndexer()
-                    conv_text = f"[Usuario]: {message_text[:400]}\n[AURA]: {content[:600]}"
-                    asyncio.ensure_future(_rag.index_text(conv_text, "telegram_chat", "memory"))
+                    conv_text = (
+                        f"[Usuario]: {message_text[:400]}\n[AURA]: {content[:600]}"
+                    )
+                    asyncio.ensure_future(
+                        _rag.index_text(conv_text, "telegram_chat", "memory")
+                    )
                 except Exception:
                     pass
 
@@ -350,10 +369,11 @@ class BrainHandlerMixin:
         heartbeat_task: Optional["asyncio.Task[None]"] = None
 
         # Shared state for live tool log (mutated by on_event callback)
-        _tool_log: list = []          # [(icon_str, line_str), ...]
-        _last_progress_edit = [0.0]   # throttle edits
+        _tool_log: list = []  # [(icon_str, line_str), ...]
+        _last_progress_edit = [0.0]  # throttle edits
 
-        from ..orchestrator_utils import tool_icon as _tool_icon, escape_html as _esc_html
+        from ..orchestrator_utils import escape_html as _esc_html
+        from ..orchestrator_utils import tool_icon as _tool_icon
 
         def _tool_event(kind: str, name: str, detail: str) -> None:
             """Called from execute_streaming() for each tool/text event."""
@@ -374,8 +394,7 @@ class BrainHandlerMixin:
             phase = _phase(elapsed)
             header = (
                 f"{current_brain.emoji} <b>{current_brain.display_name}</b>"
-                f" · {spin} {phase}"
-                + (f" · {dur}" if dur else "")
+                f" · {spin} {phase}" + (f" · {dur}" if dur else "")
             )
             if not _tool_log:
                 return header
@@ -457,7 +476,9 @@ class BrainHandlerMixin:
                     if rate_monitor:
                         try:
                             if rate_monitor.get_usage(fallback_name).is_rate_limited:
-                                logger.info("cascade_skip_ratelimited", brain=fallback_name)
+                                logger.info(
+                                    "cascade_skip_ratelimited", brain=fallback_name
+                                )
                                 continue
                         except Exception:
                             pass
@@ -484,7 +505,9 @@ class BrainHandlerMixin:
                     if rate_monitor:
                         is_rl = "rate" in (response.error_type or "").lower()
                         if response.is_error:
-                            rate_monitor.record_error(fallback.name, is_rate_limit=is_rl)
+                            rate_monitor.record_error(
+                                fallback.name, is_rate_limit=is_rl
+                            )
                         else:
                             rate_monitor.record_request(fallback.name)
                     if not response.is_error:
@@ -494,7 +517,9 @@ class BrainHandlerMixin:
             await _stop()
 
             elapsed_total = time.time() - _start
-            header = f"{brain.emoji} <b>{brain.display_name}</b> · {_dur(elapsed_total)}"
+            header = (
+                f"{brain.emoji} <b>{brain.display_name}</b> · {_dur(elapsed_total)}"
+            )
             if brain.name != original_brain.name:
                 header = (
                     f"↗️ {original_brain.emoji}→{brain.emoji}"
@@ -528,7 +553,9 @@ class BrainHandlerMixin:
                         intent=_intent_str,
                         success=not response.is_error,
                         duration_ms=int(elapsed_total * 1000),
-                        error=str(response.error_type or "") if response.is_error else "",
+                        error=(
+                            str(response.error_type or "") if response.is_error else ""
+                        ),
                         prompt=original_text or message_text,
                     )
                 except Exception as _cx_err:
@@ -539,19 +566,22 @@ class BrainHandlerMixin:
                 try:
                     storage = context.bot_data.get("storage")
                     if storage:
-                        asyncio.ensure_future(storage.save_message_raw(
-                            user_id=user_id,
-                            prompt=original_text or message_text,
-                            response=content,
-                            cost=response.cost or 0.0,
-                            duration_ms=int(elapsed_total * 1000),
-                            brain=brain.name,
-                        ))
+                        asyncio.ensure_future(
+                            storage.save_message_raw(
+                                user_id=user_id,
+                                prompt=original_text or message_text,
+                                response=content,
+                                cost=response.cost or 0.0,
+                                duration_ms=int(elapsed_total * 1000),
+                                brain=brain.name,
+                            )
+                        )
                 except Exception:
                     pass
                 # ── Background learning ───────────────────────────────────────
                 try:
                     from src.context.fact_extractor import learn_from_interaction
+
                     asyncio.ensure_future(
                         asyncio.get_event_loop().run_in_executor(
                             None, learn_from_interaction, message_text, content
@@ -562,9 +592,14 @@ class BrainHandlerMixin:
                 # Index conversation in RAG so AURA remembers past exchanges
                 try:
                     from src.rag.indexer import RAGIndexer
+
                     _rag = RAGIndexer()
-                    conv_text = f"[Usuario]: {message_text[:400]}\n[AURA]: {content[:600]}"
-                    asyncio.ensure_future(_rag.index_text(conv_text, "telegram_chat", "memory"))
+                    conv_text = (
+                        f"[Usuario]: {message_text[:400]}\n[AURA]: {content[:600]}"
+                    )
+                    asyncio.ensure_future(
+                        _rag.index_text(conv_text, "telegram_chat", "memory")
+                    )
                 except Exception:
                     pass
 
@@ -573,6 +608,7 @@ class BrainHandlerMixin:
                 voice_users = context.bot_data.get("voice_users", set())
                 if user_id in voice_users and not response.is_error:
                     from src.bot.features.voice_tts import send_voice_response
+
                     asyncio.create_task(
                         send_voice_response(update, context, content),
                         name="voice_reply",

@@ -28,8 +28,8 @@ from telegram.ext import ContextTypes
 
 from .routing.brain_handler import BrainHandlerMixin
 from .routing.conductor_handler import ConductorHandlerMixin
-from .routing.media_handler import MediaHandlerMixin
 from .routing.content_handler import ContentHandlerMixin
+from .routing.media_handler import MediaHandlerMixin
 
 if TYPE_CHECKING:
     from .orchestrator import MessageOrchestrator
@@ -106,12 +106,12 @@ def _classify_mission_mode(text: str, has_active_mission: bool) -> tuple[str, st
 
     m_new = _NEW_MISSION_RE.match(raw)
     if m_new:
-        cleaned = raw[m_new.end():].strip()
+        cleaned = raw[m_new.end() :].strip()
         return "new", cleaned or raw
 
     m_cont = _CONTINUE_MISSION_RE.match(raw)
     if m_cont:
-        cleaned = raw[m_cont.end():].strip()
+        cleaned = raw[m_cont.end() :].strip()
         return "continue", cleaned or raw
 
     if has_active_mission and len(raw) <= 180 and _IMPLICIT_CONTINUE_RE.match(raw):
@@ -292,12 +292,15 @@ class AgenticRoutingMixin(
         # Auto-capture group chat_id when AURA first receives a group message
         _chat = update.effective_chat
         if _chat and getattr(_chat, "type", "") in ("group", "supergroup"):
-            import os as _os, pathlib as _pl
+            import pathlib as _pl
+
             _group_file = _pl.Path.home() / ".aura" / "context" / "known_groups.txt"
             _group_file.parent.mkdir(parents=True, exist_ok=True)
             _gid = str(_chat.id)
             _gtitle = getattr(_chat, "title", "")
-            _known = _group_file.read_text().splitlines() if _group_file.exists() else []
+            _known = (
+                _group_file.read_text().splitlines() if _group_file.exists() else []
+            )
             if not any(line.startswith(_gid) for line in _known):
                 with open(_group_file, "a") as _f:
                     _f.write(f"{_gid}|{_gtitle}\n")
@@ -317,7 +320,9 @@ class AgenticRoutingMixin(
             mission_state["mode"] = "new"
             message_text = normalized_text or message_text
             try:
-                await update.message.reply_text("🆕 Nueva misión detectada. Arranco contexto limpio.")
+                await update.message.reply_text(
+                    "🆕 Nueva misión detectada. Arranco contexto limpio."
+                )
             except Exception:
                 pass
         elif mode == "continue":
@@ -339,6 +344,7 @@ class AgenticRoutingMixin(
         # Pause AURA's self-improvement loop while Ricardo is sending tasks
         try:
             from ..infra.proactive_loop import set_external_task_active
+
             set_external_task_active(True)
         except Exception:
             pass  # non-critical — don't block message handling
@@ -348,6 +354,7 @@ class AgenticRoutingMixin(
             cmd = message_text[1:].strip()
             if cmd:
                 from .orchestrator_utils import bash_passthrough
+
                 logger.info("Bash passthrough", user_id=user_id, command=cmd[:100])
                 await bash_passthrough(update, cmd)
                 return
@@ -356,21 +363,37 @@ class AgenticRoutingMixin(
         # Detect "dile a hermes", "hermes:", "preguntale a hermes", etc.
         _msg_lower = message_text.lower().strip() if message_text else ""
         _hermes_prefixes = (
-            "hermes:", "hermes,", "@hermes",
-            "dile a hermes", "preguntale a hermes", "manda a hermes",
-            "hermes que ", "hermes haz ", "hermes busca ", "hermes crea ",
-            "hermes analiza ", "hermes revisa ", "hermes ejecuta ",
+            "hermes:",
+            "hermes,",
+            "@hermes",
+            "dile a hermes",
+            "preguntale a hermes",
+            "manda a hermes",
+            "hermes que ",
+            "hermes haz ",
+            "hermes busca ",
+            "hermes crea ",
+            "hermes analiza ",
+            "hermes revisa ",
+            "hermes ejecuta ",
         )
         if any(_msg_lower.startswith(p) for p in _hermes_prefixes):
             # Strip the routing prefix to get the actual task
             _task = message_text.strip()
-            for _p in ("hermes:", "hermes,", "@hermes",
-                       "dile a hermes", "preguntale a hermes", "manda a hermes"):
+            for _p in (
+                "hermes:",
+                "hermes,",
+                "@hermes",
+                "dile a hermes",
+                "preguntale a hermes",
+                "manda a hermes",
+            ):
                 if _msg_lower.startswith(_p):
-                    _task = message_text[len(_p):].strip()
+                    _task = message_text[len(_p) :].strip()
                     break
             if _task:
                 import types
+
                 # Pass as single list item to preserve the full task string
                 _fake_ctx = types.SimpleNamespace(args=[_task])
                 logger.info("hermes_natural_route", task=_task[:80])
@@ -394,12 +417,15 @@ class AgenticRoutingMixin(
         # Telegram flood guard — check if bot is in global flood ban
         try:
             from .flood_guard import remaining_flood_wait
+
             flood_remaining = remaining_flood_wait()
             if flood_remaining > 0:
                 mins = int(flood_remaining // 60)
                 secs = int(flood_remaining % 60)
                 wait_str = f"{mins}m{secs:02d}s" if mins else f"{secs}s"
-                logger.warning("agentic_text_flood_ban_active", remaining_s=flood_remaining)
+                logger.warning(
+                    "agentic_text_flood_ban_active", remaining_s=flood_remaining
+                )
                 try:
                     await update.message.reply_text(
                         f"⏳ Telegram flood ban activo — reintentando en {wait_str}.\n"
@@ -415,9 +441,7 @@ class AgenticRoutingMixin(
         await chat.send_action("typing")
         rate_monitor = context.bot_data.get("rate_monitor")
         chat_id = (
-            update.effective_chat.id
-            if update.effective_chat is not None
-            else user_id
+            update.effective_chat.id if update.effective_chat is not None else user_id
         )
 
         # --- Multi-agent squad for complex multi-step/multi-domain tasks ---
@@ -503,12 +527,16 @@ class AgenticRoutingMixin(
                         if response_text:
                             # Keep response short — model can echo long previous answers
                             rt = response_text[:250]
-                            conversation_history.append({"role": "assistant", "content": rt})
+                            conversation_history.append(
+                                {"role": "assistant", "content": rt}
+                            )
         except Exception:
             pass  # history is non-critical
 
         # --- Smart routing: classify intent and pick optimal brain ---
-        from src.observability import get_tracer  # noqa: F401 (imported for side effects)
+        from src.observability import (  # noqa: F401 (imported for side effects)
+            get_tracer,
+        )
 
         router = context.bot_data.get("brain_router")
         intent_info = ""
@@ -522,18 +550,20 @@ class AgenticRoutingMixin(
                 except Exception as _cx_err:
                     logger.warning("cortex_route_fallback", error=str(_cx_err))
                     routed_brain, intent = router.smart_route(
-                        message_text, user_id,
-                        rate_monitor=rate_monitor, urgent=False,
+                        message_text,
+                        user_id,
+                        rate_monitor=rate_monitor,
+                        urgent=False,
                     )
             else:
                 routed_brain, intent = router.smart_route(
-                    message_text, user_id,
-                    rate_monitor=rate_monitor, urgent=False,
+                    message_text,
+                    user_id,
+                    rate_monitor=rate_monitor,
+                    urgent=False,
                 )
             try:
-                intent_info = (
-                    f"{intent.intent.value}:{intent.suggested_brain}({intent.confidence})"
-                )
+                intent_info = f"{intent.intent.value}:{intent.suggested_brain}({intent.confidence})"
             except Exception:
                 intent_info = str(intent)
             logger.info("smart_route_decision", routed=routed_brain, intent=intent_info)
@@ -546,20 +576,30 @@ class AgenticRoutingMixin(
             )
 
             # ── Native actions: intercept before routing to any LLM brain ──
-            from src.economy.intent import Intent as _Intent
             import re as _re2
-            _is_send = bool(_re2.search(
-                r"(?i)\b(envi[aá]|manda|send|escribe?|redacta?|compone?)\b",
-                message_text,
-            ))
+
+            from src.economy.intent import Intent as _Intent
+
+            _is_send = bool(
+                _re2.search(
+                    r"(?i)\b(envi[aá]|manda|send|escribe?|redacta?|compone?)\b",
+                    message_text,
+                )
+            )
             if intent is not None and intent.intent == _Intent.EMAIL and _is_send:
                 await self._handle_email_native(
-                    update, context, router, message_text, user_id,
+                    update,
+                    context,
+                    router,
+                    message_text,
+                    user_id,
                 )
                 return
 
             if intent is not None and intent.intent == _Intent.IMAGE:
-                await self._handle_image_gen(update, context, router, message_text, user_id)
+                await self._handle_image_gen(
+                    update, context, router, message_text, user_id
+                )
                 return
 
             if intent is not None and intent.intent == _Intent.SOCIAL:
@@ -575,7 +615,11 @@ class AgenticRoutingMixin(
             # ── Route to brain (direct — no task_router overhead) ───────────
             if routed_brain != "zero-token":
                 await self._handle_alt_brain(
-                    update, context, router, message_text, user_id,
+                    update,
+                    context,
+                    router,
+                    message_text,
+                    user_id,
                     brain_name=routed_brain,
                     intent=intent,
                     original_text=message_text,
@@ -585,6 +629,7 @@ class AgenticRoutingMixin(
 
         # No router available — use Gemini directly as fallback
         from src.brains.gemini_brain import GeminiBrain
+
         progress_msg = await update.message.reply_text("🔵 Thinking...")
         try:
             brain = GeminiBrain()

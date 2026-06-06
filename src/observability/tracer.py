@@ -9,7 +9,7 @@ Wraps the Langfuse SDK with graceful degradation:
 import os
 import time
 from contextlib import contextmanager
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any, Dict, Generator, Optional
 
 import structlog
@@ -84,7 +84,9 @@ class LangfuseTracer:
         now_ms = int(time.time() * 1000)
 
         if not self._enabled or not self._client:
-            return TraceContext(trace_id="", brain_name=brain_name, start_time_ms=now_ms)
+            return TraceContext(
+                trace_id="", brain_name=brain_name, start_time_ms=now_ms
+            )
 
         try:
             trace = self._client.trace(
@@ -105,7 +107,9 @@ class LangfuseTracer:
             )
         except Exception as e:
             logger.error("langfuse_trace_error", error=str(e))
-            return TraceContext(trace_id="", brain_name=brain_name, start_time_ms=now_ms)
+            return TraceContext(
+                trace_id="", brain_name=brain_name, start_time_ms=now_ms
+            )
 
     def end_trace(
         self,
@@ -125,7 +129,9 @@ class LangfuseTracer:
             trace = self._client.trace(id=ctx.trace_id)
 
             update_data: Dict[str, Any] = {
-                "output": {"response": output[:1000]} if output else {"error": error[:500]},
+                "output": (
+                    {"response": output[:1000]} if output else {"error": error[:500]}
+                ),
                 "metadata": {
                     "duration_ms": elapsed,
                     "cost": cost,

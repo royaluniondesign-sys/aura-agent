@@ -1,4 +1,5 @@
 """Shared utilities for bot handlers."""
+
 from pathlib import Path
 from typing import Optional
 
@@ -51,4 +52,5 @@ def _format_file_size(size_bytes: int) -> str:
 def _escape_markdown(text: str) -> str:
     """Escape HTML special characters."""
     from ..utils.html_format import escape_html
+
     return escape_html(text)

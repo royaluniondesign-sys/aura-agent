@@ -3,12 +3,11 @@
 Single responsibility: take an exchange (who said what, reply, timing) and send it
 to the owner in a readable format. All mesh-visible communication goes through here.
 """
+
 from __future__ import annotations
 
-import asyncio
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Optional
 
 import structlog
 
@@ -45,12 +44,14 @@ async def broadcast_exchange(
         return
 
     icon = "⚠️" if important else "🕸"
-    elapsed_str = f"{int(elapsed_s)}s" if elapsed_s >= 1 else f"{int(elapsed_s * 1000)}ms"
+    elapsed_str = (
+        f"{int(elapsed_s)}s" if elapsed_s >= 1 else f"{int(elapsed_s * 1000)}ms"
+    )
 
     sender_icon = {"aura": "✨", "hermes": "⚡"}.get(sender.lower(), "🤖")
-    recv_icon   = {"aura": "✨", "hermes": "⚡"}.get(receiver.lower(), "🤖")
+    recv_icon = {"aura": "✨", "hermes": "⚡"}.get(receiver.lower(), "🤖")
 
-    msg_preview  = message[:300] + ("…" if len(message) > 300 else "")
+    msg_preview = message[:300] + ("…" if len(message) > 300 else "")
     reply_preview = reply[:600] + ("…" if len(reply) > 600 else "")
 
     text = (
@@ -62,7 +63,9 @@ async def broadcast_exchange(
 
     try:
         await bot.send_message(chat_id=chat_id, text=text, parse_mode="HTML")
-        _log(f"{sender.upper()}→{receiver.upper()}: {message[:60]} | reply: {reply[:60]}")
+        _log(
+            f"{sender.upper()}→{receiver.upper()}: {message[:60]} | reply: {reply[:60]}"
+        )
     except Exception as e:
         logger.warning("mesh_broadcast_error", error=str(e))
 
@@ -96,6 +99,7 @@ async def broadcast_alert(
 
 def _queue_to_file(from_agent: str, message: str) -> None:
     import json
+
     inbox = Path.home() / ".aura" / "mesh" / "inbox.json"
     inbox.parent.mkdir(parents=True, exist_ok=True)
     items: list = []
@@ -104,5 +108,7 @@ def _queue_to_file(from_agent: str, message: str) -> None:
             items = json.loads(inbox.read_text())
         except Exception:
             items = []
-    items.append({"from": from_agent, "message": message, "ts": datetime.now(UTC).isoformat()})
+    items.append(
+        {"from": from_agent, "message": message, "ts": datetime.now(UTC).isoformat()}
+    )
     inbox.write_text(json.dumps(items, ensure_ascii=False, indent=2))

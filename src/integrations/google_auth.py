@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 import json
 import os
-
 from pathlib import Path
 from typing import Optional
 
@@ -87,9 +86,11 @@ async def start_oauth_flow(
     auth_url = f"{_AUTH_URI}?{urlencode(params)}"
 
     # Start local server to catch callback
-    asyncio.create_task(_run_oauth_callback_server(
-        client_id, client_secret, redirect_uri, redirect_port
-    ))
+    asyncio.create_task(
+        _run_oauth_callback_server(
+            client_id, client_secret, redirect_uri, redirect_port
+        )
+    )
 
     return auth_url
 
@@ -101,7 +102,6 @@ async def _run_oauth_callback_server(
     port: int,
 ) -> None:
     """Run a minimal HTTP server to capture the OAuth callback code."""
-    import aiohttp
     from aiohttp import web
 
     auth_code_future: asyncio.Future[str] = asyncio.get_event_loop().create_future()

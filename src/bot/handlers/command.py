@@ -1,10 +1,6 @@
 """Command handlers for bot operations."""
 
-import os
-import signal
-from datetime import datetime, timezone
-from pathlib import Path
-from typing import Optional
+import os  # noqa: F401 — tests patch src.bot.handlers.command.os.kill
 
 import structlog
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -14,25 +10,28 @@ from ...claude.facade import ClaudeIntegration
 from ...config.settings import Settings
 from ...projects import PrivateTopicsUnavailableError, load_project_registry
 from ...security.audit import AuditLogger
-from ...security.validators import SecurityValidator
-from ...storage.models import SessionModel
 from ..utils.html_format import escape_html
 from ._handler_utils import (
-    _escape_markdown,
-    _format_file_size,
-    _get_thread_project_root,
     _is_private_chat,
-    _is_within_root,
+)
+
+# Re-export admin commands so external callers still resolve from this module
+from .cmd_admin import (  # noqa: F401
+    end_session,
+    git_command,
+    quick_actions,
+    restart_command,
 )
 
 # Re-export navigation commands so external callers still resolve from this module
-from .cmd_navigation import change_directory, list_files, print_working_directory
+from .cmd_navigation import (  # noqa: F401
+    change_directory,
+    list_files,
+    print_working_directory,
+)
 
 # Re-export project commands so external callers still resolve from this module
-from .cmd_project import export_session, session_status, show_projects
-
-# Re-export admin commands so external callers still resolve from this module
-from .cmd_admin import end_session, git_command, quick_actions, restart_command
+from .cmd_project import export_session, session_status, show_projects  # noqa: F401
 
 logger = structlog.get_logger()
 

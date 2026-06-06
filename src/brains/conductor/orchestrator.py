@@ -1,4 +1,5 @@
 """The Conductor class — 3-layer brain orchestrator."""
+
 from __future__ import annotations
 
 import asyncio
@@ -87,18 +88,23 @@ class Conductor:
         meta_ctx = ""
         try:
             from ...infra.meta_context import build_compact_context
+
             meta_ctx = build_compact_context()
         except Exception as _mce:
             logger.debug("meta_context_unavailable", error=str(_mce))
 
-        planner_prompt = _build_planner_prompt(task, available_brains, pending_tasks, meta_ctx)
+        planner_prompt = _build_planner_prompt(
+            task, available_brains, pending_tasks, meta_ctx
+        )
 
-        await _broadcast({
-            "type": "planning",
-            "run_id": run_id,
-            "msg": "Claude analyzing task…",
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "planning",
+                "run_id": run_id,
+                "msg": "Claude analyzing task…",
+                "ts": time.time(),
+            }
+        )
 
         try:
             resp = await asyncio.wait_for(
@@ -126,6 +132,7 @@ class Conductor:
 
     def _interpolate_prompt(self, prompt: str, step_outputs: Dict[int, str]) -> str:
         from .step_executor import interpolate_prompt
+
         return interpolate_prompt(prompt, step_outputs)
 
     async def _execute_step(
@@ -144,38 +151,47 @@ class Conductor:
 
     def self_repair_step(self, step: Any) -> bool:
         from .repair import self_repair_step as _self_repair_step
+
         return _self_repair_step(step)
 
     def _repair_tests(self, broken_tests: Any, repair_strategies: Any = None) -> Any:
         from .repair import _repair_tests as _rt
+
         return _rt(broken_tests, repair_strategies)
 
     def _repair_test_basic(self, test: str) -> None:
         from .repair import _repair_test_basic
+
         _repair_test_basic(test)
 
     def _repair_test_with_backup(self, test: str) -> None:
         from .repair import _repair_test_with_backup
+
         _repair_test_with_backup(test)
 
     def _repair_test_with_replacement(self, test: str) -> None:
         from .repair import _repair_test_with_replacement
+
         _repair_test_with_replacement(test)
 
     def retry_broken_tests(self, test: str, result: Any) -> bool:
         from .repair import retry_broken_tests
+
         return retry_broken_tests(test, result)
 
     def _run_tests(self) -> None:
         from .repair import _run_tests
+
         _run_tests()
 
     def self_repair(self) -> None:
         from .repair import self_repair
+
         self_repair()
 
     def self_repair_launch_agent(self) -> None:
         from .repair import self_repair_launch_agent
+
         self_repair_launch_agent()
 
     # ── Core orchestration: run_plan ──────────────────────────────────────────
@@ -199,6 +215,7 @@ class Conductor:
             source: Origin of the run — "manual", "proactive", or "scheduler"
         """
         import uuid
+
         run_id = run_id or str(uuid.uuid4())[:8]
         plan.run_id = run_id
         task = task or plan.task_summary
@@ -207,16 +224,25 @@ class Conductor:
         # Set source for history tracking
         self._run_source = source
 
-        logger.info("conductor_run_plan", run_id=run_id, task=task[:80], steps=plan.total_steps, source=source)
+        logger.info(
+            "conductor_run_plan",
+            run_id=run_id,
+            task=task[:80],
+            steps=plan.total_steps,
+            source=source,
+        )
 
         try:
             return await self._execute_run_plan(plan, task, run_id, source, start)
         except asyncio.CancelledError:
             logger.info("conductor_run_plan_cancelled", run_id=run_id)
             return ConductorResult(
-                run_id=run_id, task=task, plan=plan,
+                run_id=run_id,
+                task=task,
+                plan=plan,
                 final_output="",
-                steps_completed=0, steps_failed=0,
+                steps_completed=0,
+                steps_failed=0,
                 total_duration_ms=int((time.time() - start) * 1000),
                 is_error=True,
             )
@@ -230,21 +256,28 @@ class Conductor:
         start: float,
     ) -> ConductorResult:
         """Inner execution of run_plan logic."""
-        await _broadcast({
-            "type": "plan_created",
-            "run_id": run_id,
-            "task": task[:120],
-            "task_summary": plan.task_summary,
-            "strategy": plan.strategy,
-            "total_steps": plan.total_steps,
-            "layers": plan.layers_used,
-            "steps": [
-                {"step": s.step, "layer": s.layer, "brain": s.brain,
-                 "role": s.role, "depends_on": s.depends_on}
-                for s in plan.steps
-            ],
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "plan_created",
+                "run_id": run_id,
+                "task": task[:120],
+                "task_summary": plan.task_summary,
+                "strategy": plan.strategy,
+                "total_steps": plan.total_steps,
+                "layers": plan.layers_used,
+                "steps": [
+                    {
+                        "step": s.step,
+                        "layer": s.layer,
+                        "brain": s.brain,
+                        "role": s.role,
+                        "depends_on": s.depends_on,
+                    }
+                    for s in plan.steps
+                ],
+                "ts": time.time(),
+            }
+        )
 
         step_outputs: Dict[int, str] = {}
         steps_completed = 0
@@ -252,8 +285,11 @@ class Conductor:
 
         for layer_num in plan.layers_used:
             layer_steps = [s for s in plan.steps if s.layer == layer_num]
-            ready = [s for s in layer_steps if not s.depends_on or
-                     all(d in step_outputs for d in s.depends_on)]
+            ready = [
+                s
+                for s in layer_steps
+                if not s.depends_on or all(d in step_outputs for d in s.depends_on)
+            ]
             blocked = [s for s in layer_steps if s not in ready]
 
             if ready:
@@ -301,7 +337,11 @@ class Conductor:
                 activity="conductor_run_plan_completed",
                 brain="autonomous",
                 duration_ms=total_ms,
-                status="completed" if steps_completed > 0 and steps_failed == 0 else "partial",
+                status=(
+                    "completed"
+                    if steps_completed > 0 and steps_failed == 0
+                    else "partial"
+                ),
                 details={
                     "run_id": run_id,
                     "task_summary": task[:120],
@@ -311,22 +351,31 @@ class Conductor:
                 },
             )
 
-        await _broadcast({
-            "type": "run_completed",
-            "run_id": run_id,
-            "task": task[:120],
-            "steps_completed": steps_completed,
-            "steps_failed": steps_failed,
-            "total_duration_ms": total_ms,
-            "output_preview": final_output[:300],
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "run_completed",
+                "run_id": run_id,
+                "task": task[:120],
+                "steps_completed": steps_completed,
+                "steps_failed": steps_failed,
+                "total_duration_ms": total_ms,
+                "output_preview": final_output[:300],
+                "ts": time.time(),
+            }
+        )
 
-        logger.info("conductor_run_plan_done", run_id=run_id,
-                    steps_ok=steps_completed, steps_fail=steps_failed, duration_ms=total_ms)
+        logger.info(
+            "conductor_run_plan_done",
+            run_id=run_id,
+            steps_ok=steps_completed,
+            steps_fail=steps_failed,
+            duration_ms=total_ms,
+        )
 
         result = ConductorResult(
-            run_id=run_id, task=task, plan=plan,
+            run_id=run_id,
+            task=task,
+            plan=plan,
             final_output=final_output,
             steps_completed=steps_completed,
             steps_failed=steps_failed,
@@ -335,28 +384,37 @@ class Conductor:
         )
         try:
             from ...infra.conductor_history import save_run
-            save_run({
-                "run_id": run_id,
-                "task": task[:300],
-                "task_summary": plan.task_summary,
-                "strategy": plan.strategy,
-                "source": getattr(self, "_run_source", "proactive"),
-                "started_at": _format_ts(start),
-                "completed_at": _format_ts(time.time()),
-                "total_duration_ms": total_ms,
-                "steps_completed": steps_completed,
-                "steps_failed": steps_failed,
-                "is_error": result.is_error,
-                "final_output": final_output[:600],
-                "steps": [
-                    {"step": s.step, "layer": s.layer, "brain": s.brain,
-                     "role": s.role, "status": s.status,
-                     "prompt": s.prompt if s.prompt else "",
-                     "output": s.output[:400] if s.output else "",
-                     "duration_ms": s.duration_ms, "error": s.error}
-                    for s in plan.steps
-                ],
-            })
+
+            save_run(
+                {
+                    "run_id": run_id,
+                    "task": task[:300],
+                    "task_summary": plan.task_summary,
+                    "strategy": plan.strategy,
+                    "source": getattr(self, "_run_source", "proactive"),
+                    "started_at": _format_ts(start),
+                    "completed_at": _format_ts(time.time()),
+                    "total_duration_ms": total_ms,
+                    "steps_completed": steps_completed,
+                    "steps_failed": steps_failed,
+                    "is_error": result.is_error,
+                    "final_output": final_output[:600],
+                    "steps": [
+                        {
+                            "step": s.step,
+                            "layer": s.layer,
+                            "brain": s.brain,
+                            "role": s.role,
+                            "status": s.status,
+                            "prompt": s.prompt if s.prompt else "",
+                            "output": s.output[:400] if s.output else "",
+                            "duration_ms": s.duration_ms,
+                            "error": s.error,
+                        }
+                        for s in plan.steps
+                    ],
+                }
+            )
         except Exception:
             pass
 
@@ -389,6 +447,7 @@ class Conductor:
         Returns ConductorResult with final_output and full telemetry.
         """
         import uuid
+
         run_id = run_id or str(uuid.uuid4())[:8]
         start = time.time()
 
@@ -398,13 +457,18 @@ class Conductor:
         logger.info("conductor_run_start", run_id=run_id, task=task[:80], source=source)
 
         try:
-            return await self._execute_run(task, run_id, working_directory, source, start)
+            return await self._execute_run(
+                task, run_id, working_directory, source, start
+            )
         except asyncio.CancelledError:
             logger.info("conductor_run_cancelled", run_id=run_id)
             return ConductorResult(
-                run_id=run_id, task=task, plan=None,
+                run_id=run_id,
+                task=task,
+                plan=None,
                 final_output="",
-                steps_completed=0, steps_failed=0,
+                steps_completed=0,
+                steps_failed=0,
                 total_duration_ms=int((time.time() - start) * 1000),
                 is_error=True,
             )
@@ -421,38 +485,45 @@ class Conductor:
 
         # Available brains (skip internal ones)
         _PLANNABLE = [
-            "api-zero", "ollama-rud", "qwen-code", "opencode",
-            "gemini", "openrouter", "cline", "codex",
-            "haiku", "sonnet", "opus",
+            "api-zero",
+            "ollama-rud",
+            "qwen-code",
+            "opencode",
+            "gemini",
+            "openrouter",
+            "cline",
+            "codex",
+            "haiku",
+            "sonnet",
+            "opus",
         ]
-        available = [
-            b for b in _PLANNABLE
-            if self._router.get_brain(b) is not None
-        ]
+        available = [b for b in _PLANNABLE if self._router.get_brain(b) is not None]
 
         # Create plan
         plan = await self._create_plan(task, available, run_id)
 
-        await _broadcast({
-            "type": "plan_created",
-            "run_id": run_id,
-            "task": task[:120],
-            "task_summary": plan.task_summary,
-            "strategy": plan.strategy,
-            "total_steps": plan.total_steps,
-            "layers": plan.layers_used,
-            "steps": [
-                {
-                    "step": s.step,
-                    "layer": s.layer,
-                    "brain": s.brain,
-                    "role": s.role,
-                    "depends_on": s.depends_on,
-                }
-                for s in plan.steps
-            ],
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "plan_created",
+                "run_id": run_id,
+                "task": task[:120],
+                "task_summary": plan.task_summary,
+                "strategy": plan.strategy,
+                "total_steps": plan.total_steps,
+                "layers": plan.layers_used,
+                "steps": [
+                    {
+                        "step": s.step,
+                        "layer": s.layer,
+                        "brain": s.brain,
+                        "role": s.role,
+                        "depends_on": s.depends_on,
+                    }
+                    for s in plan.steps
+                ],
+                "ts": time.time(),
+            }
+        )
 
         await self._notify_safe(
             f"🎯 <b>Plan ready</b> — {plan.total_steps} step(s) across "
@@ -470,16 +541,16 @@ class Conductor:
             layer_steps = [s for s in plan.steps if s.layer == layer_num]
 
             # Separate steps with satisfied deps vs. blocked
-            ready = [s for s in layer_steps if not s.depends_on or
-                     all(d in step_outputs for d in s.depends_on)]
+            ready = [
+                s
+                for s in layer_steps
+                if not s.depends_on or all(d in step_outputs for d in s.depends_on)
+            ]
             blocked = [s for s in layer_steps if s not in ready]
 
             # Run ready steps in parallel within this layer
             if ready:
-                tasks = [
-                    self._execute_step(s, step_outputs, run_id)
-                    for s in ready
-                ]
+                tasks = [self._execute_step(s, step_outputs, run_id) for s in ready]
                 results = await asyncio.gather(*tasks, return_exceptions=True)
                 for step, result in zip(ready, results):
                     if isinstance(result, Exception):
@@ -526,7 +597,11 @@ class Conductor:
                 activity="conductor_run_completed",
                 brain="autonomous",
                 duration_ms=total_ms,
-                status="completed" if steps_completed > 0 and steps_failed == 0 else "partial",
+                status=(
+                    "completed"
+                    if steps_completed > 0 and steps_failed == 0
+                    else "partial"
+                ),
                 details={
                     "run_id": run_id,
                     "task_summary": task[:120],
@@ -536,16 +611,18 @@ class Conductor:
                 },
             )
 
-        await _broadcast({
-            "type": "run_completed",
-            "run_id": run_id,
-            "task": task[:120],
-            "steps_completed": steps_completed,
-            "steps_failed": steps_failed,
-            "total_duration_ms": total_ms,
-            "output_preview": final_output[:300],
-            "ts": time.time(),
-        })
+        await _broadcast(
+            {
+                "type": "run_completed",
+                "run_id": run_id,
+                "task": task[:120],
+                "steps_completed": steps_completed,
+                "steps_failed": steps_failed,
+                "total_duration_ms": total_ms,
+                "output_preview": final_output[:300],
+                "ts": time.time(),
+            }
+        )
 
         logger.info(
             "conductor_run_done",
@@ -576,34 +653,37 @@ class Conductor:
         # Persist run to history (dashboard Sessions panel)
         try:
             from ...infra.conductor_history import save_run
-            save_run({
-                "run_id": run_id,
-                "task": task[:300],
-                "task_summary": plan.task_summary,
-                "strategy": plan.strategy,
-                "source": getattr(self, "_run_source", "manual"),
-                "started_at": _format_ts(start),
-                "completed_at": _format_ts(time.time()),
-                "total_duration_ms": total_ms,
-                "steps_completed": steps_completed,
-                "steps_failed": steps_failed,
-                "is_error": result.is_error,
-                "final_output": final_output[:600],
-                "steps": [
-                    {
-                        "step": s.step,
-                        "layer": s.layer,
-                        "brain": s.brain,
-                        "role": s.role,
-                        "status": s.status,
-                        "prompt": s.prompt if s.prompt else "",
-                        "output": s.output[:400] if s.output else "",
-                        "duration_ms": s.duration_ms,
-                        "error": s.error,
-                    }
-                    for s in plan.steps
-                ],
-            })
+
+            save_run(
+                {
+                    "run_id": run_id,
+                    "task": task[:300],
+                    "task_summary": plan.task_summary,
+                    "strategy": plan.strategy,
+                    "source": getattr(self, "_run_source", "manual"),
+                    "started_at": _format_ts(start),
+                    "completed_at": _format_ts(time.time()),
+                    "total_duration_ms": total_ms,
+                    "steps_completed": steps_completed,
+                    "steps_failed": steps_failed,
+                    "is_error": result.is_error,
+                    "final_output": final_output[:600],
+                    "steps": [
+                        {
+                            "step": s.step,
+                            "layer": s.layer,
+                            "brain": s.brain,
+                            "role": s.role,
+                            "status": s.status,
+                            "prompt": s.prompt if s.prompt else "",
+                            "output": s.output[:400] if s.output else "",
+                            "duration_ms": s.duration_ms,
+                            "error": s.error,
+                        }
+                        for s in plan.steps
+                    ],
+                }
+            )
         except Exception as _he:
             logger.debug("conductor_history_save_failed", error=str(_he))
 

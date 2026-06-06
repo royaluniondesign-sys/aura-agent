@@ -1,4 +1,5 @@
 """Strategic task generation and state analysis functions."""
+
 from __future__ import annotations
 
 import json
@@ -114,9 +115,9 @@ def analyze_state() -> Dict[str, Any]:
 
     # Check conductor history for success metrics
     try:
-        history_file = Path.home() / '.aura' / 'history' / 'conductor.json'
+        history_file = Path.home() / ".aura" / "history" / "conductor.json"
         if history_file.exists():
-            with open(history_file, 'r') as f:
+            with open(history_file, "r") as f:
                 runs = [json.loads(line) for line in f if line.strip()]
             state["completed_tasks"] = len([r for r in runs if not r.get("is_error")])
             state["failed_tasks"] = len([r for r in runs if r.get("is_error")])
@@ -126,8 +127,12 @@ def analyze_state() -> Dict[str, Any]:
     except Exception as e:
         logger.debug("analyze_state_history_error", error=str(e))
 
-    logger.info("analyze_state_complete", pending=state["pending_tasks"],
-                completed=state["completed_tasks"], success_rate=state["success_rate"])
+    logger.info(
+        "analyze_state_complete",
+        pending=state["pending_tasks"],
+        completed=state["completed_tasks"],
+        success_rate=state["success_rate"],
+    )
     return state
 
 
@@ -151,45 +156,57 @@ def prioritize_tasks(current_state: Dict[str, Any]) -> List[Dict[str, Any]]:
 
     # If high pending load, prioritize synthesis optimization
     if pending > 5:
-        tasks.append({
-            "title": "Optimize synthesis pipeline for high throughput",
-            "tier": "Tier 2",
-            "priority": "high",
-            "reason": f"High pending load ({pending} tasks)",
-        })
+        tasks.append(
+            {
+                "title": "Optimize synthesis pipeline for high throughput",
+                "tier": "Tier 2",
+                "priority": "high",
+                "reason": f"High pending load ({pending} tasks)",
+            }
+        )
 
     # If success rate is low, prioritize learning and improvement
     if success_rate < 0.8:
-        tasks.append({
-            "title": "Analyze failure patterns and improve brain routing",
-            "tier": "Tier 2",
-            "priority": "high",
-            "reason": f"Low success rate ({success_rate:.0%})",
-        })
+        tasks.append(
+            {
+                "title": "Analyze failure patterns and improve brain routing",
+                "tier": "Tier 2",
+                "priority": "high",
+                "reason": f"Low success rate ({success_rate:.0%})",
+            }
+        )
     elif success_rate > 0.9:
-        tasks.append({
-            "title": "Consolidate learnings and refine brain strategies",
-            "tier": "Tier 2",
-            "priority": "medium",
-            "reason": "High success — opportunity to refine tactics",
-        })
+        tasks.append(
+            {
+                "title": "Consolidate learnings and refine brain strategies",
+                "tier": "Tier 2",
+                "priority": "medium",
+                "reason": "High success — opportunity to refine tactics",
+            }
+        )
 
     # Always include core Tier 2 optimization tasks
-    tasks.extend([
-        {
-            "title": "Cache and reuse successful execution plans",
-            "tier": "Tier 2",
-            "priority": "medium",
-        },
-        {
-            "title": "Analyze brain latencies and optimize layer routing",
-            "tier": "Tier 2",
-            "priority": "medium",
-        },
-    ])
+    tasks.extend(
+        [
+            {
+                "title": "Cache and reuse successful execution plans",
+                "tier": "Tier 2",
+                "priority": "medium",
+            },
+            {
+                "title": "Analyze brain latencies and optimize layer routing",
+                "tier": "Tier 2",
+                "priority": "medium",
+            },
+        ]
+    )
 
-    logger.info("prioritize_tasks_complete", count=len(tasks),
-                pending=pending, success_rate=success_rate)
+    logger.info(
+        "prioritize_tasks_complete",
+        count=len(tasks),
+        pending=pending,
+        success_rate=success_rate,
+    )
     return tasks
 
 
@@ -202,11 +219,12 @@ def generate_strategic_tasks() -> List[Dict[str, Any]]:
     Returns:
         List of strategic task dicts, prioritized by tier.
     """
+
     # Define a function to prioritize Tier 1 and Tier 2 tasks
     def _prioritize(task_list: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-        tier_1_tasks = [task for task in task_list if task.get('tier') == 1]
-        tier_2_tasks = [task for task in task_list if task.get('tier') == 2]
-        other_tasks = [task for task in task_list if task.get('tier') not in [1, 2]]
+        tier_1_tasks = [task for task in task_list if task.get("tier") == 1]
+        tier_2_tasks = [task for task in task_list if task.get("tier") == 2]
+        other_tasks = [task for task in task_list if task.get("tier") not in [1, 2]]
 
         # Combine and prioritize Tier 1 and Tier 2 tasks
         return tier_1_tasks + tier_2_tasks + other_tasks
@@ -241,28 +259,28 @@ def generate_strategic_tasks_tier3(
     tasks: List[Dict[str, Any]] = []
 
     for goal in mission_goals:
-        task_name = goal.get('task', '')
-        priority = goal.get('priority', 'medium')
-        task_status = current_state.get('task_status', {}).get(task_name, 'unknown')
+        task_name = goal.get("task", "")
+        priority = goal.get("priority", "medium")
+        task_status = current_state.get("task_status", {}).get(task_name, "unknown")
 
-        if priority == 'high':
+        if priority == "high":
             # High priority tasks always included
             tasks.append(goal)
-        elif priority == 'medium':
+        elif priority == "medium":
             # Medium priority only if incomplete
-            if task_status == 'incomplete':
+            if task_status == "incomplete":
                 tasks.append(goal)
-        elif priority == 'low':
+        elif priority == "low":
             # Low priority only if incomplete or pending
-            if task_status in ('incomplete', 'pending'):
+            if task_status in ("incomplete", "pending"):
                 tasks.append(goal)
 
     logger.info(
         "generate_strategic_tasks_tier3_complete",
         count=len(tasks),
-        high_priority=len([t for t in tasks if t.get('priority') == 'high']),
-        medium_priority=len([t for t in tasks if t.get('priority') == 'medium']),
-        low_priority=len([t for t in tasks if t.get('priority') == 'low']),
+        high_priority=len([t for t in tasks if t.get("priority") == "high"]),
+        medium_priority=len([t for t in tasks if t.get("priority") == "medium"]),
+        low_priority=len([t for t in tasks if t.get("priority") == "low"]),
     )
     return tasks
 
@@ -273,7 +291,6 @@ def process_commits() -> None:
     Analyzes recent git commits to gather context for strategic task generation.
     """
     # Code to process recent commits
-    pass
 
 
 def manage_mission_priorities() -> None:
@@ -282,4 +299,3 @@ def manage_mission_priorities() -> None:
     Adjusts mission priorities based on AURA's operational state and goals.
     """
     # Code to manage mission priorities
-    pass

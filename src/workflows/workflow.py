@@ -1,7 +1,8 @@
 """Workflow orchestration with consistent error handling."""
 
+from typing import Any, Optional
+
 import structlog
-from typing import Optional, Any
 
 logger = structlog.get_logger()
 

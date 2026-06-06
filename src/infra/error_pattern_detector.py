@@ -3,13 +3,12 @@
 No ML dependencies. Uses simple frequency counting over the bot log.
 Called by self_healer to surface actionable recurring issues.
 """
+
 from __future__ import annotations
 
 import json
-import re
 from collections import Counter
 from pathlib import Path
-from typing import Optional
 
 import structlog
 
@@ -35,7 +34,9 @@ def _extract_errors(lines: list[str]) -> list[str]:
     return errors
 
 
-def get_recurring_errors(n_lines: int = 500, min_count: int = _MIN_OCCURRENCES) -> dict[str, int]:
+def get_recurring_errors(
+    n_lines: int = 500, min_count: int = _MIN_OCCURRENCES
+) -> dict[str, int]:
     """Return a dict of {error_event: count} for errors seen >= min_count times."""
     if not _BOT_LOG.exists():
         return {}

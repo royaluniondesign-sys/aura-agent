@@ -16,8 +16,14 @@ from src.integrations import gmail_client
     description="Lista los emails no leídos en la cuenta Gmail configurada. Devuelve remitente, asunto, snippet y ID.",
     category="email",
     parameters={
-        "max_results": {"type": "int", "description": "Máximo de emails a devolver (default 10)"},
-        "query": {"type": "str", "description": "Filtro adicional Gmail syntax (ej: 'from:cliente.com' o 'subject:presupuesto')"},
+        "max_results": {
+            "type": "int",
+            "description": "Máximo de emails a devolver (default 10)",
+        },
+        "query": {
+            "type": "str",
+            "description": "Filtro adicional Gmail syntax (ej: 'from:cliente.com' o 'subject:presupuesto')",
+        },
     },
 )
 async def gmail_list_unread(max_results: int = 10, query: str = "") -> str:
@@ -45,7 +51,10 @@ async def gmail_list_unread(max_results: int = 10, query: str = "") -> str:
     category="email",
     parameters={
         "message_id": {"type": "str", "description": "ID del mensaje de Gmail"},
-        "mark_read": {"type": "bool", "description": "Marcar como leído al abrir (default True)"},
+        "mark_read": {
+            "type": "bool",
+            "description": "Marcar como leído al abrir (default True)",
+        },
     },
 )
 async def gmail_read(message_id: str, mark_read: bool = True) -> str:
@@ -72,7 +81,10 @@ async def gmail_read(message_id: str, mark_read: bool = True) -> str:
     description="Busca emails usando Gmail query syntax. Ej: 'from:cliente@empresa.com subject:presupuesto after:2026/05/01'",
     category="email",
     parameters={
-        "query": {"type": "str", "description": "Query Gmail (from:, to:, subject:, after:, before:, is:unread, etc.)"},
+        "query": {
+            "type": "str",
+            "description": "Query Gmail (from:, to:, subject:, after:, before:, is:unread, etc.)",
+        },
         "max_results": {"type": "int", "description": "Máximo resultados (default 10)"},
     },
 )
@@ -105,14 +117,19 @@ async def gmail_search(query: str, max_results: int = 10) -> str:
         "to": {"type": "str", "description": "Email del destinatario"},
         "subject": {"type": "str", "description": "Asunto del email"},
         "body": {"type": "str", "description": "Cuerpo en texto plano"},
-        "html": {"type": "str", "description": "Cuerpo HTML opcional (para emails más elaborados)"},
+        "html": {
+            "type": "str",
+            "description": "Cuerpo HTML opcional (para emails más elaborados)",
+        },
     },
 )
 async def gmail_send(to: str, subject: str, body: str, html: str = "") -> str:
     if not gmail_client.is_configured():
         return '{"ok": false, "error": "not_configured"}'
     try:
-        result = await gmail_client.send(to=to, subject=subject, body=body, html=html or None)
+        result = await gmail_client.send(
+            to=to, subject=subject, body=body, html=html or None
+        )
         if result.get("ok"):
             return f"✅ Email enviado a {to} desde {gmail_client.RUD_EMAIL}"
         return f"❌ Error: {result.get('error')}"

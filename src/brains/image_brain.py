@@ -8,9 +8,9 @@ Priority (best quality → fully free fallback):
 
 Returns __IMAGE_B64__:<base64> so orchestrator can send as Telegram photo.
 """
+
 from __future__ import annotations
 
-import asyncio
 import base64
 import os
 import time
@@ -25,12 +25,12 @@ logger = structlog.get_logger()
 
 # ── NVIDIA Build ──────────────────────────────────────────────────────────────
 _NV_API_KEY = os.environ.get("NVIDIA_API_KEY", "")
-_NV_DEV_URL    = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev"
+_NV_DEV_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-dev"
 _NV_SCHNELL_URL = "https://ai.api.nvidia.com/v1/genai/black-forest-labs/flux.1-schnell"
 
 # ── HuggingFace ───────────────────────────────────────────────────────────────
 _HF_TOKEN = os.environ.get("HF_TOKEN", "")
-_HF_URL   = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+_HF_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
 
 # ── Pollinations (fallback, no key) ───────────────────────────────────────────
 _POLL_URL = "https://image.pollinations.ai/prompt/{prompt}?width=1024&height=1024&nologo=true&model=flux"
@@ -41,7 +41,10 @@ _DEFAULT_TIMEOUT = 60
 def _sanitize(prompt: str, max_len: int = 450) -> str:
     """Strip meta-instructions and cap length (NVIDIA black-image prevention)."""
     import re
-    clean = re.sub(r"(?i)(style:|mood:|format:|subject:|use|generate|create|make)\s*", "", prompt)
+
+    clean = re.sub(
+        r"(?i)(style:|mood:|format:|subject:|use|generate|create|make)\s*", "", prompt
+    )
     clean = re.sub(r"\s+", " ", clean).strip()
     return clean[:max_len]
 
@@ -49,11 +52,14 @@ def _sanitize(prompt: str, max_len: int = 450) -> str:
 async def _try_nvidia(prompt: str, timeout: int, dev: bool = True) -> Optional[bytes]:
     """Attempt NVIDIA FLUX generation. Returns bytes or None on failure."""
     import aiohttp
+
     url = _NV_DEV_URL if dev else _NV_SCHNELL_URL
     payload = {
         "prompt": _sanitize(prompt),
-        "width": 1024, "height": 1024,
-        "cfg_scale": 5, "seed": 0,
+        "width": 1024,
+        "height": 1024,
+        "cfg_scale": 5,
+        "seed": 0,
     }
     headers = {
         "Authorization": f"Bearer {_NV_API_KEY}",
@@ -63,7 +69,9 @@ async def _try_nvidia(prompt: str, timeout: int, dev: bool = True) -> Optional[b
     try:
         async with aiohttp.ClientSession() as sess:
             async with sess.post(
-                url, json=payload, headers=headers,
+                url,
+                json=payload,
+                headers=headers,
                 timeout=aiohttp.ClientTimeout(total=timeout),
             ) as resp:
                 if resp.status != 200:
@@ -85,6 +93,7 @@ async def _try_huggingface(prompt: str, timeout: int) -> Optional[bytes]:
     if not _HF_TOKEN:
         return None
     import aiohttp
+
     try:
         async with aiohttp.ClientSession() as sess:
             async with sess.post(
@@ -104,11 +113,14 @@ async def _try_huggingface(prompt: str, timeout: int) -> Optional[bytes]:
 async def _try_pollinations(prompt: str, timeout: int) -> Optional[bytes]:
     """Fallback: Pollinations.ai — always free, no key needed."""
     import aiohttp
+
     encoded = urllib.parse.quote(prompt[:300], safe="")
     url = _POLL_URL.format(prompt=encoded)
     try:
         async with aiohttp.ClientSession() as sess:
-            async with sess.get(url, timeout=aiohttp.ClientTimeout(total=timeout)) as resp:
+            async with sess.get(
+                url, timeout=aiohttp.ClientTimeout(total=timeout)
+            ) as resp:
                 if resp.status != 200:
                     return None
                 return await resp.read()
@@ -175,7 +187,9 @@ class ImageBrain(Brain):
 
         logger.info(
             "image_brain_ok",
-            provider=provider, elapsed_ms=elapsed, size_kb=len(image_bytes) // 1024,
+            provider=provider,
+            elapsed_ms=elapsed,
+            size_kb=len(image_bytes) // 1024,
         )
 
         b64 = base64.b64encode(image_bytes).decode()

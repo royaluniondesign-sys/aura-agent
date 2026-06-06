@@ -11,12 +11,13 @@ Run:
     uv run python -m src.spark.pipeline --dry-run
     uv run python -m src.spark.pipeline --query keywords --top 20
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sqlite3
-from datetime import datetime, UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,7 @@ _LAKE_DIR = Path.home() / ".aura" / "knowledge_lake"
 
 def _get_duckdb():
     import duckdb
+
     con = duckdb.connect()
     con.execute("SET threads=4; SET memory_limit='512MB'")
     return con
@@ -43,7 +45,8 @@ def _load_rag_to_duckdb(con) -> int:
     ).fetchall()
     sqlite_conn.close()
 
-    con.execute("""
+    con.execute(
+        """
         CREATE OR REPLACE TABLE chunks AS
         SELECT
             col0 AS id,
@@ -52,7 +55,9 @@ def _load_rag_to_duckdb(con) -> int:
             col3 AS content,
             col4 AS metadata,
             col5 AS updated_at
-        FROM (VALUES """ + ",".join(f"(?,?,?,?,?,?)" for _ in rows) + ")",
+        FROM (VALUES """
+        + ",".join("(?,?,?,?,?,?)" for _ in rows)
+        + ")",
         [val for row in rows for val in row],
     )
     return len(rows)
@@ -83,7 +88,8 @@ def run(dry_run: bool = False) -> dict[str, Any]:
 
     # ── Keyword frequency ─────────────────────────────────────────────────────
     kw_path = str(_LAKE_DIR / "keywords.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT source_type, word, count(*) AS freq
             FROM (
@@ -97,12 +103,14 @@ def run(dry_run: bool = False) -> dict[str, Any]:
             HAVING count(*) > 3
             ORDER BY freq DESC
         ) TO '{kw_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("keywords_written", path=kw_path)
 
     # ── Source summary ────────────────────────────────────────────────────────
     src_path = str(_LAKE_DIR / "source_summary.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT
                 source,
@@ -114,12 +122,14 @@ def run(dry_run: bool = False) -> dict[str, Any]:
             GROUP BY source, source_type
             ORDER BY chunk_count DESC
         ) TO '{src_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("source_summary_written", path=src_path)
 
     # ── Recent memory chunks ──────────────────────────────────────────────────
     mem_path = str(_LAKE_DIR / "recent_memory.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT source, content, updated_at
             FROM chunks
@@ -127,19 +137,22 @@ def run(dry_run: bool = False) -> dict[str, Any]:
             ORDER BY updated_at DESC
             LIMIT 200
         ) TO '{mem_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("recent_memory_written", path=mem_path)
 
     # ── Conversation extracts (telegram_chat only) ────────────────────────────
     conv_path = str(_LAKE_DIR / "conversations.parquet")
-    con.execute(f"""
+    con.execute(
+        f"""
         COPY (
             SELECT id, content, updated_at
             FROM chunks
             WHERE source = 'telegram_chat'
             ORDER BY updated_at DESC
         ) TO '{conv_path}' (FORMAT PARQUET)
-    """)
+    """
+    )
     logger.info("conversations_written", path=conv_path)
 
     manifest = {
@@ -175,7 +188,9 @@ def query(table: str, top_n: int = 20, source_type: str | None = None) -> list[d
 def _cli() -> None:
     parser = argparse.ArgumentParser(description="AURA Knowledge Pipeline")
     parser.add_argument("--dry-run", action="store_true")
-    parser.add_argument("--query", metavar="TABLE", help="Query a knowledge table (after run)")
+    parser.add_argument(
+        "--query", metavar="TABLE", help="Query a knowledge table (after run)"
+    )
     parser.add_argument("--top", type=int, default=20)
     parser.add_argument("--type", dest="source_type", default=None)
     args = parser.parse_args()

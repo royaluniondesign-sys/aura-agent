@@ -1,9 +1,10 @@
 """Zero-token workspace commands — inbox, calendar, limits."""
 
+from pathlib import Path
+
 import structlog
 from telegram import Update
 from telegram.ext import ContextTypes
-from pathlib import Path
 
 logger = structlog.get_logger()
 
@@ -20,7 +21,9 @@ class ZeroTokenWorkspaceMixin:
         try:
             result = subprocess.run(
                 ["npx", "google-workspace-mcp", "status"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(Path.home()),
             )
             if "NOT found" in result.stdout or "No accounts" in result.stdout:
@@ -56,7 +59,9 @@ class ZeroTokenWorkspaceMixin:
         try:
             result = subprocess.run(
                 ["npx", "google-workspace-mcp", "status"],
-                capture_output=True, text=True, timeout=10,
+                capture_output=True,
+                text=True,
+                timeout=10,
                 cwd=str(Path.home()),
             )
             if "NOT found" in result.stdout or "No accounts" in result.stdout:

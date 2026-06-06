@@ -10,12 +10,9 @@ Memory is updated via update_memory() after each learning extraction.
 from __future__ import annotations
 
 import os
-import re
 import socket
-import time
 from datetime import datetime
 from pathlib import Path
-from typing import Optional
 
 # ── Service ports ────────────────────────────────────────────────────────────
 _OPENDESIGN_PORT = 59826
@@ -57,7 +54,7 @@ def build_tool_manifest() -> str:
         sections.append(
             "### open-design (ACTIVO en puerto 59826)\n"
             "Genera carousels, posts, prototipos HTML/CSS con branding RUD.\n"
-            f"- API: `curl -s http://127.0.0.1:{_OPENDESIGN_PORT}/api/generate -d '{{\"brief\":\"...\",\"format\":\"carousel_9_16\"}}'`\n"
+            f'- API: `curl -s http://127.0.0.1:{_OPENDESIGN_PORT}/api/generate -d \'{{"brief":"...","format":"carousel_9_16"}}\'`\n'
             "- Formatos: carousel_9_16, post_1_1, post_4_5, story_9_16, banner_16_9\n"
             "- DESIGN.md: ~/Projects/design-systems/royaluniondesign/DESIGN.md\n"
             "  → Paleta: #0d0d0d negro + #c9a84c gold + #f5f0e8 cream\n"
@@ -126,6 +123,7 @@ def build_tool_manifest() -> str:
     )
 
     return "\n\n".join(sections)
+
 
 _BRAIN_DIR = Path.home() / ".aura" / "brain"
 _IDENTITY_FILE = _BRAIN_DIR / "identity.md"
@@ -241,9 +239,7 @@ def update_memory(fact: str, section: str = _SECTION_NOTES) -> None:
         _MEMORY_FILE.write_text("\n".join(result) + "\n", encoding="utf-8")
     else:
         # Append new section
-        _MEMORY_FILE.write_text(
-            content + f"\n\n{section}\n{entry}\n", encoding="utf-8"
-        )
+        _MEMORY_FILE.write_text(content + f"\n\n{section}\n{entry}\n", encoding="utf-8")
 
 
 def add_client(email: str, name: str = "", company: str = "", notes: str = "") -> None:
@@ -265,7 +261,7 @@ def add_task(description: str) -> None:
 
 def format_for_display() -> str:
     """Format memory for Telegram display."""
-    identity = get_identity()
+    get_identity()
     memory = get_memory()
 
     lines = ["<b>🧠 AURA — Cerebro</b>\n"]
@@ -302,13 +298,16 @@ async def build_system_prompt_async(
     Runs semantic search over the indexed vault and injects the most relevant
     chunks before the tool manifest. Falls back to sync version silently on error.
     """
-    base = build_system_prompt(include_memory=include_memory, extra_section=extra_section)
+    base = build_system_prompt(
+        include_memory=include_memory, extra_section=extra_section
+    )
 
     if not user_message:
         return base
 
     try:
         from src.rag.retriever import RAGRetriever
+
         retriever = RAGRetriever()
         rag_block = await retriever.get_context_for_prompt(user_message, max_chars=1500)
         if rag_block:

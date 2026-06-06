@@ -13,11 +13,16 @@ import json
 import urllib.error
 import urllib.request
 from pathlib import Path
-from typing import Any, Optional
+from typing import Optional
 
 import structlog
 
-from .aura_context import update_memory, add_client, add_task, _SECTION_CLIENTS, _SECTION_TASKS, _SECTION_NOTES
+from .aura_context import (
+    _SECTION_NOTES,
+    add_client,
+    add_task,
+    update_memory,
+)
 
 logger = structlog.get_logger()
 
@@ -51,6 +56,7 @@ If nothing worth remembering, reply: []
 def _get_openrouter_key() -> Optional[str]:
     """Get OpenRouter key from env or opencode auth file."""
     import os
+
     key = os.environ.get("OPENROUTER_API_KEY")
     if not key:
         auth = Path.home() / ".local/share/opencode/auth.json"
@@ -74,23 +80,25 @@ def extract_facts(user_message: str, assistant_response: str) -> list[str]:
         return []
 
     conversation = (
-        f"User: {user_message[:500]}\n\n"
-        f"Assistant: {assistant_response[:1000]}"
+        f"User: {user_message[:500]}\n\n" f"Assistant: {assistant_response[:1000]}"
     )
 
     try:
-        body = json.dumps({
-            "model": _EXTRACTOR_MODEL,
-            "messages": [
-                {"role": "system", "content": _EXTRACT_SYSTEM},
-                {"role": "user", "content": conversation},
-            ],
-            "max_tokens": 256,
-            "temperature": 0.1,  # deterministic fact extraction
-        }).encode()
+        body = json.dumps(
+            {
+                "model": _EXTRACTOR_MODEL,
+                "messages": [
+                    {"role": "system", "content": _EXTRACT_SYSTEM},
+                    {"role": "user", "content": conversation},
+                ],
+                "max_tokens": 256,
+                "temperature": 0.1,  # deterministic fact extraction
+            }
+        ).encode()
 
         req = urllib.request.Request(
-            _API_URL, data=body,
+            _API_URL,
+            data=body,
             headers={
                 "Authorization": f"Bearer {key}",
                 "Content-Type": "application/json",
@@ -122,6 +130,7 @@ def _classify_and_save(fact: str) -> None:
 
     # Client fact: contains email pattern
     import re
+
     if re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", fact):
         add_client(
             email=re.search(r"[\w.+-]+@[\w-]+\.[a-z]{2,}", fact).group(),  # type: ignore[union-attr]
@@ -130,8 +139,19 @@ def _classify_and_save(fact: str) -> None:
         return
 
     # Task fact: past tense action words
-    task_words = ["enviado", "creado", "instalado", "configurado", "arreglado",
-                  "sent", "created", "fixed", "installed", "configured", "completed"]
+    task_words = [
+        "enviado",
+        "creado",
+        "instalado",
+        "configurado",
+        "arreglado",
+        "sent",
+        "created",
+        "fixed",
+        "installed",
+        "configured",
+        "completed",
+    ]
     if any(w in fact_lower for w in task_words):
         add_task(fact)
         return

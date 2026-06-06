@@ -5,7 +5,6 @@ cached responses for repeated or similar queries.
 """
 
 import hashlib
-import json
 import sqlite3
 import time
 from pathlib import Path
@@ -31,7 +30,8 @@ class ResponseCache:
     def _init_db(self) -> None:
         """Create cache table if not exists."""
         with sqlite3.connect(str(self._db_path)) as conn:
-            conn.execute("""
+            conn.execute(
+                """
                 CREATE TABLE IF NOT EXISTS cache (
                     key TEXT PRIMARY KEY,
                     brain TEXT NOT NULL,
@@ -39,11 +39,14 @@ class ResponseCache:
                     created_at REAL NOT NULL,
                     hit_count INTEGER DEFAULT 0
                 )
-            """)
-            conn.execute("""
+            """
+            )
+            conn.execute(
+                """
                 CREATE INDEX IF NOT EXISTS idx_cache_created
                 ON cache(created_at)
-            """)
+            """
+            )
 
     @staticmethod
     def _make_key(prompt: str, brain: str) -> str:
@@ -108,9 +111,9 @@ class ResponseCache:
         try:
             with sqlite3.connect(str(self._db_path)) as conn:
                 total = conn.execute("SELECT COUNT(*) FROM cache").fetchone()[0]
-                hits = conn.execute(
-                    "SELECT SUM(hit_count) FROM cache"
-                ).fetchone()[0] or 0
+                hits = (
+                    conn.execute("SELECT SUM(hit_count) FROM cache").fetchone()[0] or 0
+                )
                 fresh = conn.execute(
                     "SELECT COUNT(*) FROM cache WHERE created_at > ?",
                     (time.time() - self._ttl,),
@@ -119,9 +122,11 @@ class ResponseCache:
                     "total_entries": total,
                     "fresh_entries": fresh,
                     "total_hits": hits,
-                    "db_size_kb": round(self._db_path.stat().st_size / 1024, 1)
-                    if self._db_path.exists()
-                    else 0,
+                    "db_size_kb": (
+                        round(self._db_path.stat().st_size / 1024, 1)
+                        if self._db_path.exists()
+                        else 0
+                    ),
                 }
         except Exception as e:
             logger.debug("cache_stats_error", error=str(e))

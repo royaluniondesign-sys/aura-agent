@@ -13,7 +13,7 @@ To activate:
 
 import asyncio
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import structlog
 
@@ -38,7 +38,7 @@ async def _fetch_unread_emails(limit: int = 20) -> List[Dict[str, Any]]:
 
     try:
         proc = await asyncio.create_subprocess_shell(
-            f'npx google-workspace-mcp gmail list --unread --limit {limit} --json',
+            f"npx google-workspace-mcp gmail list --unread --limit {limit} --json",
             stdout=asyncio.subprocess.PIPE,
             stderr=asyncio.subprocess.PIPE,
         )
@@ -47,6 +47,7 @@ async def _fetch_unread_emails(limit: int = 20) -> List[Dict[str, Any]]:
             return []
 
         import json
+
         return json.loads(stdout.decode())
     except Exception as e:
         logger.warning("email_fetch_failed", error=str(e))
@@ -80,7 +81,7 @@ async def generate_triage() -> str:
 
     for email in emails:
         subject = (email.get("subject") or "").lower()
-        sender = (email.get("from") or "").lower()
+        (email.get("from") or "").lower()
 
         if any(kw in subject for kw in promo_keywords):
             promo.append(email)

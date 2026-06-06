@@ -8,30 +8,31 @@ Claude wrote the plan. This module executes it using cheap models + existing pip
 
 Zero expensive LLM calls here — just orchestration + API calls.
 """
+
 from __future__ import annotations
 
-import asyncio
 import json
 import logging
 import os
-from datetime import datetime, timezone
 from pathlib import Path
-from typing import Optional
 
 import httpx
 
-from .content_memory import mark_published, mark_failed
+from .content_memory import mark_failed, mark_published
 
 log = logging.getLogger("content.executor")
 
 API_BASE = f"http://localhost:{os.environ.get('API_SERVER_PORT', '3002')}"
-API_TOKEN = os.environ.get("API_SERVER_SECRET", "i8HjKCDoKqVEyYxlEM7t2X6FbkmvylRzHkyragoVdsE")
+API_TOKEN = os.environ.get(
+    "API_SERVER_SECRET", "i8HjKCDoKqVEyYxlEM7t2X6FbkmvylRzHkyragoVdsE"
+)
 HEADERS = {"X-Dashboard-Token": API_TOKEN, "Content-Type": "application/json"}
 
 PLANS_DIR = Path.home() / ".aura" / "content_plans"
 
 
 # ── Platform router ────────────────────────────────────────────────────────
+
 
 async def execute_plan(plan: dict) -> dict:
     """Execute a single content plan. Returns result dict."""
@@ -40,7 +41,9 @@ async def execute_plan(plan: dict) -> dict:
     headline = plan.get("headline", "")
     memory_id = plan.get("memory_id", 0)
 
-    log.info("execute_plan fmt=%s platforms=%s headline=%s", fmt, platforms, headline[:40])
+    log.info(
+        "execute_plan fmt=%s platforms=%s headline=%s", fmt, platforms, headline[:40]
+    )
 
     result: dict = {"ok": False, "format": fmt, "platforms": {}}
 
@@ -86,6 +89,7 @@ async def execute_plan(plan: dict) -> dict:
 
 
 # ── Content generators ─────────────────────────────────────────────────────
+
 
 async def _generate_photo_post(plan: dict) -> dict:
     """Generate a 4:5 photo post using FLUX.1 via existing social generate API."""
@@ -249,6 +253,7 @@ async def _generate_story(plan: dict) -> dict:
 
 # ── Platform publishing ────────────────────────────────────────────────────
 
+
 async def _publish_to_platform(platform: str, content: dict, plan: dict) -> dict:
     """Route to platform-specific publisher."""
     if platform == "instagram":
@@ -292,6 +297,7 @@ async def _publish_linkedin(content: dict, plan: dict) -> dict:
 
 # ── Remotion helpers ──────────────────────────────────────────────────────
 
+
 async def _check_remotion() -> bool:
     """Check if Remotion render server is available."""
     try:
@@ -314,7 +320,11 @@ async def _render_remotion(headline: str, script: str, plan: dict) -> dict:
                         "headline": headline,
                         "script": script,
                         "style": "rud_editorial",
-                        "colors": {"bg": "#0d0d0d", "accent": "#c9a84c", "text": "#f5f0e8"},
+                        "colors": {
+                            "bg": "#0d0d0d",
+                            "accent": "#c9a84c",
+                            "text": "#f5f0e8",
+                        },
                     },
                 },
             )
@@ -328,15 +338,19 @@ async def _render_remotion(headline: str, script: str, plan: dict) -> dict:
 
 # ── Batch executor ─────────────────────────────────────────────────────────
 
+
 async def execute_todays_plans(notify_fn=None) -> list[dict]:
     """Execute all of today's pending plans. Optionally notify via Telegram."""
     from .content_brain import load_today_plans
+
     plans = load_today_plans()
 
     if not plans:
         log.info("no_plans_today")
         if notify_fn:
-            await notify_fn("📋 Content Agent: sin planes para hoy aún. Corre /content plan para generar.")
+            await notify_fn(
+                "📋 Content Agent: sin planes para hoy aún. Corre /content plan para generar."
+            )
         return []
 
     results = []
@@ -366,6 +380,7 @@ async def execute_todays_plans(notify_fn=None) -> list[dict]:
 def _update_plan_status(topic_key: str, result: dict) -> None:
     """Mark plan as published/failed in today's plan file."""
     from datetime import datetime, timezone
+
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     plan_file = PLANS_DIR / f"{today}.json"
     if not plan_file.exists():

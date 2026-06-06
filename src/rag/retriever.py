@@ -1,4 +1,5 @@
 """High-level RAG retrieval API for AURA."""
+
 from __future__ import annotations
 
 from collections import defaultdict
@@ -6,7 +7,7 @@ from typing import Any, Dict, List, Optional
 
 import structlog
 
-from .embedder import embed, cosine_similarity, MODEL
+from .embedder import MODEL, cosine_similarity, embed
 from .store import RAGStore
 
 logger = structlog.get_logger()
@@ -53,13 +54,15 @@ class RAGRetriever:
                 continue
             score = cosine_similarity(query_vec, vec)
             if score >= min_score:
-                scored.append({
-                    "id": id_,
-                    "content": content,
-                    "source": source,
-                    "source_type": source_type,
-                    "score": round(float(score), 4),
-                })
+                scored.append(
+                    {
+                        "id": id_,
+                        "content": content,
+                        "source": source,
+                        "source_type": source_type,
+                        "score": round(float(score), 4),
+                    }
+                )
 
         # Sort by score descending
         scored.sort(key=lambda x: x["score"], reverse=True)
@@ -95,7 +98,9 @@ class RAGRetriever:
 
         for item in results:
             # Shorten source path for display
-            source_display = item["source"].replace(str(__import__("pathlib").Path.home()), "~")
+            source_display = item["source"].replace(
+                str(__import__("pathlib").Path.home()), "~"
+            )
             source_type = item["source_type"]
             content = item["content"].strip()
 
