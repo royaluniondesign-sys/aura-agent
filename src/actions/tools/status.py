@@ -72,7 +72,7 @@ async def get_aura_status() -> str:
         pass
 
     # Recent errors in log
-    log_path = Path.home() / "claude-code-telegram/logs/bot.stdout.log"
+    log_path = Path.home() / "aura/logs/bot.stdout.log"
     if log_path.exists():
         try:
             import subprocess

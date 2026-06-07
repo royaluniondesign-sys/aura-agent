@@ -16,7 +16,7 @@ from .store import RAGStore
 logger = structlog.get_logger()
 
 _HOME = Path.home()
-_AURA_ROOT = _HOME / "claude-code-telegram"
+_AURA_ROOT = _HOME / "aura"
 
 _OBSIDIAN = _HOME / "Obsidian"
 
@@ -26,9 +26,10 @@ INDEX_SOURCES: List[tuple[str, str, Optional[int]]] = [
     (str(_OBSIDIAN / "**" / "*.md"), "memory", None),
     # AURA own memory
     (str(_HOME / ".aura" / "memory" / "*.md"), "memory", None),
-    (str(_AURA_ROOT / "MISSION.md"), "mission", None),
+    # Project docs: architecture, runbooks, phases
+    (str(_AURA_ROOT / "docs" / "**" / "*.md"), "mission", None),
     (str(_AURA_ROOT / "CLAUDE.md"), "mission", None),
-    (str(_AURA_ROOT / "conductor_log.md"), "log", None),
+    (str(_AURA_ROOT / "MISSION.md"), "mission", None),
     (str(_AURA_ROOT / "logs" / "bot.stdout.log"), "log", 500),
     (str(_AURA_ROOT / "src" / "**" / "*.py"), "code", None),
 ]
