@@ -289,6 +289,29 @@ class AgenticRoutingMixin(
         user_id = update.effective_user.id
         message_text = update.message.text
 
+        # Handle //command syntax (convert to single slash for backward compat)
+        if message_text and message_text.startswith("//"):
+            normalized_msg = message_text[1:]
+            if normalized_msg.startswith("/"):
+                cmd_match = re.match(r"/(\w+)(?:\s+(.*))?$", normalized_msg)
+                if cmd_match:
+                    cmd_name = cmd_match.group(1).lower()
+                    registered = getattr(self, "_registered_commands", set())
+                    if cmd_name in registered:
+                        # Call the appropriate handler
+                        handler = None
+                        if hasattr(self, f"_zt_{cmd_name}"):
+                            handler = getattr(self, f"_zt_{cmd_name}")
+                        elif hasattr(self, f"agentic_{cmd_name}"):
+                            handler = getattr(self, f"agentic_{cmd_name}")
+
+                        if handler:
+                            logger.info("double_slash_command_compat", cmd=cmd_name)
+                            # Update the message text to the normalized version
+                            update.message.text = normalized_msg
+                            await handler(update, context)
+                            return
+
         # Auto-capture group chat_id when AURA first receives a group message
         _chat = update.effective_chat
         if _chat and getattr(_chat, "type", "") in ("group", "supergroup"):

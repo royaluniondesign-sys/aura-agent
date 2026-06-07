@@ -48,6 +48,8 @@ class VoiceDaemon:
         self._app.router.add_post("/stop", self._handle_stop)
         self._app.router.add_post("/send", self._handle_send)
         self._app.router.add_get("/transcript", self._handle_transcript)
+        self._app.router.add_get("/tools", self._handle_tools)
+        self._app.router.add_get("/metrics", self._handle_metrics)
         self._app.router.add_post("/sleep", self._handle_sleep)
         self._app.router.add_post("/wake", self._handle_wake)
 
@@ -137,6 +139,10 @@ class VoiceDaemon:
       <button id="btn-start" onclick="startAgent()">▶ START</button>
       <button id="btn-stop" class="stop-btn" onclick="stopAgent()">⏹ STOP</button>
     </div>
+    <div class="ctrl-row">
+      <button id="btn-sleep" class="stop-btn" onclick="sleepAgent()">🌙 SLEEP</button>
+      <button id="btn-wake" onclick="wakeAgent()">☀ WAKE</button>
+    </div>
   </div>
 
   <!-- Center: transcript -->
@@ -160,6 +166,7 @@ class VoiceDaemon:
 
 <script>
 let seenCount = 0;
+let seenToolCount = 0;
 let animFrame = 0;
 
 // Waveform animation
@@ -189,29 +196,29 @@ drawWave();
 
 async function poll() {
   try {
-    const [s, t] = await Promise.all([
+    const [s, t, tl, m] = await Promise.all([
       fetch('/status').then(r=>r.json()),
-      fetch('/transcript?limit=100').then(r=>r.json())
+      fetch('/transcript?limit=100').then(r=>r.json()),
+      fetch('/tools?limit=50').then(r=>r.json()),
+      fetch('/metrics').then(r=>r.json()),
     ]);
 
-    const running = s.status === 'running';
-    isLive = running;
-    document.getElementById('dot').className = running ? 'live' : '';
+    const sleeping = s.sleeping === true;
+    const running = s.status === 'running' || s.status === 'sleeping';
+    isLive = running && !sleeping;
+    document.getElementById('dot').className = running && !sleeping ? 'live' : '';
     const stEl = document.getElementById('status-text');
-    stEl.textContent = running ? 'Running' : s.status.toUpperCase();
-    stEl.className = running ? 'running' : 'stopped';
+    if(sleeping){ stEl.textContent = '🌙 Sleeping'; stEl.className = 'stopped'; }
+    else { stEl.textContent = running ? 'Running' : s.status.toUpperCase(); stEl.className = running ? 'running' : 'stopped'; }
     document.getElementById('uptime').textContent = 'Uptime: ' + (s.uptime_s || 0) + 's';
     document.getElementById('turns').textContent = s.transcript_count || 0;
     document.getElementById('model-lbl').textContent = s.model || 'Gemini 2.5 Flash Native Audio';
 
-    // CPU / RAM via psutil (approximate via navigator)
-    if(window.performance && window.performance.memory){
-      const used = window.performance.memory.usedJSHeapSize;
-      const total = window.performance.memory.totalJSHeapSize;
-      const pct = Math.round((used/total)*100);
-      document.getElementById('ram-bar').style.width = pct+'%';
-      document.getElementById('ram-pct').textContent = pct+'%';
-    }
+    // Real CPU/RAM from psutil
+    document.getElementById('cpu-bar').style.width = (m.cpu_pct||0)+'%';
+    document.getElementById('cpu-pct').textContent = (m.cpu_pct||0)+'%';
+    document.getElementById('ram-bar').style.width = (m.ram_pct||0)+'%';
+    document.getElementById('ram-pct').textContent = (m.ram_mb||0)+'MB';
 
     // Transcript
     const entries = t.transcript || [];
@@ -227,6 +234,22 @@ async function poll() {
       });
       seenCount = entries.length;
       box.scrollTop = box.scrollHeight;
+    }
+
+    // Tool calls panel
+    const tools = tl.tools || [];
+    const tbox = document.getElementById('tools-log');
+    if(tools.length > seenToolCount){
+      const newTools = tools.slice(seenToolCount);
+      newTools.forEach(e => {
+        const div = document.createElement('div');
+        div.className = 'tool-entry';
+        const t = new Date(e.ts*1000).toLocaleTimeString();
+        div.textContent = t + ' · ' + e.tool + '(' + (e.args||[]).join(', ') + ')';
+        tbox.appendChild(div);
+      });
+      seenToolCount = tools.length;
+      tbox.scrollTop = tbox.scrollHeight;
     }
   } catch(e) {
     document.getElementById('status-text').textContent = 'OFFLINE';
@@ -253,6 +276,16 @@ async function startAgent(){
 async function stopAgent(){
   addSysMsg('⏹ Deteniendo...');
   await fetch('/stop',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+}
+
+async function sleepAgent(){
+  addSysMsg('🌙 Poniendo a dormir...');
+  await fetch('/sleep',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+}
+
+async function wakeAgent(){
+  addSysMsg('☀ Despertando...');
+  await fetch('/wake',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
 }
 
 function addSysMsg(text){
@@ -321,6 +354,21 @@ setInterval(poll, 800);
     async def _handle_transcript(self, request: web.Request) -> web.Response:
         limit = int(request.query.get("limit", "20"))
         return web.json_response({"transcript": self._transcript_log[-limit:]})
+
+    async def _handle_tools(self, request: web.Request) -> web.Response:
+        limit = int(request.query.get("limit", "50"))
+        return web.json_response({"tools": self._tool_log[-limit:]})
+
+    async def _handle_metrics(self, request: web.Request) -> web.Response:
+        try:
+            import psutil
+            proc = psutil.Process()
+            cpu = psutil.cpu_percent(interval=None)
+            ram = proc.memory_percent()
+            ram_mb = proc.memory_info().rss // (1024 * 1024)
+        except Exception:
+            cpu, ram, ram_mb = 0.0, 0.0, 0
+        return web.json_response({"cpu_pct": round(cpu, 1), "ram_pct": round(ram, 1), "ram_mb": ram_mb})
 
     async def _handle_sleep(self, request: web.Request) -> web.Response:
         if not self._agent or not self._agent.is_ready():
